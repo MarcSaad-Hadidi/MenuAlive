@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --color-charcoal: #080706;
+  --color-espresso: #1d130d;
+  --color-cream: #f7eddd;
+  --color-muted: #cdbfa9;
+  --color-champagne: #d9b879;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--color-charcoal);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(75, 45, 25, 0.24), transparent 34rem),
+    linear-gradient(180deg, #080706 0%, #0c0907 48%, #060504 100%);
+  color: var(--color-cream);
+  font-family: "Avenir Next", Optima, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
+  text-rendering: geometricPrecision;
+}
+
+button,
+a,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(217, 184, 121, 0.32);
+  color: var(--color-cream);
+}
+
+.video-readable-overlay {
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(8, 7, 6, 0.78) 0%, rgba(8, 7, 6, 0.52) 34%, rgba(8, 7, 6, 0.12) 70%, rgba(8, 7, 6, 0.48) 100%),
+    linear-gradient(180deg, rgba(8, 7, 6, 0.36) 0%, rgba(8, 7, 6, 0.03) 40%, rgba(8, 7, 6, 0.72) 100%);
+}
+
+.video-warmth {
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 74%, rgba(121, 76, 38, 0.12), transparent 28rem),
+    linear-gradient(180deg, rgba(58, 31, 15, 0.08), transparent 42%);
+  mix-blend-mode: soft-light;
+}
+
+.video-grain {
+  pointer-events: none;
+}
+
+.video-grain::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  opacity: 0.045;
+  mix-blend-mode: soft-light;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.chapter-copy {
+  text-shadow: 0 2px 34px rgba(0, 0, 0, 0.56);
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.chapter-copy[data-phase="pre-enter"] {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.chapter-copy[data-phase="exit"] {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+@media (max-width: 767px) {
+  .video-readable-overlay {
+    background:
+      linear-gradient(180deg, rgba(8, 7, 6, 0.3) 0%, rgba(8, 7, 6, 0.24) 38%, rgba(8, 7, 6, 0.86) 100%),
+      linear-gradient(90deg, rgba(8, 7, 6, 0.76) 0%, rgba(8, 7, 6, 0.34) 72%, rgba(8, 7, 6, 0.58) 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
