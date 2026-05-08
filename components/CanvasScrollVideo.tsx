@@ -195,9 +195,12 @@ export function CanvasScrollVideo() {
   useEffect(() => {
     const canvas = canvasRef.current;
     const section = sectionRef.current;
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    // `desynchronized` peut figer ou déchirer le canvas sur Firefox / Brave avec certains pilotes.
+    const avoidDesyncCanvas = /Firefox|Brave/i.test(ua);
     const context = canvas?.getContext("2d", {
       alpha: false,
-      desynchronized: true
+      desynchronized: !avoidDesyncCanvas
     });
 
     if (!canvas || !section || !context) {

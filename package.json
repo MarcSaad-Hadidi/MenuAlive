@@ -13,6 +13,7 @@
     "demo:convert-usdz": "node scripts/convert-demo-glb-to-usdz.mjs"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.2.0",
     "gsap": "^3.13.0",
     "lenis": "^1.3.23",
     "next": "^16.0.0",

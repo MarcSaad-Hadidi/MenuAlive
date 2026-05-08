@@ -16,6 +16,18 @@ const LenisRefContext = createContext<RefObject<Lenis | null> | null>(null);
 const REDUCED_MOTION_MEDIA_QUERY = "(prefers-reduced-motion: reduce)";
 const MOBILE_SCROLL_MEDIA_QUERY = "(max-width: 767px)";
 
+/**
+ * Lenis + ScrollTrigger peut saccader sur Brave (wheel / RAF) et Firefox.
+ * Scroll natif + ScrollTrigger.update reste fluide et évite le double lissage.
+ */
+function prefersNativeScrollDesktop(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  const ua = navigator.userAgent;
+  return /Brave/i.test(ua) || /Firefox\//i.test(ua);
+}
+
 /** Référence vers l’instance Lenis globale (pour stop/start hors du provider). */
 export function useLenisRef(): RefObject<Lenis | null> | null {
   return useContext(LenisRefContext);
@@ -62,10 +74,11 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
 
     const startDesktopLenis = () => {
       const lenis = new Lenis({
-        duration: prefersReducedMotion ? 0.01 : 0.72,
+        // Un peu plus court = moins de « trainée » vis-à-vis du scrub ScrollTrigger.
+        duration: prefersReducedMotion ? 0.01 : 0.58,
         easing: (time) => Math.min(1, 1.001 - 2 ** (-10 * time)),
         smoothWheel: !prefersReducedMotion,
-        wheelMultiplier: 0.78,
+        wheelMultiplier: 0.88,
         touchMultiplier: 1
       });
 
@@ -83,21 +96,26 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
 
       return () => {
         gsap.ticker.remove(update);
+        gsap.ticker.lagSmoothing(500, 33);
         lenis.destroy();
         lenisRef.current = null;
       };
     };
 
-    const applyScrollMode = (useNativeMobile: boolean) => {
+    /** Mobile : natif. Desktop Brave/Firefox : natif. Autres desktop : Lenis. */
+    const applyScrollMode = () => {
       removeDesktopScroll?.();
       removeMobileScroll?.();
       removeDesktopScroll = null;
       removeMobileScroll = null;
 
-      if (useNativeMobile) {
-        removeMobileScroll = attachNativeScrollUpdates();
-      } else {
+      const isMobileViewport = mobileScrollQuery.matches;
+      const useLenis = !isMobileViewport && !prefersNativeScrollDesktop();
+
+      if (useLenis) {
         removeDesktopScroll = startDesktopLenis();
+      } else {
+        removeMobileScroll = attachNativeScrollUpdates();
       }
 
       requestAnimationFrame(() => {
@@ -105,10 +123,10 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
       });
     };
 
-    applyScrollMode(mobileScrollQuery.matches);
+    applyScrollMode();
 
-    const onViewportChange = (event: MediaQueryListEvent) => {
-      applyScrollMode(event.matches);
+    const onViewportChange = () => {
+      applyScrollMode();
     };
 
     if (typeof mobileScrollQuery.addEventListener === "function") {

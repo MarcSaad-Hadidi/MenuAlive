@@ -18,6 +18,11 @@ type ModelViewerProps = DetailedHTMLProps<
   exposure?: string;
   /** https://modelviewer.dev/ — comportement pendant le fetch du poster / modèle */
   loading?: string;
+  "camera-orbit"?: string;
+  "camera-target"?: string;
+  "field-of-view"?: string;
+  "min-camera-orbit"?: string;
+  "max-camera-orbit"?: string;
 };
 
 declare module "react" {

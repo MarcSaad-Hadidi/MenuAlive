@@ -58,8 +58,13 @@ async function exportBinaryGlb(root, fileName) {
 
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-  const target = 2.2;
-  grouped.scale.multiplyScalar(target / maxDim);
+  /** Mètres : ~34 cm — assiette / verre crédible en AR (2,2 m rendait les plats géants). */
+  const targetMeters = 0.34;
+  grouped.scale.multiplyScalar(targetMeters / maxDim);
+  grouped.updateMatrixWorld(true);
+
+  const groundedBox = new THREE.Box3().setFromObject(grouped);
+  grouped.position.y -= groundedBox.min.y;
   grouped.updateMatrixWorld(true);
 
   scene.add(grouped);
