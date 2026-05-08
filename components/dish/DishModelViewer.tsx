@@ -2,9 +2,11 @@
 
 import Script from "next/script";
 import {
+  forwardRef,
   useCallback,
   useEffect,
   useId,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState
@@ -15,11 +17,21 @@ const MODEL_VIEWER_CDN =
   "https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js";
 
 const MV_INIT_TIMEOUT_MS = 12_000;
+const AR_HELP_TEXT =
+  "Placez le plat sur votre table avec la cam\u00e9ra de votre t\u00e9l\u00e9phone.";
+const AR_UNAVAILABLE_TEXT =
+  "La vue devant vous est disponible sur les t\u00e9l\u00e9phones compatibles AR.";
+const IOS_USDZ_MISSING_TEXT =
+  "Pour activer l\u2019AR iPhone, ajoutez un fichier USDZ \u00e0 ce plat.";
 
 type DishModelViewerProps = {
   dish: Pick<Dish, "name" | "model3dUrl" | "usdzUrl">;
   /** Chrome minimal : titres et aide fournis par le parent si besoin. */
   minimalChrome?: boolean;
+};
+
+export type DishModelViewerHandle = {
+  requestAr: () => boolean;
 };
 
 function modelViewerDefined(): boolean {
@@ -33,21 +45,69 @@ async function ensureModelViewer(): Promise<boolean> {
   return true;
 }
 
-export function DishModelViewer({
-  dish,
-  minimalChrome = false
-}: DishModelViewerProps) {
+type ModelViewerElement = HTMLElement & {
+  canActivateAR?: boolean;
+  activateAR?: () => Promise<void> | void;
+};
+
+function isIosDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+export const DishModelViewer = forwardRef<
+  DishModelViewerHandle,
+  DishModelViewerProps
+>(function DishModelViewer(
+  { dish, minimalChrome = false },
+  ref
+) {
   const titleId = useId();
+  const helpId = useId();
   const [mvReady, setMvReady] = useState(() => modelViewerDefined());
   const [initTimedOut, setInitTimedOut] = useState(false);
   const [modelLoadError, setModelLoadError] = useState(false);
-  const loadWatchRef = useRef<HTMLElement | null>(null);
+  const [arAvailable, setArAvailable] = useState(false);
+  const [arLaunchFailed, setArLaunchFailed] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const loadWatchRef = useRef<ModelViewerElement | null>(null);
   const hasModel = Boolean(dish.model3dUrl?.trim());
   const modelSrc = useMemo(() => dish.model3dUrl?.trim() ?? "", [dish.model3dUrl]);
+  const iosSrc = useMemo(() => dish.usdzUrl?.trim() ?? "", [dish.usdzUrl]);
+  const missingIosAr = isIos && !iosSrc;
 
   const handleScriptLoad = useCallback(() => {
     void ensureModelViewer().then(() => setMvReady(true));
   }, []);
+
+  const refreshArAvailability = useCallback(() => {
+    const el = loadWatchRef.current;
+    setArAvailable(Boolean(el?.canActivateAR));
+  }, []);
+
+  const requestAr = useCallback(() => {
+    const el = loadWatchRef.current;
+
+    if (!el?.activateAR || !el.canActivateAR || missingIosAr) {
+      setArLaunchFailed(true);
+      refreshArAvailability();
+      return false;
+    }
+
+    setArLaunchFailed(false);
+    try {
+      const result = el.activateAR();
+      if (result && typeof result.then === "function") {
+        result.catch(() => setArLaunchFailed(true));
+      }
+      return true;
+    } catch {
+      setArLaunchFailed(true);
+      return false;
+    }
+  }, [missingIosAr, refreshArAvailability]);
+
+  useImperativeHandle(ref, () => ({ requestAr }), [requestAr]);
 
   /** Détection lecteur : microtask évite setState synchrone dans l’effet (eslint). */
   useEffect(() => {
@@ -64,6 +124,10 @@ export function DishModelViewer({
     };
   }, [hasModel]);
 
+  useEffect(() => {
+    queueMicrotask(() => setIsIos(isIosDevice()));
+  }, []);
+
   /** Ne pas rester bloqué indéfiniment si le lecteur ne s’initialise pas */
   useEffect(() => {
     if (!hasModel || mvReady) return;
@@ -79,19 +143,29 @@ export function DishModelViewer({
       const el = loadWatchRef.current;
       if (!el) return;
       const onMvError = () => setModelLoadError(true);
-      const onMvLoad = () => setModelLoadError(false);
+      const onMvLoad = () => {
+        setModelLoadError(false);
+        refreshArAvailability();
+      };
+      const onArStatus = () => {
+        setArLaunchFailed(false);
+        refreshArAvailability();
+      };
       el.addEventListener("error", onMvError);
       el.addEventListener("load", onMvLoad);
+      el.addEventListener("ar-status", onArStatus);
+      refreshArAvailability();
       teardown = () => {
         el.removeEventListener("error", onMvError);
         el.removeEventListener("load", onMvLoad);
+        el.removeEventListener("ar-status", onArStatus);
       };
     }, 0);
     return () => {
       window.clearTimeout(wait);
       teardown?.();
     };
-  }, [hasModel, mvReady, modelSrc]);
+  }, [hasModel, mvReady, modelSrc, refreshArAvailability]);
 
   if (!hasModel) {
     return (
@@ -159,17 +233,44 @@ export function DishModelViewer({
             <model-viewer
               ref={loadWatchRef}
               src={modelSrc}
-              {...(dish.usdzUrl?.trim() ? { "ios-src": dish.usdzUrl.trim() } : {})}
+              {...(iosSrc ? { "ios-src": iosSrc } : {})}
               alt={`Vue du plat : ${dish.name}`}
+              aria-describedby={helpId}
               camera-controls
               auto-rotate
               ar
               ar-modes="webxr scene-viewer quick-look"
+              ar-placement="floor"
+              ar-scale="fixed"
               shadow-intensity="1"
               exposure="1.05"
               loading="auto"
-              className="mx-auto block h-[min(65vh,460px)] w-full rounded-xl bg-[#10100e] ring-1 ring-white/8"
-            />
+              className="mx-auto block h-[min(58vh,420px)] min-h-[280px] w-full rounded-xl bg-[#10100e] ring-1 ring-white/8 sm:h-[min(65vh,460px)] sm:min-h-[340px]"
+            >
+              <button
+                type="button"
+                slot="ar-button"
+                className="absolute bottom-4 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full border border-champagne/45 bg-[#080706]/92 px-5 text-sm font-semibold text-champagne shadow-[0_14px_40px_rgba(0,0,0,0.48)] backdrop-blur transition hover:border-champagne/70 hover:bg-[#120d09] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#10100e]"
+                onClick={requestAr}
+              >
+                Voir devant moi
+              </button>
+            </model-viewer>
+            <div className="mt-3 space-y-1.5 px-1 text-center text-xs leading-relaxed text-[#bba88f] sm:text-sm">
+              <p id={helpId}>
+                {AR_HELP_TEXT}
+              </p>
+              {!arAvailable || arLaunchFailed ? (
+                <p className="text-[#8f806d]">
+                  {AR_UNAVAILABLE_TEXT}
+                </p>
+              ) : null}
+              {missingIosAr ? (
+                <p className="text-[#c4a892]">
+                  {IOS_USDZ_MISSING_TEXT}
+                </p>
+              ) : null}
+            </div>
             {modelLoadError ? (
               <p className="mt-2 text-center text-xs text-[#c49a84]">
                 Le modèle ne s’affiche pas. Réessayez dans un instant.
@@ -180,4 +281,4 @@ export function DishModelViewer({
       </div>
     </section>
   );
-}
+});

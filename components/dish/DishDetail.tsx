@@ -8,7 +8,10 @@ import { dishHas3dModel } from "@/lib/menuQuery";
 import { useDemoSimulation } from "@/components/menu/DemoSimulationContext";
 import { formatPrice } from "@/lib/formatPrice";
 import { AllergenBadge } from "@/components/dish/AllergenBadge";
-import { DishModelViewer } from "@/components/dish/DishModelViewer";
+import {
+  DishModelViewer,
+  type DishModelViewerHandle
+} from "@/components/dish/DishModelViewer";
 import { DishDetailHero } from "@/components/dish/DishDetailHero";
 
 type DishDetailProps = {
@@ -42,8 +45,9 @@ export function DishDetail({ dish }: DishDetailProps) {
   const immersive = isRealMobile || isPhoneSimulation;
   const [showPlat3d, setShowPlat3d] = useState(false);
   const plat3dAnchorRef = useRef<HTMLDivElement | null>(null);
+  const modelViewerRef = useRef<DishModelViewerHandle | null>(null);
 
-  const handleVoir3dClick = useCallback(() => {
+  const showAndScrollToPlat3d = useCallback(() => {
     setShowPlat3d(true);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -52,6 +56,18 @@ export function DishDetail({ dish }: DishDetailProps) {
       });
     });
   }, []);
+
+  const handleVoir3dClick = useCallback(() => {
+    showAndScrollToPlat3d();
+  }, [showAndScrollToPlat3d]);
+
+  const handleVoirDevantMoiClick = useCallback(() => {
+    if (showPlat3d && modelViewerRef.current?.requestAr()) {
+      return;
+    }
+
+    showAndScrollToPlat3d();
+  }, [showAndScrollToPlat3d, showPlat3d]);
 
   return (
     <article className={immersive ? "pb-24 pt-2.5" : "pb-24 pt-4 sm:pt-5"}>
@@ -205,10 +221,17 @@ export function DishDetail({ dish }: DishDetailProps) {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button
               type="button"
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/18 bg-white/6 px-5 text-center text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:w-auto sm:min-w-[180px]"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/18 bg-white/6 px-5 text-center text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:w-auto sm:min-w-[170px]"
               onClick={handleVoir3dClick}
             >
               Voir en 3D
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-champagne/50 bg-champagne px-5 text-center text-sm font-semibold text-[#17100a] shadow-[0_12px_34px_rgba(217,184,121,0.18)] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:w-auto sm:min-w-[190px]"
+              onClick={handleVoirDevantMoiClick}
+            >
+              Voir devant moi
             </button>
           </div>
         ) : null}
@@ -223,7 +246,11 @@ export function DishDetail({ dish }: DishDetailProps) {
             immersive ? "mt-10" : "mt-12"
           }`}
         >
-          <DishModelViewer dish={dish} minimalChrome />
+          <DishModelViewer
+            ref={modelViewerRef}
+            dish={dish}
+            minimalChrome
+          />
         </section>
       ) : null}
     </article>

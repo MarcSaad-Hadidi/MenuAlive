@@ -11,6 +11,8 @@ type ModelViewerProps = DetailedHTMLProps<
   "auto-rotate"?: boolean | "";
   ar?: boolean | "";
   "ar-modes"?: string;
+  "ar-placement"?: "floor" | "wall";
+  "ar-scale"?: "auto" | "fixed";
   "shadow-intensity"?: string;
   "environment-image"?: string;
   exposure?: string;

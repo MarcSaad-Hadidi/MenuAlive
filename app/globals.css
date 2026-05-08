@@ -70,6 +70,22 @@ button[aria-label="Open Next.js Dev Tools"] {
   display: none !important;
 }
 
+.scroll-video-section {
+  height: 420svh;
+}
+
+.video-sticky-viewport {
+  height: 100svh;
+  min-height: 100svh;
+}
+
+@supports (height: 100dvh) {
+  .video-sticky-viewport {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
 .video-readable-overlay {
   pointer-events: none;
   background:
@@ -153,6 +169,17 @@ button[aria-label="Open Next.js Dev Tools"] {
   }
 }
 
+@media (min-width: 768px) {
+  .scroll-video-section {
+    height: 520vh;
+  }
+
+  .video-sticky-viewport {
+    height: 100vh;
+    min-height: 560px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -161,6 +188,16 @@ button[aria-label="Open Next.js Dev Tools"] {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .scroll-video-section {
+    height: 100svh;
+  }
+
+  @supports (height: 100dvh) {
+    .scroll-video-section {
+      height: 100dvh;
+    }
   }
 }
 

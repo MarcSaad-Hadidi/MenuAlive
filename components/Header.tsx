@@ -70,7 +70,7 @@ export function Header() {
             <>
               <Link
                 href="/demo"
-                className="inline-flex min-h-10 max-w-[9.5rem] items-center justify-center rounded-full border border-champagne/35 bg-transparent px-3 text-center text-xs font-semibold text-champagne transition hover:border-champagne/55 hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:max-w-none sm:min-h-11 sm:px-4 sm:text-sm"
+                className="hidden min-h-10 max-w-[9.5rem] items-center justify-center rounded-full border border-champagne/35 bg-transparent px-3 text-center text-xs font-semibold text-champagne transition hover:border-champagne/55 hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline-flex sm:max-w-none sm:min-h-11 sm:px-4 sm:text-sm"
                 aria-label="Voir la démo du menu interactif"
               >
                 Voir la démo
