@@ -25,12 +25,32 @@ type MenuFilterBarProps = {
   compact?: boolean;
 };
 
+type ToggleKey = keyof Pick<
+  MenuFilterState,
+  "signatureOnly" | "recommendedOnly" | "availableOnly" | "with3dOnly"
+>;
+
+type FilterChip = {
+  key: ToggleKey;
+  /** Libellé long (desktop) — fallback si `compactLabel` est absent. */
+  label: string;
+  /** Libellé compact (simulation téléphone et mobile réel). */
+  compactLabel?: string;
+};
+
+const FILTER_CHIPS: FilterChip[] = [
+  { key: "signatureOnly", label: "Signature" },
+  { key: "recommendedOnly", label: "Recommandés" },
+  { key: "availableOnly", label: "Disponibles" },
+  { key: "with3dOnly", label: "Avec vue 3D", compactLabel: "3D" }
+];
+
 export function MenuFilterBar({
   filters,
   onChange,
   compact
 }: MenuFilterBarProps) {
-  const toggle = (key: keyof Pick<MenuFilterState, "signatureOnly" | "recommendedOnly" | "availableOnly">) => {
+  const toggle = (key: ToggleKey) => {
     onChange({ ...filters, [key]: !filters[key] });
   };
 
@@ -47,48 +67,30 @@ export function MenuFilterBar({
       <div
         className={
           compact
-            ? "flex flex-nowrap items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain py-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            ? "flex flex-wrap items-center justify-start gap-x-1.5 gap-y-1.5"
             : "flex flex-wrap items-center gap-1.5"
         }
       >
         <span className="sr-only">Filtres rapides</span>
-        <button
-          type="button"
-          onClick={() => toggle("signatureOnly")}
-          aria-pressed={filters.signatureOnly}
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${
-            filters.signatureOnly
-              ? "border-champagne/50 bg-champagne/[0.13] text-cream ring-1 ring-champagne/20"
-              : "border-white/[0.1] bg-black/40 text-[#b9aa94] hover:border-white/18 hover:bg-black/48"
-          }`}
-        >
-          Signature
-        </button>
-        <button
-          type="button"
-          onClick={() => toggle("recommendedOnly")}
-          aria-pressed={filters.recommendedOnly}
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${
-            filters.recommendedOnly
-              ? "border-champagne/50 bg-champagne/[0.13] text-cream ring-1 ring-champagne/20"
-              : "border-white/[0.1] bg-black/40 text-[#b9aa94] hover:border-white/18 hover:bg-black/48"
-          }`}
-        >
-          Recommandés
-        </button>
-        <button
-          type="button"
-          onClick={() => toggle("availableOnly")}
-          aria-pressed={filters.availableOnly}
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${
-            filters.availableOnly
-              ? "border-champagne/50 bg-champagne/[0.13] text-cream ring-1 ring-champagne/20"
-              : "border-white/[0.1] bg-black/40 text-[#b9aa94] hover:border-white/18 hover:bg-black/48"
-          }`}
-        >
-          Disponibles
-        </button>
-        {compact ? <span className="w-2 shrink-0" aria-hidden /> : null}
+        {FILTER_CHIPS.map((chip) => {
+          const pressed = filters[chip.key];
+          const label = compact && chip.compactLabel ? chip.compactLabel : chip.label;
+          return (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={() => toggle(chip.key)}
+              aria-pressed={pressed}
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-full border px-3 pb-[7px] pt-[5px] text-[11px] font-medium leading-[1.2] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${
+                pressed
+                  ? "border-champagne/50 bg-champagne/[0.13] text-cream ring-1 ring-champagne/20"
+                  : "border-white/[0.1] bg-black/40 text-[#b9aa94] hover:border-white/18 hover:bg-black/48"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       <div

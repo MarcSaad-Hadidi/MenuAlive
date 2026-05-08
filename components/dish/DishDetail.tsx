@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import type { Dish } from "@/lib/demoMenuData";
 import { getRestaurant } from "@/lib/demoMenuData";
+import { dishHas3dModel } from "@/lib/menuQuery";
 import { useDemoSimulation } from "@/components/menu/DemoSimulationContext";
 import { formatPrice } from "@/lib/formatPrice";
 import { AllergenBadge } from "@/components/dish/AllergenBadge";
@@ -36,6 +37,7 @@ function scrollToPlat3dAnchor(target: HTMLElement) {
 export function DishDetail({ dish }: DishDetailProps) {
   const restaurant = getRestaurant();
   const unavailable = !dish.isAvailable;
+  const has3d = dishHas3dModel(dish);
   const { isRealMobile, isPhoneSimulation } = useDemoSimulation();
   const immersive = isRealMobile || isPhoneSimulation;
   const [showPlat3d, setShowPlat3d] = useState(false);
@@ -90,6 +92,14 @@ export function DishDetail({ dish }: DishDetailProps) {
           {dish.isRecommended ? (
             <span className="rounded-full border border-white/20 bg-white/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-cream">
               Recommandé
+            </span>
+          ) : null}
+          {has3d ? (
+            <span
+              className="rounded-full border border-champagne/40 bg-black/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-champagne/95"
+              aria-label="Plat avec vue 3D"
+            >
+              Vue 3D
             </span>
           ) : null}
         </div>
@@ -191,15 +201,17 @@ export function DishDetail({ dish }: DishDetailProps) {
           </p>
         </section>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <button
-            type="button"
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/18 bg-white/6 px-5 text-center text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:w-auto sm:min-w-[180px]"
-            onClick={handleVoir3dClick}
-          >
-            Voir en 3D
-          </button>
-        </div>
+        {has3d ? (
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <button
+              type="button"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/18 bg-white/6 px-5 text-center text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:w-auto sm:min-w-[180px]"
+              onClick={handleVoir3dClick}
+            >
+              Voir en 3D
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {showPlat3d ? (

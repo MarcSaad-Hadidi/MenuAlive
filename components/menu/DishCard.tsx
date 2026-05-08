@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CurrencyCode, Dish } from "@/lib/demoMenuData";
 import { getDishCardImageObjectPosition } from "@/lib/demoMenuData";
+import { dishHas3dModel } from "@/lib/menuQuery";
 import { formatPrice } from "@/lib/formatPrice";
 import { AllergenBadge } from "@/components/dish/AllergenBadge";
 import { useDemoSimulation } from "@/components/menu/DemoSimulationContext";
@@ -95,6 +96,7 @@ function DishCardHeroImage({
 export function DishCard({ dish, currency }: DishCardProps) {
   const { isPhoneSimulation } = useDemoSimulation();
   const unavailable = !dish.isAvailable;
+  const has3d = dishHas3dModel(dish);
 
   if (isPhoneSimulation) {
     return (
@@ -115,6 +117,14 @@ export function DishCard({ dish, currency }: DishCardProps) {
             {dish.isRecommended ? (
               <span className="rounded border border-white/14 bg-white/[0.05] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-cream/95">
                 Recommandé
+              </span>
+            ) : null}
+            {has3d ? (
+              <span
+                className="rounded border border-champagne/30 bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-champagne/95"
+                aria-label="Plat avec vue 3D"
+              >
+                3D
               </span>
             ) : null}
           </div>
@@ -180,6 +190,14 @@ export function DishCard({ dish, currency }: DishCardProps) {
           {dish.isRecommended ? (
             <span className="rounded-md border border-white/16 bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-cream/95">
               Recommandé
+            </span>
+          ) : null}
+          {has3d ? (
+            <span
+              className="rounded-md border border-champagne/35 bg-black/45 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-champagne/95"
+              aria-label="Plat avec vue 3D"
+            >
+              3D
             </span>
           ) : null}
         </div>
