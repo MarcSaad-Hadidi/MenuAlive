@@ -56,7 +56,7 @@ function Footer() {
   return (
     <footer className="border-t border-white/10 bg-[#050403] px-5 py-10 text-sm text-[#b9aa94] sm:px-10 lg:px-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-display text-xl text-cream">MenuAlive / MenuVivant</p>
+        <p className="font-display text-xl text-cream">Vistaire</p>
         <p>Menu digital premium pour restaurants.</p>
       </div>
     </footer>

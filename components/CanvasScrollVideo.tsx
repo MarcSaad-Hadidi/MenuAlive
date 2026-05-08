@@ -627,7 +627,7 @@ export function CanvasScrollVideo() {
     return (
       <section
         id="experience"
-        aria-label="Expérience MenuAlive"
+        aria-label="Expérience Vistaire"
         className="relative min-h-[100svh] overflow-hidden bg-charcoal"
       >
         <video
@@ -659,7 +659,7 @@ export function CanvasScrollVideo() {
     <section
       ref={sectionRef}
       id="experience"
-      aria-label="Expérience MenuAlive"
+      aria-label="Expérience Vistaire"
       className="relative h-[420vh] bg-charcoal md:h-[520vh]"
     >
       <div className="sticky top-0 h-screen min-h-[560px] w-full overflow-hidden bg-charcoal [contain:paint]">

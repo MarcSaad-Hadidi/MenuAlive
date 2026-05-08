@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "Espace restaurateur | MenuAlive",
+  title: "Espace restaurateur | Vistaire",
   description:
     "Pilotage de la carte, des plats et des médias — prévisualisation locale."
 };

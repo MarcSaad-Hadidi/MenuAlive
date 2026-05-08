@@ -65,7 +65,7 @@ export default function AdminPage() {
             href="/"
             className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-sm font-semibold text-[#b9aa94] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
           >
-            Retour au site MenuAlive
+            Retour au site Vistaire
           </Link>
         </div>
 

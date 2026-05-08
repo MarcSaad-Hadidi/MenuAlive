@@ -3,9 +3,9 @@ import { SmoothScrollProvider } from "@/components/SmoothScrollProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MenuAlive — Le menu qui donne vie à vos plats",
+  title: "Vistaire — Le menu qui donne vie à vos plats",
   description:
-    "MenuAlive transforme le QR code restaurant en menu digital premium, visuel, interactif et immersif avec expérience 3D / AR."
+    "Vistaire transforme le QR code restaurant en menu digital premium, visuel, interactif et immersif avec expérience 3D / AR."
 };
 
 export const viewport: Viewport = {

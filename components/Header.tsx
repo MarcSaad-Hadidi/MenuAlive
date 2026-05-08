@@ -26,11 +26,11 @@ export function Header() {
             className="shrink-0 font-display text-lg leading-none text-cream outline-none transition hover:text-champagne focus-visible:ring-2 focus-visible:ring-champagne sm:text-2xl"
             aria-label={
               isHome
-                ? "MenuAlive — accueil de la page"
-                : "MenuAlive — retour à la page d’accueil"
+                ? "Vistaire — accueil de la page"
+                : "Vistaire — retour à la page d’accueil"
             }
           >
-            MenuAlive
+            Vistaire
           </Link>
           {isDemoRoute ? (
             <span className="hidden truncate border-l border-white/15 pl-3 text-[11px] font-medium uppercase tracking-[0.18em] text-champagne/85 sm:inline">
@@ -64,7 +64,7 @@ export function Header() {
               href="/"
               className="text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
             >
-              Accueil MenuAlive
+              Accueil Vistaire
             </Link>
           ) : (
             <>

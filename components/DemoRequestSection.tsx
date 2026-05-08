@@ -30,7 +30,7 @@ export function DemoRequestSection() {
             Démo privée
           </p>
           <h2 className="mt-5 font-display text-[clamp(2.4rem,5vw,4.9rem)] font-normal leading-[1.01] text-cream">
-            Demander une démo MenuAlive
+            Demander une démo Vistaire
           </h2>
           <p className="mt-5 max-w-md text-base leading-7 text-[#d1c2aa]">
             Préparez une première expérience autour de vos plats signatures, de
