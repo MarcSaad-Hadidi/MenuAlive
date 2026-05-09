@@ -176,7 +176,6 @@ function tuneRaviolesArScene(scene) {
   if (plateMeshes.length === 0 || foodMeshes.length === 0) return;
 
   const plateBounds = scene.getWorldExtends((mesh) => plateMeshes.includes(mesh));
-  const foodBounds = scene.getWorldExtends((mesh) => foodMeshes.includes(mesh));
   const plateSize = plateBounds.max.subtract(plateBounds.min);
   const plateTopY = plateBounds.max.y;
 
@@ -205,7 +204,7 @@ function tuneRaviolesArScene(scene) {
   );
   support.position.set(
     (plateBounds.min.x + plateBounds.max.x) / 2,
-    plateTopY - 0.001,
+    plateTopY - 0.035,
     (plateBounds.min.z + plateBounds.max.z) / 2
   );
   const supportMat = new PBRMaterial("ravioles-ar-ceramic-opaque", scene);
@@ -217,15 +216,8 @@ function tuneRaviolesArScene(scene) {
   supportMat.backFaceCulling = false;
   support.material = supportMat;
 
-  // Repose la nourriture légèrement dans la surface visible pour supprimer l'effet flottant.
-  const foodBottomY = foodBounds.min.y;
-  const targetFoodBottomY = plateTopY - 0.002;
-  const deltaY = targetFoodBottomY - foodBottomY;
-  const translation = Matrix.Translation(0, deltaY, 0);
-  for (const mesh of foodMeshes) {
-    mesh.bakeTransformIntoVertices(translation);
-    mesh.refreshBoundingInfo(true);
-  }
+  // La hauteur nourriture/assiette est corrigee dans le GLB source.
+  void foodMeshes;
 }
 
 function ensureMeshNormals(scene) {

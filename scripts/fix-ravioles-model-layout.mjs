@@ -8,7 +8,8 @@ import {
   MeshBuilder,
   NullEngine,
   PBRMaterial,
-  Scene
+  Scene,
+  Vector3
 } from "@babylonjs/core";
 import { AppendSceneAsync } from "@babylonjs/core/Loading/sceneLoader.js";
 import "@babylonjs/loaders/glTF/index.js";
@@ -33,13 +34,14 @@ function isPlateMesh(mesh) {
   return (
     name.includes("assiette") ||
     name.includes("rebord") ||
-    name.includes("céramique") ||
-    name.includes("ceramique")
+    name.includes("ceramique") ||
+    name.includes("céramique")
   );
 }
 
-function isLooseRim(mesh) {
-  return mesh.name.toLowerCase().includes("rebord");
+function isDisposablePlateHelper(mesh) {
+  const name = mesh.name.toLowerCase();
+  return name.includes("rebord") || name.includes("opaque-plate-surface");
 }
 
 function boundsFor(scene, meshes) {
@@ -60,11 +62,32 @@ function logBounds(label, bounds) {
 }
 
 function bakeTranslate(meshes, y) {
+  if (Math.abs(y) < 0.00001) return;
   const translation = Matrix.Translation(0, y, 0);
   for (const mesh of meshes) {
     mesh.bakeTransformIntoVertices(translation);
     mesh.refreshBoundingInfo(true);
   }
+}
+
+function meshYQuantile(meshes, quantile) {
+  const ys = [];
+  for (const mesh of meshes) {
+    const positions = mesh.getVerticesData("position");
+    if (!positions) continue;
+    const world = mesh.computeWorldMatrix(true);
+    for (let i = 0; i < positions.length; i += 3) {
+      ys.push(
+        Vector3.TransformCoordinates(
+          new Vector3(positions[i], positions[i + 1], positions[i + 2]),
+          world
+        ).y
+      );
+    }
+  }
+  ys.sort((a, b) => a - b);
+  if (ys.length === 0) return null;
+  return ys[Math.floor(Math.max(0, Math.min(1, quantile)) * (ys.length - 1))];
 }
 
 function makeCeramicMaterial(scene) {
@@ -87,9 +110,9 @@ async function main() {
     name: "ravioles-chevre-miel.glb"
   });
 
-  const looseRims = renderableMeshes(scene).filter(isLooseRim);
-  for (const rim of looseRims) {
-    rim.dispose(false, true);
+  const disposableMeshes = renderableMeshes(scene).filter(isDisposablePlateHelper);
+  for (const mesh of disposableMeshes) {
+    mesh.dispose(false, true);
   }
 
   const meshes = renderableMeshes(scene);
@@ -108,7 +131,7 @@ async function main() {
 
   for (const material of scene.materials) {
     const name = material.name.toLowerCase();
-    if (!name.includes("céramique") && !name.includes("ceramique")) continue;
+    if (!name.includes("ceramique") && !name.includes("céramique")) continue;
     material.alpha = 1;
     material.transparencyMode = PBRMaterial.PBRMATERIAL_OPAQUE;
     material.albedoColor = new Color3(0.96, 0.92, 0.84);
@@ -117,31 +140,33 @@ async function main() {
     material.backFaceCulling = false;
   }
 
-  const plateSize = plateBounds.size;
-  const plateTopY = plateBounds.max.y;
+  const foodContactY = meshYQuantile(foodMeshes, 0.2);
+  if (foodContactY !== null) {
+    const targetFoodContactY = plateBounds.max.y - 0.012;
+    const deltaY = targetFoodContactY - foodContactY;
+    bakeTranslate(foodMeshes, deltaY);
+    console.log(`ravioles foodDeltaY=${Number(deltaY.toFixed(5))}`);
+  }
+
   const support = MeshBuilder.CreateCylinder(
     "ravioles-opaque-plate-surface",
     {
-      height: 0.006,
-      diameter: Math.max(plateSize.x, plateSize.z) * 0.9,
+      height: 0.004,
+      diameter: Math.max(plateBounds.size.x, plateBounds.size.z) * 0.9,
       tessellation: 128
     },
     scene
   );
   support.position.set(
     (plateBounds.min.x + plateBounds.max.x) / 2,
-    plateTopY + 0.001,
+    plateBounds.max.y - 0.035,
     (plateBounds.min.z + plateBounds.max.z) / 2
   );
   support.material = makeCeramicMaterial(scene);
 
-  // Le mesh alimentaire contient quelques points bas, mais les ravioles visibles
-  // restent trop éloignées de l'assiette. On descend légèrement le bloc alimentaire.
-  bakeTranslate(foodMeshes, -0.035);
-
   const after = boundsFor(scene, renderableMeshes(scene));
-  logBounds("ravioles GLB après", after);
-  console.log(`rebords supprimés=${looseRims.length}`);
+  logBounds("ravioles GLB apres", after);
+  console.log(`ravioles meshesSupprimes=${disposableMeshes.length}`);
 
   const glb = await GLTF2Export.GLBAsync(scene, "ravioles-chevre-miel.glb", {
     exportWithoutWaitingForScene: true,

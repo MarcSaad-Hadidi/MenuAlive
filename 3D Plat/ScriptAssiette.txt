@@ -1,0 +1,191 @@
+import bpy
+import math
+from mathutils import Vector
+
+# =====================================================
+# ASSIETTE RÉALISTE AUTOMATIQUE POUR PLAT 3D
+# Sélectionne ton plat avant de lancer le script.
+# =====================================================
+
+# ---------- RÉGLAGES PRINCIPAUX ----------
+PLATE_COLOR = (0.96, 0.92, 0.84, 1.0)   # blanc cassé céramique premium
+PLATE_MARGIN = 1.45                     # taille de l'assiette par rapport au plat
+PLATE_DEPTH = 0.055                     # creux général de l'assiette
+PLATE_THICKNESS = 0.035                 # épaisseur solide
+FOOD_CLEARANCE = 0.012                  # distance entre le bas du plat et le haut de l'assiette
+
+SEGMENTS = 192                          # rondeur de l'assiette
+RINGS = 9                               # nombre d'anneaux de géométrie
+
+ADD_SHADOW_PLANE = False                # mets True si tu veux une table de preview
+PLATE_NAME = "Assiette céramique réaliste"
+
+# ---------- RÉCUPÉRER LE PLAT SÉLECTIONNÉ ----------
+selected = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
+
+if not selected:
+    raise Exception("Sélectionne ton plat 3D avant de lancer le script.")
+
+# Calcule la bounding box globale du plat
+min_x = min((obj.matrix_world @ Vector(corner)).x for obj in selected for corner in obj.bound_box)
+max_x = max((obj.matrix_world @ Vector(corner)).x for obj in selected for corner in obj.bound_box)
+min_y = min((obj.matrix_world @ Vector(corner)).y for obj in selected for corner in obj.bound_box)
+max_y = max((obj.matrix_world @ Vector(corner)).y for obj in selected for corner in obj.bound_box)
+min_z = min((obj.matrix_world @ Vector(corner)).z for obj in selected for corner in obj.bound_box)
+max_z = max((obj.matrix_world @ Vector(corner)).z for obj in selected for corner in obj.bound_box)
+
+center_x = (min_x + max_x) / 2
+center_y = (min_y + max_y) / 2
+
+food_width = max_x - min_x
+food_depth = max_y - min_y
+food_radius = max(food_width, food_depth) / 2
+
+plate_radius = food_radius * PLATE_MARGIN
+plate_top_z = min_z - FOOD_CLEARANCE
+
+# ---------- SUPPRIMER ANCIENNE ASSIETTE SI EXISTANTE ----------
+for obj in list(bpy.context.scene.objects):
+    if obj.name.startswith(PLATE_NAME) or obj.name.startswith("Rebord assiette réaliste"):
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+# ---------- PROFIL DE L'ASSIETTE ----------
+# Chaque tuple = (rayon relatif, hauteur relative)
+# L'idée : centre légèrement creux, bassin intérieur, rebord qui remonte.
+profile = [
+    (0.00, -0.018),
+    (0.18, -0.020),
+    (0.40, -0.018),
+    (0.62, -0.012),
+    (0.76, -0.004),
+    (0.86,  0.010),
+    (0.93,  0.028),
+    (0.985, 0.034),
+    (1.00,  0.020),
+]
+
+verts = []
+faces = []
+
+# Créer les vertices en anneaux
+for ring_index, (r_factor, z_offset) in enumerate(profile):
+    r = plate_radius * r_factor
+    z = plate_top_z + z_offset
+
+    for i in range(SEGMENTS):
+        angle = 2 * math.pi * i / SEGMENTS
+        x = center_x + r * math.cos(angle)
+        y = center_y + r * math.sin(angle)
+        verts.append((x, y, z))
+
+# Créer les faces entre anneaux
+for ring_index in range(len(profile) - 1):
+    current_start = ring_index * SEGMENTS
+    next_start = (ring_index + 1) * SEGMENTS
+
+    for i in range(SEGMENTS):
+        a = current_start + i
+        b = current_start + (i + 1) % SEGMENTS
+        c = next_start + (i + 1) % SEGMENTS
+        d = next_start + i
+
+        faces.append((a, b, c, d))
+
+# Fermer le centre avec des triangles vers le premier anneau
+center_vertex_index = len(verts)
+verts.append((center_x, center_y, plate_top_z + profile[0][1]))
+
+first_ring_start = 0
+for i in range(SEGMENTS):
+    a = first_ring_start + i
+    b = first_ring_start + (i + 1) % SEGMENTS
+    faces.append((center_vertex_index, a, b))
+
+mesh = bpy.data.meshes.new("Mesh_Assiette_Ceramique")
+mesh.from_pydata(verts, [], faces)
+mesh.update()
+
+plate = bpy.data.objects.new(PLATE_NAME, mesh)
+bpy.context.collection.objects.link(plate)
+bpy.context.view_layer.objects.active = plate
+plate.select_set(True)
+
+# ---------- MATÉRIAU CÉRAMIQUE RÉALISTE ----------
+mat = bpy.data.materials.new("Céramique blanc cassé légèrement satinée")
+mat.use_nodes = True
+
+nodes = mat.node_tree.nodes
+bsdf = nodes.get("Principled BSDF")
+
+if bsdf:
+    bsdf.inputs["Base Color"].default_value = PLATE_COLOR
+    bsdf.inputs["Roughness"].default_value = 0.68
+    bsdf.inputs["Metallic"].default_value = 0.0
+    if "Alpha" in bsdf.inputs:
+        bsdf.inputs["Alpha"].default_value = 1.0
+
+plate.data.materials.append(mat)
+
+# ---------- ÉPAISSEUR ----------
+solidify = plate.modifiers.new("Épaisseur réelle", "SOLIDIFY")
+solidify.thickness = PLATE_THICKNESS
+solidify.offset = -1
+solidify.use_quality_normals = True
+
+# ---------- BORDS ARRONDIS ----------
+bevel = plate.modifiers.new("Rebords arrondis premium", "BEVEL")
+bevel.width = plate_radius * 0.018
+bevel.segments = 10
+bevel.profile = 0.55
+
+# ---------- LISSAGE ----------
+weighted_normals = plate.modifiers.new("Normales propres", "WEIGHTED_NORMAL")
+weighted_normals.keep_sharp = True
+
+bpy.ops.object.shade_smooth()
+
+# ---------- AJOUT D'UN REBORD SUPPLÉMENTAIRE SUBTIL ----------
+bpy.ops.mesh.primitive_torus_add(
+    major_radius=plate_radius * 0.965,
+    minor_radius=plate_radius * 0.018,
+    major_segments=192,
+    minor_segments=18,
+    location=(center_x, center_y, plate_top_z + 0.030)
+)
+
+rim = bpy.context.object
+rim.name = "Rebord assiette réaliste"
+rim.data.materials.append(mat)
+bpy.ops.object.shade_smooth()
+
+rim_bevel_normals = rim.modifiers.new("Normales rebord", "WEIGHTED_NORMAL")
+
+# ---------- OPTION : TABLE DE PRÉVISUALISATION ----------
+if ADD_SHADOW_PLANE:
+    bpy.ops.mesh.primitive_plane_add(
+        size=plate_radius * 3.2,
+        location=(center_x, center_y, plate_top_z - PLATE_THICKNESS - 0.004)
+    )
+    table = bpy.context.object
+    table.name = "Table preview sombre"
+
+    table_mat = bpy.data.materials.new("Table sombre matte")
+    table_mat.use_nodes = True
+    table_bsdf = table_mat.node_tree.nodes.get("Principled BSDF")
+    if table_bsdf:
+        table_bsdf.inputs["Base Color"].default_value = (0.015, 0.014, 0.013, 1)
+        table_bsdf.inputs["Roughness"].default_value = 0.85
+
+    table.data.materials.append(table_mat)
+
+# ---------- RECENTRER L'ORIGINE ----------
+bpy.context.view_layer.objects.active = plate
+plate.select_set(True)
+rim.select_set(True)
+
+# ---------- MESSAGE ----------
+print("Assiette réaliste ajoutée avec succès.")
+print(f"Rayon assiette : {plate_radius:.3f}")
+print(f"Diamètre assiette : {plate_radius * 2:.3f}")
+print("Si l'assiette est trop grande, baisse PLATE_MARGIN à 1.25 ou 1.30.")
+print("Si elle est trop petite, monte PLATE_MARGIN à 1.55.")
