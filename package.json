@@ -12,7 +12,8 @@
     "frames:update-config": "node scripts/update-frame-config.mjs",
     "optimize:videos": "node scripts/optimize-videos.mjs",
     "demo:generate-3d": "node scripts/generate-demo-models.mjs",
-    "demo:convert-usdz": "node scripts/convert-demo-glb-to-usdz.mjs"
+    "demo:convert-usdz": "node scripts/convert-demo-glb-to-usdz.mjs",
+    "demo:validate-assets": "node scripts/validate-demo-assets.mjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.2.0",

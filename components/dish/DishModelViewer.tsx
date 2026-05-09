@@ -58,6 +58,11 @@ type ModelViewerElement = HTMLElement & {
   activateAR?: () => Promise<void> | void;
 };
 
+function debugAr(event: string, payload: Record<string, unknown> = {}) {
+  if (process.env.NODE_ENV === "production") return;
+  console.debug("[Vistaire AR]", { event, ...payload });
+}
+
 function openQuickLook(iosSrc: string): boolean {
   if (typeof window === "undefined") return false;
   if (!iosSrc) return false;
@@ -101,6 +106,22 @@ export const DishModelViewer = forwardRef<
   const missingIosAr = isIos && !iosSrc;
 
   useEffect(() => {
+    debugAr("state", {
+      modelSrc,
+      iosSrc,
+      mvReady,
+      modelLoaded,
+      modelLoadError,
+      canActivateAR: loadWatchRef.current?.canActivateAR,
+      hasActivateAR: typeof loadWatchRef.current?.activateAR === "function",
+      userAgent: typeof navigator === "undefined" ? "" : navigator.userAgent,
+      isIosDevice: isIosDevice(),
+      isIosEmbeddedBrowser: isIosEmbeddedBrowser(),
+      isBraveUserAgent: isBraveUserAgent()
+    });
+  }, [modelSrc, iosSrc, mvReady, modelLoaded, modelLoadError]);
+
+  useEffect(() => {
     let cancelled = false;
     void ensureModelViewerLoaded().then(() => {
       if (!cancelled) setMvReady(true);
@@ -121,12 +142,31 @@ export const DishModelViewer = forwardRef<
       const onLoad = () => {
         setModelLoaded(true);
         setModelLoadError(false);
+        debugAr("load", {
+          modelSrc,
+          iosSrc,
+          canActivateAR: node.canActivateAR,
+          hasActivateAR: typeof node.activateAR === "function"
+        });
       };
-      const onError = () => {
+      const onError = (event: Event) => {
         setModelLoadError(true);
         setModelLoaded(false);
+        debugAr("error", {
+          modelSrc,
+          iosSrc,
+          eventType: event.type,
+          canActivateAR: node.canActivateAR
+        });
       };
-      const onArStatus = () => setArUnsupported(false);
+      const onArStatus = (event: Event) => {
+        setArUnsupported(false);
+        debugAr("ar-status", {
+          status: (event as CustomEvent).detail?.status,
+          canActivateAR: node.canActivateAR,
+          hasActivateAR: typeof node.activateAR === "function"
+        });
+      };
 
       node.addEventListener("load", onLoad);
       node.addEventListener("error", onError);
@@ -145,7 +185,7 @@ export const DishModelViewer = forwardRef<
         if (loaded) onLoad();
       });
     },
-    []
+    [modelSrc, iosSrc]
   );
 
   useEffect(() => {
@@ -162,51 +202,131 @@ export const DishModelViewer = forwardRef<
 
   const requestAr = useCallback((): ArRequestStatus => {
     if (missingIosAr) {
+      debugAr("requestAr", {
+        result: "missing-ios-src",
+        modelSrc,
+        iosSrc,
+        mvReady,
+        modelLoaded
+      });
       return "missing-ios-src";
     }
     if (!mvReady) {
+      debugAr("requestAr", {
+        result: "deferred",
+        reason: "model-viewer-not-ready",
+        modelSrc,
+        iosSrc
+      });
       return "deferred";
     }
     const el = loadWatchRef.current;
     if (!el?.activateAR) {
       // Fallback robuste iOS: ouvrir directement le USDZ dans Quick Look.
       if (isIos && openQuickLook(iosSrc)) {
+        debugAr("requestAr", {
+          result: "launched",
+          reason: "fallback-quick-look-no-activate-ar",
+          modelSrc,
+          iosSrc
+        });
         return "launched";
       }
+      debugAr("requestAr", {
+        result: "deferred",
+        reason: "missing-activate-ar",
+        modelSrc,
+        iosSrc,
+        isIos
+      });
       return "deferred";
     }
     if (!modelLoaded) {
+      debugAr("requestAr", {
+        result: "deferred",
+        reason: "model-not-loaded",
+        modelSrc,
+        iosSrc,
+        canActivateAR: el.canActivateAR
+      });
       return "deferred";
     }
     if (el.canActivateAR === false) {
       if (isIos && openQuickLook(iosSrc)) {
+        debugAr("requestAr", {
+          result: "launched",
+          reason: "fallback-quick-look-can-activate-ar-false",
+          modelSrc,
+          iosSrc
+        });
         return "launched";
       }
       setArUnsupported(true);
+      debugAr("requestAr", {
+        result: "unsupported",
+        reason: "can-activate-ar-false",
+        modelSrc,
+        iosSrc,
+        isIos
+      });
       return "unsupported";
     }
 
     setArUnsupported(false);
     try {
       const result = el.activateAR();
+      debugAr("requestAr", {
+        result: "launched",
+        reason: "activate-ar-called",
+        modelSrc,
+        iosSrc,
+        canActivateAR: el.canActivateAR,
+        hasActivateAR: true
+      });
       if (result && typeof result.then === "function") {
         result.catch(() => {
           if (isIos && openQuickLook(iosSrc)) {
+            debugAr("requestAr", {
+              result: "launched",
+              reason: "fallback-quick-look-activate-ar-rejected",
+              modelSrc,
+              iosSrc
+            });
             return;
           }
           setArUnsupported(true);
+          debugAr("requestAr", {
+            result: "unsupported",
+            reason: "activate-ar-rejected",
+            modelSrc,
+            iosSrc,
+            isIos
+          });
           openSystemBrowserHandoffForAr();
         });
       }
       return "launched";
     } catch {
       if (isIos && openQuickLook(iosSrc)) {
+        debugAr("requestAr", {
+          result: "launched",
+          reason: "fallback-quick-look-activate-ar-threw",
+          modelSrc,
+          iosSrc
+        });
         return "launched";
       }
       setArUnsupported(true);
+      debugAr("requestAr", {
+        result: "unsupported",
+        reason: "activate-ar-threw",
+        modelSrc,
+        iosSrc,
+        isIos
+      });
       return "unsupported";
     }
-  }, [missingIosAr, mvReady, modelLoaded, isIos, iosSrc]);
+  }, [missingIosAr, mvReady, modelLoaded, isIos, iosSrc, modelSrc]);
 
   useImperativeHandle(ref, () => ({ requestAr }), [requestAr]);
 

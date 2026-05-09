@@ -9,11 +9,18 @@
  *   npm run demo:convert-usdz
  */
 /* global globalThis */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { NullEngine, Scene, TransformNode, Vector3 } from "@babylonjs/core";
+import {
+  NullEngine,
+  Scene,
+  TransformNode,
+  Vector3,
+  VertexBuffer,
+  VertexData
+} from "@babylonjs/core";
 import { AppendSceneAsync } from "@babylonjs/core/Loading/sceneLoader.js";
 import "@babylonjs/loaders/glTF/index.js";
 import { USDZExportAsync } from "@babylonjs/serializers";
@@ -65,6 +72,80 @@ function normalizeSceneForAr(scene, targetMaxDimMeters) {
   group.position.y -= boundsScaled.min.y;
 }
 
+function getRenderableMeshes(scene) {
+  return scene.meshes.filter((m) => m.getTotalVertices() > 0);
+}
+
+function getSceneBounds(scene) {
+  const meshes = getRenderableMeshes(scene);
+  if (meshes.length === 0) return null;
+  const bounds = scene.getWorldExtends((mesh) => meshes.includes(mesh));
+  const size = bounds.max.subtract(bounds.min);
+  return { min: bounds.min, max: bounds.max, size };
+}
+
+function formatVector(v) {
+  return v.asArray().map((n) => Number(n.toFixed(5)));
+}
+
+function logBounds(label, bounds) {
+  if (!bounds) {
+    console.log(`${label}: aucun mesh exportable`);
+    return;
+  }
+  console.log(
+    `${label}: min=${JSON.stringify(formatVector(bounds.min))} max=${JSON.stringify(
+      formatVector(bounds.max)
+    )} size=${JSON.stringify(formatVector(bounds.size))}`
+  );
+}
+
+/**
+ * Certains GLB optimisés ont un root mesh vide au-dessus du vrai mesh. L'export
+ * USDZ Babylon peut alors référencer ce parent vide et écrire une géométrie
+ * `undefined`. On bake les transforms monde sur les meshes rendus, puis on les
+ * détache avant export.
+ */
+function flattenRenderableMeshesForUsdz(scene) {
+  for (const mesh of getRenderableMeshes(scene)) {
+    const world = mesh.computeWorldMatrix(true).clone();
+    mesh.setParent(null);
+    mesh.bakeTransformIntoVertices(world);
+    mesh.position = Vector3.Zero();
+    mesh.rotationQuaternion = null;
+    mesh.rotation = Vector3.Zero();
+    mesh.scaling = Vector3.One();
+    mesh.computeWorldMatrix(true);
+    mesh.refreshBoundingInfo(true);
+  }
+
+  for (const mesh of [...scene.meshes]) {
+    if (mesh.getTotalVertices() === 0) {
+      mesh.dispose(false, true);
+    }
+  }
+
+  for (const node of [...scene.transformNodes]) {
+    if ((node.getChildren?.() ?? []).length === 0) {
+      node.dispose(false, true);
+    }
+  }
+}
+
+function ensureMeshNormals(scene) {
+  for (const mesh of getRenderableMeshes(scene)) {
+    if (mesh.getVerticesData(VertexBuffer.NormalKind)) continue;
+    const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
+    const indices = mesh.getIndices();
+    if (!positions || !indices) continue;
+
+    const normals = [];
+    VertexData.ComputeNormals(positions, indices, normals);
+    mesh.setVerticesData(VertexBuffer.NormalKind, normals);
+    mesh.refreshBoundingInfo(true);
+  }
+}
+
 function forcePositiveScales(scene) {
   for (const node of [...scene.transformNodes, ...scene.meshes]) {
     if (!("scaling" in node) || !node.scaling) continue;
@@ -72,6 +153,23 @@ function forcePositiveScales(scene) {
       Math.abs(node.scaling.x),
       Math.abs(node.scaling.y),
       Math.abs(node.scaling.z)
+    );
+  }
+}
+
+function ensureUsdzContainsGeometry(bytes, usdzName) {
+  const zip = fflate.unzipSync(new Uint8Array(bytes));
+  const usdEntries = Object.entries(zip).filter(([name]) => /\.usd[ac]?$/i.test(name));
+  const usdText = usdEntries
+    .map(([, entryBytes]) => Buffer.from(entryBytes).toString("utf8"))
+    .join("\n");
+  const hasGeometry =
+    /\bdef\s+Mesh\b/.test(usdText) ||
+    /\bpoint3f\[\]\s+points\b/.test(usdText) ||
+    /\bint\[\]\s+faceVertexIndices\b/.test(usdText);
+  if (!hasGeometry || /\bundefined\b/.test(usdText)) {
+    throw new Error(
+      `${usdzName} ne contient pas de géométrie USD exportée correctement.`
     );
   }
 }
@@ -96,12 +194,21 @@ async function convertOne(glbName) {
 
   // Le homard importé est centré autour de (0,0,0) et trop grand pour AR table:
   // on le recale uniquement pour l'export USDZ afin d'éviter "AR ouvert mais rien visible".
+  let boundsBefore = null;
+  let boundsAfter = null;
+  let targetMaxDimMeters = null;
+
   if (glbName === "homard-bisque.glb") {
+    targetMaxDimMeters = 0.25;
+    boundsBefore = getSceneBounds(scene);
     forcePositiveScales(scene);
-    normalizeSceneForAr(scene, 0.25);
+    normalizeSceneForAr(scene, targetMaxDimMeters);
+    flattenRenderableMeshesForUsdz(scene);
+    ensureMeshNormals(scene);
+    boundsAfter = getSceneBounds(scene);
   }
 
-  const meshCount = scene.meshes.filter((m) => m.getTotalVertices() > 0).length;
+  const meshCount = getRenderableMeshes(scene).length;
   if (meshCount === 0) {
     console.warn(
       `Avertissement ${glbName} : aucun mesh exportable après chargement — USDZ peut être vide.`
@@ -123,7 +230,16 @@ async function convertOne(glbName) {
 
   const usdzName = glbName.replace(/\.glb$/i, ".usdz");
   const usdzPath = join(DEMO_DIR, usdzName);
+  ensureUsdzContainsGeometry(bytes, usdzName);
   writeFileSync(usdzPath, Buffer.from(bytes));
+  const finalSize = statSync(usdzPath).size;
+  if (glbName === "homard-bisque.glb") {
+    logBounds(`${glbName} bounding box avant`, boundsBefore);
+    logBounds(`${glbName} bounding box après`, boundsAfter);
+    console.log(`${glbName} meshCount=${meshCount}`);
+    console.log(`${glbName} targetMaxDimMeters=${targetMaxDimMeters}`);
+    console.log(`${usdzName} taille finale=${(finalSize / 1024 / 1024).toFixed(2)} MB`);
+  }
   console.log(
     `OK ${usdzName} (${(bytes.byteLength / 1024).toFixed(1)} KB, ${meshCount} mesh)`
   );
