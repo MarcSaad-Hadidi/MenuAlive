@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
     const demoUsdz = [
       "ravioles-chevre-miel.usdz",
       "homard-bisque.usdz",
+      "homard-bisque-ar-lite.usdz",
       "souffle-chocolat.usdz",
       "maison-elyse-n1.usdz",
     ];
