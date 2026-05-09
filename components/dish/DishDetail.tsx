@@ -15,6 +15,7 @@ import {
 } from "@/components/dish/DishModelViewer";
 import { DishDetailHero } from "@/components/dish/DishDetailHero";
 import { openSystemBrowserHandoffForAr } from "@/lib/openSystemBrowser";
+import { isIosDevice } from "@/lib/arEnvironment";
 
 type DishDetailProps = {
   dish: Dish;
@@ -52,6 +53,7 @@ export function DishDetail({ dish }: DishDetailProps) {
   const plat3dAnchorRef = useRef<HTMLDivElement | null>(null);
   const modelViewerRef = useRef<DishModelViewerHandle | null>(null);
   const canExpectMobileUi = immersive;
+  const isIos = isIosDevice();
 
   /** Précharge model-viewer pour réduire la fenêtre où le lecteur n’est pas prêt. */
   useEffect(() => {
@@ -101,6 +103,13 @@ export function DishDetail({ dish }: DishDetailProps) {
       return;
     }
 
+    // Chemin le plus fiable sur iPhone/iPad: ouvrir Quick Look directement
+    // dans le geste utilisateur (évite les pertes de gesture via états/render).
+    if (isIos && dish.usdzUrl?.trim()) {
+      window.location.assign(dish.usdzUrl.trim());
+      return;
+    }
+
     setDesktopArHint(false);
     setPhoneSimulationArHint(false);
 
@@ -132,7 +141,7 @@ export function DishDetail({ dish }: DishDetailProps) {
       const el = plat3dAnchorRef.current;
       if (el) scrollToPlat3dAnchor(el);
     });
-  }, [canExpectMobileUi, isRealMobile, showPlat3d]);
+  }, [canExpectMobileUi, isRealMobile, showPlat3d, isIos, dish.usdzUrl]);
 
   return (
     <article className={immersive ? "pb-24 pt-2.5" : "pb-24 pt-4 sm:pt-5"}>
