@@ -32,6 +32,10 @@ export function MenuHero({ restaurant }: MenuHeroProps) {
           {restaurant.tagline}
         </p>
         <p className="mt-2 text-xs text-[#8f806e]">{restaurant.location}</p>
+        <p className="mx-auto mt-4 max-w-lg text-xs leading-relaxed text-[#7a6b5b] sm:text-sm">
+          Même parcours que sur téléphone après scan du QR à table : navigation
+          tactile native, sans application à installer.
+        </p>
       </div>
     </header>
   );

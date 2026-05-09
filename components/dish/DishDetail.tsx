@@ -290,9 +290,10 @@ export function DishDetail({ dish }: DishDetailProps) {
                 role="status"
                 aria-live="polite"
               >
-                La réalité augmentée est prévue sur smartphone. Explorez le plat en 3D
-                ci-dessous — ou ouvrez cette page sur votre téléphone pour « Voir devant
-                moi ».
+                Sur ordinateur, l’AR n’est pas disponible partout : faites tourner le
+                modèle 3D ci-dessous, ou ouvrez cette fiche sur votre téléphone pour
+                placer le plat avec « Voir devant moi » (WebXR / Quick Look selon
+                l’appareil).
               </p>
             ) : null}
             {phoneSimulationArHint ? (
@@ -301,9 +302,9 @@ export function DishDetail({ dish }: DishDetailProps) {
                 role="status"
                 aria-live="polite"
               >
-                Aperçu bureau : lancez l’AR depuis le bouton sous le modèle 3D
-                ci-dessous. Sur votre téléphone, « Voir devant moi » démarre
-                directement lorsque l’appareil la prend en charge.
+                Simulation d’écran téléphone sur bureau : l’AR se pilote comme sur
+                mobile réel via le bouton sous le modèle. Sur appareil physique, le
+                même bouton lance l’AR lorsque le navigateur l’expose.
               </p>
             ) : null}
             {heroArDeferredHint ? (
@@ -333,6 +334,12 @@ export function DishDetail({ dish }: DishDetailProps) {
                 Voir en 3D
               </button>
             </div>
+            {isRealMobile ? (
+              <p className="text-xs leading-relaxed text-[#7a6b5c]">
+                Sur ce téléphone, « Voir devant moi » ouvre l’AR lorsque le système la
+                propose ; « Voir en 3D » affiche le modèle interactif sans caméra.
+              </p>
+            ) : null}
           </div>
         ) : null}
       </div>

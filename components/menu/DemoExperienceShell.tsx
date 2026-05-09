@@ -74,7 +74,7 @@ export function DemoExperienceShell({ children }: DemoExperienceShellProps) {
       data-demo-root
     >
       {!isRealMobile ? (
-        <div className="bg-[#060504] py-2.5 pl-4 pr-2 sm:pl-6 sm:pr-4">
+        <div className="hidden bg-[#060504] py-2.5 pl-4 pr-2 sm:pl-6 sm:pr-4 md:block">
           <div className="flex w-full justify-end">
             <button
               type="button"

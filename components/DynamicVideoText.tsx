@@ -6,6 +6,9 @@ type DynamicVideoTextProps = {
 };
 
 export function DynamicVideoText({ chapter }: DynamicVideoTextProps) {
+  const primaryHref = chapter.ctaHref ?? "#demo";
+  const secondaryHref = chapter.secondaryCtaHref ?? "#demo";
+
   return (
     <div
       key={chapter.id}
@@ -23,13 +26,20 @@ export function DynamicVideoText({ chapter }: DynamicVideoTextProps) {
         {chapter.body}
       </p>
       {chapter.cta ? (
-        <PrimaryButton
-          href="#demo"
-          aria-label={chapter.cta}
-          className="mt-8"
-        >
-          {chapter.cta}
-        </PrimaryButton>
+        <div className="mt-8 flex max-w-full flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <PrimaryButton href={primaryHref} aria-label={chapter.cta}>
+            {chapter.cta}
+          </PrimaryButton>
+          {chapter.secondaryCta ? (
+            <a
+              href={secondaryHref}
+              aria-label={chapter.secondaryCta}
+              className="inline-flex min-h-12 max-w-full items-center justify-center rounded-full border border-white/22 bg-white/6 px-6 py-3 text-center text-base font-semibold leading-tight text-cream transition duration-300 hover:border-champagne/40 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal"
+            >
+              {chapter.secondaryCta}
+            </a>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

@@ -17,7 +17,7 @@ export function AdminDishTable({
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-white/12 bg-[#0a0806]">
-      <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+      <table className="w-full min-w-[860px] border-collapse text-left text-sm">
         <thead>
           <tr className="border-b border-white/10 bg-black/40 text-xs uppercase tracking-[0.15em] text-[#b9aa94]">
             <th scope="col" className="px-4 py-4 font-semibold">
@@ -39,18 +39,21 @@ export function AdminDishTable({
               3D
             </th>
             <th scope="col" className="px-4 py-4 font-semibold">
+              AR
+            </th>
+            <th scope="col" className="px-4 py-4 font-semibold">
               Signature
             </th>
             <th scope="col" className="px-4 py-4 text-right font-semibold">
-              Action
+              Actions
             </th>
           </tr>
         </thead>
         <tbody>
           {dishes.map((dish) => {
             const hasPhoto = Boolean(dish.image);
-            const has3d =
-              Boolean(dish.model3dUrl?.trim()) || Boolean(dish.usdzUrl?.trim());
+            const hasGlb = Boolean(dish.model3dUrl?.trim());
+            const hasUsdz = Boolean(dish.usdzUrl?.trim());
 
             return (
               <tr
@@ -81,8 +84,17 @@ export function AdminDishTable({
                   )}
                 </td>
                 <td className="px-4 py-3.5">
-                  {has3d ? (
-                    <span className="text-emerald-200/90">Prêt</span>
+                  {hasGlb ? (
+                    <span className="text-emerald-200/90">GLB</span>
+                  ) : (
+                    <span className="text-[#8a7b68]">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3.5">
+                  {hasUsdz ? (
+                    <span className="text-emerald-200/90">USDZ</span>
+                  ) : hasGlb ? (
+                    <span className="text-amber-200/85">Web / Android</span>
                   ) : (
                     <span className="text-[#8a7b68]">—</span>
                   )}
@@ -97,12 +109,20 @@ export function AdminDishTable({
                   )}
                 </td>
                 <td className="px-4 py-3.5 text-right">
-                  <button
-                    type="button"
-                    className="rounded-full border border-white/14 px-3 py-1.5 text-xs font-semibold text-cream transition hover:border-champagne/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-                  >
-                    Modifier
-                  </button>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      className="rounded-full border border-white/14 px-3 py-1.5 text-xs font-semibold text-cream transition hover:border-champagne/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-full border border-champagne/25 px-3 py-1.5 text-xs font-semibold text-champagne/95 transition hover:border-champagne/45 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                    >
+                      Préparer AR
+                    </button>
+                  </div>
                 </td>
               </tr>
             );

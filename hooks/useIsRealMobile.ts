@@ -1,24 +1,23 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useLayoutEffect, useState } from "react";
 
 const QUERY = "(max-width: 767px)";
 
-function subscribe(onStoreChange: () => void) {
-  const mq = window.matchMedia(QUERY);
-  mq.addEventListener("change", onStoreChange);
-  return () => mq.removeEventListener("change", onStoreChange);
-}
-
-function getSnapshot() {
-  return window.matchMedia(QUERY).matches;
-}
-
-function getServerSnapshot() {
-  return false;
-}
-
-/** True on narrow viewports (typical phone). Used to hide the desktop phone mockup. */
+/**
+ * Mobile réel (largeur typique téléphone). Après hydratation, reflète `matchMedia`
+ * dans le même cycle de layout pour limiter le décalage avec le SSR (`false`).
+ */
 export function useIsRealMobile() {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [matches, setMatches] = useState(false);
+
+  useLayoutEffect(() => {
+    const mq = window.matchMedia(QUERY);
+    const sync = () => setMatches(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  return matches;
 }

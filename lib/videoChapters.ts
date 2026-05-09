@@ -6,6 +6,10 @@ export type VideoChapter = {
   title: string;
   body: string;
   cta?: string;
+  /** Lien du bouton principal (défaut : ancre démo). */
+  ctaHref?: string;
+  secondaryCta?: string;
+  secondaryCtaHref?: string;
 };
 
 export const videoChapters: VideoChapter[] = [
@@ -16,7 +20,10 @@ export const videoChapters: VideoChapter[] = [
     eyebrow: "Vistaire",
     title: "Du QR code au menu vivant.",
     body: "Le client scanne à table. L’expérience s’ouvre instantanément, sans application.",
-    cta: "Demander une démo"
+    cta: "Voir la démo",
+    ctaHref: "/demo",
+    secondaryCta: "Demander une démo",
+    secondaryCtaHref: "#demo"
   },
   {
     id: "menu",
@@ -41,7 +48,8 @@ export const videoChapters: VideoChapter[] = [
     eyebrow: "Pour les restaurants",
     title: "Un menu qui donne envie.",
     body: "Valorisez vos plats signatures et transformez un simple QR code en expérience mémorable.",
-    cta: "Créer une démo"
+    cta: "Créer une démo",
+    ctaHref: "#demo"
   }
 ];
 

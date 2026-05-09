@@ -22,12 +22,15 @@ const MOBILE_MAX_DEVICE_PIXEL_RATIO = 1.22;
 const FRAME_SAFE_CROP_SCALE = 1.02;
 const MOBILE_FRAME_SAFE_CROP_SCALE = 1;
 const MOBILE_BACKGROUND_CROP_SCALE = 1.015;
-const MOBILE_INITIAL_FRAME_BATCH = 16;
+const MOBILE_INITIAL_FRAME_BATCH = 12;
 const MOBILE_NEARBY_PRELOAD_RADIUS = 14;
-const MOBILE_BACKGROUND_PRELOAD_LIMIT = 140;
+const MOBILE_BACKGROUND_PRELOAD_LIMIT = 96;
+const MOBILE_BACKGROUND_FRAME_BATCH = 3;
 const MOBILE_MAX_CACHED_FRAMES = 58;
 const MOBILE_NEAREST_FRAME_FALLBACK_RADIUS = 10;
 const MOBILE_FRAME_INDEX_STEP = 2;
+const MOBILE_MAX_CONCURRENT_FRAME_LOADS = 3;
+const MOBILE_COMPOSITION_EPSILON = 0.0012;
 const MOBILE_MEDIA_QUERY = "(max-width: 767px)";
 const REDUCED_MOTION_MEDIA_QUERY = "(prefers-reduced-motion: reduce)";
 const TRANSITION_SOFTNESS = 0.025;
@@ -147,6 +150,8 @@ type ScrollDebugState = {
 
 declare global {
   interface Window {
+    __VISTAIRE_SCROLL_DEBUG__?: ScrollDebugState;
+    /** @deprecated Utiliser `__VISTAIRE_SCROLL_DEBUG__` */
     __MENUALIVE_SCROLL_DEBUG__?: ScrollDebugState;
   }
 }
@@ -219,6 +224,40 @@ export function CanvasScrollVideo() {
     let removeResizeListener = () => { };
     let removeMobileViewportListener = () => { };
     let killScrollTrigger = () => { };
+    let mobileLoadSlotsInUse = 0;
+    const mobileLoadWaiters: Array<() => void> = [];
+    let lastMobileCompositionProgress = -1;
+
+    const acquireMobileLoadSlot = () => {
+      if (!isMobileViewportRef.current) {
+        return Promise.resolve();
+      }
+
+      if (mobileLoadSlotsInUse < MOBILE_MAX_CONCURRENT_FRAME_LOADS) {
+        mobileLoadSlotsInUse += 1;
+        return Promise.resolve();
+      }
+
+      return new Promise<void>((resolve) => {
+        mobileLoadWaiters.push(() => {
+          mobileLoadSlotsInUse += 1;
+          resolve();
+        });
+      });
+    };
+
+    const releaseMobileLoadSlot = () => {
+      if (mobileLoadSlotsInUse <= 0) {
+        return;
+      }
+
+      mobileLoadSlotsInUse -= 1;
+      const next = mobileLoadWaiters.shift();
+
+      if (next) {
+        next();
+      }
+    };
 
     imagesRef.current = Array.from({ length: frameConfig.frameCount }, () => null);
     imageRequestsRef.current.clear();
@@ -323,32 +362,60 @@ export function CanvasScrollVideo() {
       }
 
       const request = new Promise<HTMLImageElement>((resolve, reject) => {
-        const image = new Image();
+        void (async () => {
+          let holdMobileSlot = false;
 
-        image.decoding = "async";
-        image.loading = "eager";
-        image.fetchPriority = priority;
-        image.onload = async () => {
           try {
-            await image.decode();
-          } catch {
-            // Some browsers report decode issues after a successful load.
-          }
+            await acquireMobileLoadSlot();
+            if (isMobileViewportRef.current) {
+              holdMobileSlot = true;
+            }
 
-          imagesRef.current[safeIndex] = image;
-          imageRequestsRef.current.delete(safeIndex);
-          rememberLoadedFrame(safeIndex);
-          pruneFrameCache(
-            currentFrameRef.current >= 0 ? currentFrameRef.current : safeIndex
-          );
-          scheduleRender();
-          resolve(image);
-        };
-        image.onerror = () => {
-          imageRequestsRef.current.delete(safeIndex);
-          reject(new Error(`Unable to load frame ${safeIndex + 1}`));
-        };
-        image.src = frameConfig.framePath(safeIndex);
+            const image = new Image();
+
+            image.decoding = "async";
+            image.loading = "eager";
+            image.fetchPriority = priority;
+
+            await new Promise<void>((res, rej) => {
+              image.onload = () => {
+                res();
+              };
+              image.onerror = () => {
+                rej(new Error(`Unable to load frame ${safeIndex + 1}`));
+              };
+              image.src = frameConfig.framePath(safeIndex);
+            });
+
+            try {
+              await image.decode();
+            } catch {
+              // Some browsers report decode issues after a successful load.
+            }
+
+            if (cancelled) {
+              imageRequestsRef.current.delete(safeIndex);
+              reject(new Error("cancelled"));
+              return;
+            }
+
+            imagesRef.current[safeIndex] = image;
+            imageRequestsRef.current.delete(safeIndex);
+            rememberLoadedFrame(safeIndex);
+            pruneFrameCache(
+              currentFrameRef.current >= 0 ? currentFrameRef.current : safeIndex
+            );
+            scheduleRender();
+            resolve(image);
+          } catch (error) {
+            imageRequestsRef.current.delete(safeIndex);
+            reject(error instanceof Error ? error : new Error(String(error)));
+          } finally {
+            if (holdMobileSlot) {
+              releaseMobileLoadSlot();
+            }
+          }
+        })();
       });
 
       imageRequestsRef.current.set(safeIndex, request);
@@ -434,10 +501,13 @@ export function CanvasScrollVideo() {
 
         const start = backgroundPreloadCursorRef.current;
         const backgroundPreloadLimit = getBackgroundPreloadLimit();
+        const batchSize = isMobileViewportRef.current
+          ? MOBILE_BACKGROUND_FRAME_BATCH
+          : BACKGROUND_FRAME_BATCH;
         const end = Math.min(
           frameConfig.frameCount,
           backgroundPreloadLimit,
-          start + BACKGROUND_FRAME_BATCH
+          start + batchSize
         );
 
         for (let index = start; index < end; index += 1) {
@@ -631,19 +701,35 @@ export function CanvasScrollVideo() {
       context.fillRect(0, fadeStart, canvasWidth, canvasHeight - fadeStart);
     };
 
-    const drawFrame = (exactFrame: number, force = false) => {
+    const drawFrame = (
+      exactFrame: number,
+      force = false,
+      compositionProgress?: number
+    ) => {
       const safeExactFrame = Math.min(
         frameConfig.frameCount - 1,
         Math.max(0, exactFrame)
       );
       const safeIndex = clampFrameIndex(Math.floor(safeExactFrame));
+      const progressMax = Math.max(1, frameConfig.frameCount - 1);
+      const composition =
+        compositionProgress ??
+        safeExactFrame / progressMax;
 
       if (
         !force &&
         safeIndex === currentFrameRef.current &&
         imagesRef.current[safeIndex]
       ) {
-        return;
+        if (
+          isMobileViewportRef.current &&
+          Math.abs(composition - lastMobileCompositionProgress) >=
+            MOBILE_COMPOSITION_EPSILON
+        ) {
+          // Cadrage mobile : continuer à redessiner même si l’index frame est identique.
+        } else {
+          return;
+        }
       }
 
       const image = findNearestLoadedFrame(
@@ -679,12 +765,11 @@ export function CanvasScrollVideo() {
       context.fillStyle = "#080706";
       context.fillRect(0, 0, canvasWidth, canvasHeight);
       if (isMobileViewportRef.current) {
-        drawImageMobilePremiumFit(
-          image,
-          safeExactFrame / (frameConfig.frameCount - 1)
-        );
+        drawImageMobilePremiumFit(image, composition);
+        lastMobileCompositionProgress = composition;
       } else {
         drawImageCover(image);
+        lastMobileCompositionProgress = -1;
       }
 
       currentFrameRef.current = safeIndex;
@@ -694,7 +779,7 @@ export function CanvasScrollVideo() {
         loadFrame(safeIndex, "high")
           .then(() => {
             if (!cancelled && safeIndex === currentFrameRef.current) {
-              drawFrame(safeExactFrame, true);
+              drawFrame(safeExactFrame, true, compositionProgress);
             }
           })
           .catch(() => undefined);
@@ -733,7 +818,17 @@ export function CanvasScrollVideo() {
 
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
       configureContext();
-      drawFrame(currentFrameRef.current < 0 ? 0 : currentFrameRef.current, true);
+      const progress = displayedProgressRef.current;
+      const exactResize = isMobileViewportRef.current
+        ? Math.round(
+          (progress * (frameConfig.frameCount - 1)) / MOBILE_FRAME_INDEX_STEP
+        ) * MOBILE_FRAME_INDEX_STEP
+        : progress * (frameConfig.frameCount - 1);
+      drawFrame(
+        currentFrameRef.current < 0 ? 0 : exactResize,
+        true,
+        progress
+      );
     };
 
     const renderLoop = () => {
@@ -774,7 +869,7 @@ export function CanvasScrollVideo() {
             : lastPreloadDirectionRef.current;
 
       preloadNearbyFramesOnce(frameIndex, direction);
-      drawFrame(exactFrame);
+      drawFrame(exactFrame, false, clampedProgress);
       setTransitionVeil(clampedProgress);
       previousTargetProgressRef.current = targetProgress;
 
@@ -791,7 +886,7 @@ export function CanvasScrollVideo() {
           ? getMobileFrameComposition(clampedProgress)
           : null;
 
-        window.__MENUALIVE_SCROLL_DEBUG__ = {
+        const debug: ScrollDebugState = {
           progress: targetProgress,
           targetProgress,
           displayedProgress: clampedProgress,
@@ -803,6 +898,9 @@ export function CanvasScrollVideo() {
           mobileVisibleSourceWidthRatio:
             mobileComposition?.visibleSourceWidthRatio
         };
+
+        window.__VISTAIRE_SCROLL_DEBUG__ = debug;
+        window.__MENUALIVE_SCROLL_DEBUG__ = debug;
       }
     };
 
@@ -828,7 +926,7 @@ export function CanvasScrollVideo() {
         }
 
         resizeCanvas();
-        drawFrame(0, true);
+        drawFrame(0, true, 0);
         setLoadState("canvas");
 
         const initialFrameBatch = getInitialFrameBatch();
@@ -845,6 +943,7 @@ export function CanvasScrollVideo() {
         preloadStoryFrames();
         scheduleBackgroundPreload();
         scheduleRender();
+        initialiseScroll();
       } catch {
         if (!cancelled && mountedRef.current) {
           setLoadState("fallback");
@@ -895,6 +994,7 @@ export function CanvasScrollVideo() {
     const handleMobileViewportChange = (event: MediaQueryListEvent) => {
       isMobileViewportRef.current = event.matches;
       lastTransitionVeilOpacity = -1;
+      lastMobileCompositionProgress = -1;
       resizeCanvas();
       scheduleRender();
     };
@@ -921,8 +1021,6 @@ export function CanvasScrollVideo() {
     };
 
     preloadFrames();
-
-    initialiseScroll();
 
     return () => {
       cancelled = true;
@@ -959,9 +1057,12 @@ export function CanvasScrollVideo() {
         <video
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover object-[56%_48%] md:object-center"
+          autoPlay
           muted
           playsInline
+          loop
           preload="metadata"
+          poster={frameConfig.framePath(0)}
         >
           <source src={PRIMARY_VIDEO_SRC} type="video/mp4" />
           <source src={LEGACY_VIDEO_FALLBACK_SRC} type="video/mp4" />
@@ -1000,7 +1101,7 @@ export function CanvasScrollVideo() {
         <div ref={transitionVeilRef} className="video-transition-veil absolute inset-0 z-10" />
         <div className="video-grain absolute inset-0 z-10" />
 
-        <div className="relative z-20 flex h-full w-full items-end px-5 pb-[calc(3.25rem+env(safe-area-inset-bottom))] pt-28 sm:px-10 md:items-center lg:px-16 lg:pb-20">
+        <div className="relative z-20 flex h-full w-full items-end px-5 pb-[calc(3.25rem+env(safe-area-inset-bottom))] pt-[max(7rem,env(safe-area-inset-top))] sm:px-10 md:items-center lg:px-16 lg:pb-20">
           <DynamicVideoText chapter={activeChapter} />
         </div>
       </div>
