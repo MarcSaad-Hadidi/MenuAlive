@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   NullEngine,
+  Matrix,
   Scene,
   TransformNode,
   Vector3,
@@ -132,6 +133,14 @@ function flattenRenderableMeshesForUsdz(scene) {
   }
 }
 
+function rotateRenderableMeshesAroundY(scene, radians) {
+  const rotation = Matrix.RotationY(radians);
+  for (const mesh of getRenderableMeshes(scene)) {
+    mesh.bakeTransformIntoVertices(rotation);
+    mesh.refreshBoundingInfo(true);
+  }
+}
+
 function ensureMeshNormals(scene) {
   for (const mesh of getRenderableMeshes(scene)) {
     if (mesh.getVerticesData(VertexBuffer.NormalKind)) continue;
@@ -197,13 +206,16 @@ async function convertOne(glbName) {
   let boundsBefore = null;
   let boundsAfter = null;
   let targetMaxDimMeters = null;
+  let arYawDegrees = null;
 
   if (glbName === "homard-bisque.glb") {
     targetMaxDimMeters = 0.21;
+    arYawDegrees = 180;
     boundsBefore = getSceneBounds(scene);
     forcePositiveScales(scene);
     normalizeSceneForAr(scene, targetMaxDimMeters);
     flattenRenderableMeshesForUsdz(scene);
+    rotateRenderableMeshesAroundY(scene, (arYawDegrees * Math.PI) / 180);
     ensureMeshNormals(scene);
     boundsAfter = getSceneBounds(scene);
   }
@@ -238,6 +250,7 @@ async function convertOne(glbName) {
     logBounds(`${glbName} bounding box après`, boundsAfter);
     console.log(`${glbName} meshCount=${meshCount}`);
     console.log(`${glbName} targetMaxDimMeters=${targetMaxDimMeters}`);
+    console.log(`${glbName} arYawDegrees=${arYawDegrees}`);
     console.log(`${usdzName} taille finale=${(finalSize / 1024 / 1024).toFixed(2)} MB`);
   }
   console.log(

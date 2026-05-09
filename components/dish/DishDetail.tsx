@@ -40,6 +40,36 @@ function scrollToPlat3dAnchor(target: HTMLElement) {
   target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function isAndroidDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
+}
+
+function openAndroidSceneViewer(modelSrc: string): boolean {
+  if (typeof window === "undefined" || !modelSrc) return false;
+
+  let modelUrl: URL;
+  try {
+    modelUrl = new URL(modelSrc, window.location.href);
+  } catch {
+    return false;
+  }
+
+  const sceneViewerPath = `/scene-viewer/1.0?file=${encodeURIComponent(
+    modelUrl.toString()
+  )}&mode=ar_preferred`;
+  const intent = `intent://arvr.google.com${sceneViewerPath}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(
+    window.location.href
+  )};end;`;
+
+  try {
+    window.location.assign(intent);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function DishDetail({ dish }: DishDetailProps) {
   const restaurant = getRestaurant();
   const unavailable = !dish.isAvailable;
@@ -79,15 +109,22 @@ export function DishDetail({ dish }: DishDetailProps) {
   }, [showAndScrollToPlat3d]);
 
   const handleVoirDevantMoiClick = useCallback(() => {
+    // AR direct dans le geste utilisateur: ne monte pas le viewer 3D avant Quick Look / Scene Viewer.
+    if (isIos && dish.usdzUrl?.trim()) {
+      window.location.assign(dish.usdzUrl.trim());
+      return;
+    }
+
+    if (isAndroidDevice() && dish.model3dUrl?.trim()) {
+      if (openAndroidSceneViewer(dish.model3dUrl.trim())) {
+        return;
+      }
+    }
+
     if (!canExpectMobileUi) {
-      flushSync(() => setShowPlat3d(true));
       setDesktopArHint(true);
       setPhoneSimulationArHint(false);
       setHeroArDeferredHint(false);
-      requestAnimationFrame(() => {
-        const el = plat3dAnchorRef.current;
-        if (el) scrollToPlat3dAnchor(el);
-      });
       return;
     }
 
@@ -141,7 +178,14 @@ export function DishDetail({ dish }: DishDetailProps) {
       const el = plat3dAnchorRef.current;
       if (el) scrollToPlat3dAnchor(el);
     });
-  }, [canExpectMobileUi, isRealMobile, showPlat3d, isIos, dish.usdzUrl]);
+  }, [
+    canExpectMobileUi,
+    isRealMobile,
+    showPlat3d,
+    isIos,
+    dish.usdzUrl,
+    dish.model3dUrl
+  ]);
 
   return (
     <article className={immersive ? "pb-24 pt-2.5" : "pb-24 pt-4 sm:pt-5"}>
