@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { DynamicVideoText } from "@/components/DynamicVideoText";
 import { frameConfig } from "@/lib/frameConfig";
 import { getActiveChapter, videoChapters } from "@/lib/videoChapters";
+import { useScrollVideoMode, ScrollVideoMode } from "@/lib/deviceCapabilities";
 
 const PRIMARY_VIDEO_SRC = "/videos/upscaled-video.mp4";
 const LEGACY_VIDEO_FALLBACK_SRC = "/videos/menualive-full.mp4";
@@ -159,8 +160,16 @@ declare global {
 type LoadState = "loading" | "canvas" | "fallback";
 
 export function CanvasScrollVideo() {
+  const mode = useScrollVideoMode();
+  const modeRef = useRef<ScrollVideoMode>(mode);
+  
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoScrubRef = useRef<HTMLVideoElement>(null);
   const transitionVeilRef = useRef<HTMLDivElement>(null);
   const canvasMetricsRef = useRef({ width: 0, height: 0, dpr: 1 });
   const imagesRef = useRef<Array<HTMLImageElement | null>>(
@@ -277,10 +286,15 @@ export function CanvasScrollVideo() {
     const clampFrameIndex = (index: number) =>
       Math.min(frameConfig.frameCount - 1, Math.max(0, index));
 
-    const getInitialFrameBatch = () =>
-      isMobileViewportRef.current
+    const getInitialFrameBatch = () => {
+      const currentMode = modeRef.current;
+      if (currentMode === "video-scroll" || currentMode === "video-soft") {
+        return 0; // Skip preload for video mode
+      }
+      return isMobileViewportRef.current
         ? MOBILE_INITIAL_FRAME_BATCH
         : INITIAL_FRAME_BATCH;
+    };
 
     const getNearbyPreloadRadius = () =>
       isMobileViewportRef.current
@@ -868,8 +882,24 @@ export function CanvasScrollVideo() {
             ? -1
             : lastPreloadDirectionRef.current;
 
-      preloadNearbyFramesOnce(frameIndex, direction);
-      drawFrame(exactFrame, false, clampedProgress);
+      const currentMode = modeRef.current;
+
+      if (currentMode === "video-scroll" || currentMode === "video-soft") {
+        if (videoScrubRef.current && videoScrubRef.current.readyState >= 2) {
+          const duration = videoScrubRef.current.duration || 1;
+          const targetTime = clampedProgress * duration;
+          const currentTime = videoScrubRef.current.currentTime;
+          
+          // Throttle updates to avoid overloading the video decoder on micro-movements
+          // 0.033s is roughly 1 frame at 30fps.
+          if (Math.abs(targetTime - currentTime) > 0.033) {
+            videoScrubRef.current.currentTime = targetTime;
+          }
+        }
+      } else if (currentMode !== "static") {
+        preloadNearbyFramesOnce(frameIndex, direction);
+        drawFrame(exactFrame, false, clampedProgress);
+      }
       setTransitionVeil(clampedProgress);
       previousTargetProgressRef.current = targetProgress;
 
@@ -919,6 +949,16 @@ export function CanvasScrollVideo() {
 
     const preloadFrames = async () => {
       try {
+        const initialMode = modeRef.current;
+        if (initialMode === "video-scroll" || initialMode === "video-soft") {
+          // Pre-trigger ScrollTrigger setup immediately
+          setLoadState("canvas");
+          initialiseScroll();
+          
+          // Let the video component handle its own loading via preload="auto"
+          return;
+        }
+
         await loadFrame(0, "high");
 
         if (cancelled) {
@@ -1093,9 +1133,23 @@ export function CanvasScrollVideo() {
         <canvas
           ref={canvasRef}
           aria-hidden="true"
-          className={`absolute inset-0 h-full w-full transition-opacity duration-500 ${loadState === "canvas" ? "opacity-100" : "opacity-0"
+          className={`absolute inset-0 h-full w-full transition-opacity duration-500 ${(mode === "canvas-full" || mode === "canvas-lite") && loadState === "canvas" ? "opacity-100" : "opacity-0"
             }`}
         />
+        <video
+          ref={videoScrubRef}
+          aria-hidden="true"
+          className={`absolute inset-0 h-full w-full object-cover object-[50%_50%] transition-opacity duration-500 ${(mode === "video-scroll" || mode === "video-soft") && loadState === "canvas" ? "opacity-100" : "opacity-0"
+            }`}
+          muted
+          playsInline
+          preload="auto"
+          poster={frameConfig.framePath(0)}
+        >
+          <source src="/videos/optimized/upscaled-video-mobile-scrub.mp4" media="(max-width: 767px)" type="video/mp4" />
+          <source src="/videos/optimized/upscaled-video-desktop-scrub.mp4" media="(min-width: 768px)" type="video/mp4" />
+          <source src={PRIMARY_VIDEO_SRC} type="video/mp4" />
+        </video>
         <div className="video-readable-overlay absolute inset-0 z-10" />
         <div className="video-warmth absolute inset-0 z-10" />
         <div ref={transitionVeilRef} className="video-transition-veil absolute inset-0 z-10" />
