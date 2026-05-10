@@ -26,8 +26,7 @@ export function ScrollVideoHero() {
   
   // Cache d'images
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
-  const currentDrawnFrameRef = useRef(-1);
-  // Ref pour briser la dépendance cyclique loadFrame <-> drawFrame
+  const currentDrawnIndexRef = useRef(-1);
   const loadFrameRef = useRef<((index: number, priority?: "high" | "low" | "auto") => HTMLImageElement | null) | null>(null);
 
   // Initialisation
@@ -41,39 +40,45 @@ export function ScrollVideoHero() {
     return () => motion.removeEventListener("change", sync);
   }, []);
 
-  // Dessin sur Canvas avec "Pan & Scan" Premium et rognage Watermark
+  // Dessin sur Canvas
   const drawFrame = useCallback((progress: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
-    // Redimensionnement du canvas (fixe la pixellisation)
+    // Redimensionnement du canvas
     const { clientWidth, clientHeight } = canvas;
     const dpr = window.devicePixelRatio || 1;
-    // On limite le DPR à 1.5 pour les perfs (particulièrement sur mobile)
     const renderDpr = Math.min(dpr, 1.5); 
     
-    if (canvas.width !== clientWidth * renderDpr || canvas.height !== clientHeight * renderDpr) {
-      canvas.width = clientWidth * renderDpr;
-      canvas.height = clientHeight * renderDpr;
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
+    if (canvas.width !== Math.floor(clientWidth * renderDpr) || canvas.height !== Math.floor(clientHeight * renderDpr)) {
+      canvas.width = Math.floor(clientWidth * renderDpr);
+      canvas.height = Math.floor(clientHeight * renderDpr);
     }
+
+    // Paramètres de lissage (importants après redimensionnement)
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.globalAlpha = 1.0;
 
     const exactFrame = progress * (frameConfig.frameCount - 1);
     const targetIndex = Math.round(exactFrame);
     
-    // Fallback: si l'image ciblée n'est pas chargée, chercher la plus proche
+    // Fallback: chercher l'image la plus proche déjà chargée
     let imgToDraw = imagesRef.current[targetIndex];
+    let actualIndex = targetIndex;
+
     if (!imgToDraw) {
-      for (let offset = 1; offset < 6; offset++) {
+      for (let offset = 1; offset < 10; offset++) {
         if (targetIndex - offset >= 0 && imagesRef.current[targetIndex - offset]) {
           imgToDraw = imagesRef.current[targetIndex - offset];
+          actualIndex = targetIndex - offset;
           break;
         }
         if (targetIndex + offset < frameConfig.frameCount && imagesRef.current[targetIndex + offset]) {
           imgToDraw = imagesRef.current[targetIndex + offset];
+          actualIndex = targetIndex + offset;
           break;
         }
       }
@@ -86,68 +91,47 @@ export function ScrollVideoHero() {
       if (!imgToDraw) return;
     }
 
-    currentDrawnFrameRef.current = imagesRef.current.indexOf(imgToDraw);
+    currentDrawnIndexRef.current = actualIndex;
 
-    // --- MATHÉMATIQUES DE CADRAGE PREMIUM (OBJECT-COVER + WATERMARK CROP) ---
+    // --- MATHÉMATIQUES DE RENDU ---
     const imgW = imgToDraw.naturalWidth;
     const imgH = imgToDraw.naturalHeight;
     const cvsW = canvas.width;
     const cvsH = canvas.height;
-
     const scaleX = cvsW / imgW;
     const scaleY = cvsH / imgH;
-    
-    // Rognage dynamique: on prend le plus grand ratio (cover) et on multiplie par WATERMARK_CROP_SCALE
-    let baseScale = Math.max(scaleX, scaleY) * WATERMARK_CROP_SCALE;
     
     const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
     
     if (isMobile) {
       // --- MOBILE SINGLE DRAW (Aligné en haut) ---
-      // On évite la duplication (pas de fond flou) car on voit un téléphone dans la vidéo.
-      
-      const VISIBLE_WIDTH_RATIO = 0.58; // 58% de la largeur source visible
+      const VISIBLE_WIDTH_RATIO = 0.58; 
       const fgDrawW = cvsW / VISIBLE_WIDTH_RATIO;
       const fgDrawH = fgDrawW / (imgW / imgH);
-      
-      // Pan & Scan doux
       const focalX = 0.46 + (progress * 0.04); 
-      
       const fgDx = (cvsW / 2) - (fgDrawW * focalX);
-      // On l'aligne tout en haut (0) pour ne pas avoir d'espace vide au-dessus, 
-      // et elle descendra assez bas pour rencontrer le texte.
       const fgDy = 0; 
 
       ctx.fillStyle = "#080706";
       ctx.fillRect(0, 0, cvsW, cvsH);
-
-      ctx.globalAlpha = 1;
       ctx.drawImage(imgToDraw, fgDx, fgDy, fgDrawW, fgDrawH);
 
-      // FONDRE LE BAS (Fade out vers le texte)
-      // On commence le fondu un peu avant la fin de l'image
+      // Fondre le bas
       const fadeHeight = cvsH * 0.25;
       const fadeStart = Math.max(0, fgDy + fgDrawH - fadeHeight);
-      
       const fade = ctx.createLinearGradient(0, fadeStart, 0, fgDy + fgDrawH);
       fade.addColorStop(0, "rgba(8, 7, 6, 0)");
       fade.addColorStop(0.8, "rgba(8, 7, 6, 0.95)");
       fade.addColorStop(1, "#080706");
-      
       ctx.fillStyle = fade;
-      // On remplit jusqu'en bas de l'écran avec la couleur pleine pour boucher le trou
       ctx.fillRect(0, fadeStart, cvsW, cvsH - fadeStart);
-
     } else {
       // --- DESKTOP PREMIUM COVER ---
-      let baseScale = Math.max(scaleX, scaleY) * WATERMARK_CROP_SCALE;
-      const focalX = 0.5;
-      const focalY = 0.5;
-
+      const baseScale = Math.max(scaleX, scaleY) * WATERMARK_CROP_SCALE;
       const drawW = imgW * baseScale;
       const drawH = imgH * baseScale;
-      const dx = (cvsW / 2) - (drawW * focalX);
-      const dy = (cvsH / 2) - (drawH * focalY);
+      const dx = (cvsW / 2) - (drawW * 0.5);
+      const dy = (cvsH / 2) - (drawH * 0.5);
 
       ctx.fillStyle = "#080706";
       ctx.fillRect(0, 0, cvsW, cvsH);
@@ -158,7 +142,6 @@ export function ScrollVideoHero() {
   // Logique de chargement intelligent
   const loadFrame = useCallback((index: number, priority: "high" | "low" | "auto" = "auto"): HTMLImageElement | null => {
     if (index < 0 || index >= frameConfig.frameCount) return null;
-    
     if (imagesRef.current[index]) return imagesRef.current[index];
     
     const img = new Image();
@@ -167,68 +150,55 @@ export function ScrollVideoHero() {
     img.src = frameConfig.framePath(index);
     img.onload = () => {
       imagesRef.current[index] = img;
-      // Redessiner si c'est la frame courante (pour éviter le noir)
       const expectedFrame = Math.round(progressRef.current * (frameConfig.frameCount - 1));
-      if (expectedFrame === index || currentDrawnFrameRef.current === -1) {
+      if (expectedFrame === index || currentDrawnIndexRef.current === -1) {
         drawFrame(progressRef.current);
       }
     };
-    return null; // Pas encore chargée
+    return null;
   }, [drawFrame]);
 
-  // Enregistrer la référence
   useEffect(() => {
     loadFrameRef.current = loadFrame;
   }, [loadFrame]);
 
-  // Préchargement de base
+  // Préchargement avec boucle de secours
   useEffect(() => {
     if (reducedMotion) return;
     
     const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
-    const step = isMobile ? 3 : 1; // Mobile: 1 frame sur 3 (~12Mo), Desktop: toutes (~36Mo)
+    const step = isMobile ? 3 : 1;
     
-    // 1. Charger la première image immédiatement
     loadFrame(0, "high");
-    
-    // 2. Charger les keyframes des chapitres en priorité haute
     videoChapters.forEach(c => {
-      const frameIdx = Math.round(c.start * (frameConfig.frameCount - 1));
-      loadFrame(frameIdx, "high");
+      loadFrame(Math.round(c.start * (frameConfig.frameCount - 1)), "high");
     });
 
-    // 3. Charger le reste en tâche de fond
     let currentIndex = 0;
-    let idleId: number;
+    let timeoutId: any;
 
-    const idleLoad = () => {
-      let loadedInThisBatch = 0;
-      while (currentIndex < frameConfig.frameCount && loadedInThisBatch < 4) {
+    const backgroundLoad = () => {
+      let batchCount = 0;
+      while (currentIndex < frameConfig.frameCount && batchCount < 5) {
         if (currentIndex % step === 0 && !imagesRef.current[currentIndex]) {
           loadFrame(currentIndex, "low");
-          loadedInThisBatch++;
+          batchCount++;
         }
         currentIndex++;
       }
-      
       if (currentIndex < frameConfig.frameCount) {
-        idleId = window.requestIdleCallback ? window.requestIdleCallback(idleLoad) : window.setTimeout(idleLoad, 100);
+        timeoutId = setTimeout(backgroundLoad, 50);
       }
     };
 
-    idleId = window.requestIdleCallback ? window.requestIdleCallback(idleLoad) : window.setTimeout(idleLoad, 500);
-
-    return () => {
-      if (window.cancelIdleCallback) window.cancelIdleCallback(idleId);
-      else window.clearTimeout(idleId);
-    };
+    timeoutId = setTimeout(backgroundLoad, 500);
+    return () => clearTimeout(timeoutId);
   }, [reducedMotion, loadFrame]);
 
   // Scroll Sync
   useEffect(() => {
     const updateFromScroll = () => {
       rafRef.current = null;
-      
       const section = sectionRef.current;
       if (!section) return;
 
@@ -254,7 +224,7 @@ export function ScrollVideoHero() {
       rafRef.current = requestAnimationFrame(updateFromScroll);
     };
 
-    schedule(); // Initial draw
+    schedule();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
     window.addEventListener("orientationchange", schedule);
@@ -267,16 +237,11 @@ export function ScrollVideoHero() {
     };
   }, [reducedMotion, drawFrame]);
 
-  // Fallback si Reduced Motion
   if (reducedMotion) {
     return (
       <section id="experience" className="relative h-[100svh] overflow-clip bg-[#080706]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={frameConfig.framePath(0)}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
+        <img src={frameConfig.framePath(0)} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
         <div className="absolute inset-0 z-30 flex items-end px-5 pb-14 pt-28 sm:px-10 sm:pb-20 md:items-center md:pb-0 lg:px-16">
           <div className="mx-auto w-full max-w-7xl">
             <DynamicVideoText chapter={videoChapters[0]} />
@@ -287,38 +252,18 @@ export function ScrollVideoHero() {
   }
 
   return (
-    <section
-      ref={sectionRef}
-      id="experience"
-      className="scroll-video-section relative overflow-clip bg-[#080706]"
-      aria-label="Expérience Vistaire"
-    >
+    <section ref={sectionRef} id="experience" className="scroll-video-section relative overflow-clip bg-[#080706]">
       <div className="video-sticky-viewport sticky top-0 overflow-hidden bg-[#080706]">
-        
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 h-full w-full object-cover"
-          aria-hidden="true"
-        />
-
-        {/* Overlays premium pour la lisibilité et l'ambiance */}
+        <canvas ref={canvasRef} className="absolute inset-0 h-full w-full object-cover" aria-hidden="true" />
         <div className="video-readable-overlay absolute inset-0 z-10" />
         <div className="video-warmth absolute inset-0 z-10" />
         <div className="video-grain absolute inset-0 z-10" />
-
-        {/* Ombre portée coin inférieur droit (profondeur) */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 right-0 z-20 h-28 w-44 bg-gradient-to-br from-[#080706]/0 via-[#080706]/88 to-[#080706] md:h-24 md:w-44"
-        />
-
+        <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 z-20 h-28 w-44 bg-gradient-to-br from-[#080706]/0 via-[#080706]/88 to-[#080706] md:h-24 md:w-44" />
         <div className="absolute inset-0 z-30 flex items-end px-5 pb-14 pt-28 sm:px-10 sm:pb-20 md:items-center md:pb-0 lg:px-16">
           <div className="mx-auto w-full max-w-7xl">
             <DynamicVideoText chapter={chapter} />
           </div>
         </div>
-
-        {/* Gradient de fondu en bas pour transition vers la section suivante */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-32 bg-gradient-to-t from-[#080706] via-[#080706]/72 to-transparent" />
       </div>
     </section>
