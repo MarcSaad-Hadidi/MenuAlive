@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# FFmpeg and logs
+ffmpeg.zip
+ffmpeg_bin/
+lint.txt
+lint_utf8.txt
+public/videos/optimized/
+
