@@ -1,3 +1,3 @@
 "use client";
 
-export { ResponsiveScrollHero as ScrollVideoHero } from "@/components/ResponsiveScrollHero";
+export { ManualScrollHero as ScrollVideoHero } from "@/components/ManualScrollHero";
