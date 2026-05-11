@@ -109,6 +109,11 @@ async function shareCurrentPageLink(dishName: string): Promise<boolean> {
 const AR_BUTTON_CLASS =
   "inline-flex min-h-11 w-full items-center justify-center rounded-full border border-champagne/50 bg-champagne px-5 text-center text-sm font-semibold text-[#17100a] shadow-[0_12px_34px_rgba(217,184,121,0.18)] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:w-auto sm:min-w-[190px]";
 
+function isNarrowViewportNow(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(max-width: 767px)").matches;
+}
+
 export function DishDetail({ dish }: DishDetailProps) {
   const restaurant = getRestaurant();
   const unavailable = !dish.isAvailable;
@@ -153,13 +158,17 @@ export function DishDetail({ dish }: DishDetailProps) {
   }, [showAndScrollToPlat3d]);
 
   const handleVoirDevantMoiClick = useCallback(() => {
+    const isNarrowViewport = isNarrowViewportNow();
+    const canExpectMobileUiNow = canExpectMobileUi || isNarrowViewport;
+    const isRealMobileNow = isRealMobile || isNarrowViewport;
+
     if (isAndroidDevice() && dish.model3dUrl?.trim()) {
       if (openAndroidSceneViewer(dish.model3dUrl.trim())) {
         return;
       }
     }
 
-    if (!canExpectMobileUi) {
+    if (!canExpectMobileUiNow) {
       setDesktopArHint(true);
       setPhoneSimulationArHint(false);
       setHeroArDeferredHint(false);
@@ -167,7 +176,7 @@ export function DishDetail({ dish }: DishDetailProps) {
       return;
     }
 
-    if (!isRealMobile) {
+    if (!isRealMobileNow) {
       flushSync(() => setShowPlat3d(true));
       setDesktopArHint(false);
       setPhoneSimulationArHint(true);

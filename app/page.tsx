@@ -1,6 +1,6 @@
 import { DemoRequestSection } from "@/components/DemoRequestSection";
 import { Header } from "@/components/Header";
-import { ScrollVideoHero } from "@/components/ScrollVideoHero";
+import { ResponsiveLandingHero } from "@/components/landing/ResponsiveLandingHero";
 
 const benefits = [
   {
@@ -68,7 +68,7 @@ export default function Home() {
     <>
       <Header />
       <main>
-        <ScrollVideoHero />
+        <ResponsiveLandingHero />
         <BenefitsSection />
         <DemoRequestSection />
       </main>

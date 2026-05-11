@@ -183,7 +183,7 @@ export function ScrollVideoHero() {
     });
 
     let currentIndex = 0;
-    let timeoutId: any;
+    let timeoutId: number | null = null;
 
     const backgroundLoad = () => {
       let batchCount = 0;
@@ -195,12 +195,16 @@ export function ScrollVideoHero() {
         currentIndex++;
       }
       if (currentIndex < frameConfig.frameCount) {
-        timeoutId = setTimeout(backgroundLoad, 40); // Légèrement plus rapide
+        timeoutId = window.setTimeout(backgroundLoad, 40); // Légèrement plus rapide
       }
     };
 
-    timeoutId = setTimeout(backgroundLoad, 500);
-    return () => clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(backgroundLoad, 500);
+    return () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, [reducedMotion, loadFrame]);
 
   // Scroll Sync
@@ -241,7 +245,10 @@ export function ScrollVideoHero() {
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
       window.removeEventListener("orientationchange", schedule);
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, [reducedMotion, drawFrame]);
 
