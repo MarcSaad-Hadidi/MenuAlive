@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type RefObject
 } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -39,10 +40,12 @@ type SmoothScrollProviderProps = {
 
 export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
   const lenisRef = useRef<Lenis | null>(null);
+  const pathname = usePathname();
 
   useLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     const previousScrollRestoration = window.history.scrollRestoration;
+    const isLanding = pathname === "/";
 
     window.history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
@@ -109,6 +112,13 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
       removeDesktopScroll = null;
       removeMobileScroll = null;
 
+      if (isLanding) {
+        requestAnimationFrame(() => {
+          ScrollTrigger.refresh();
+        });
+        return;
+      }
+
       const isMobileViewport = mobileScrollQuery.matches;
       const useLenis = !isMobileViewport && !prefersNativeScrollDesktop();
 
@@ -151,7 +161,7 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
       removeDesktopScroll?.();
       removeMobileScroll?.();
     };
-  }, []);
+  }, [pathname]);
 
   return (
     <LenisRefContext.Provider value={lenisRef}>{children}</LenisRefContext.Provider>

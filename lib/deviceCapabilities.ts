@@ -3,11 +3,9 @@
 import { useEffect, useState } from "react";
 
 export type ScrollVideoMode =
-  | "canvas-full"
-  | "canvas-lite"
-  | "video-scroll"
-  | "video-soft"
-  | "static"
+  | "video-desktop"
+  | "video-mobile"
+  | "video-low"
   | "loading";
 
 export function getDeviceMode(): ScrollVideoMode {
@@ -20,7 +18,7 @@ export function getDeviceMode(): ScrollVideoMode {
   ).matches;
 
   if (prefersReducedMotion) {
-    return "static";
+    return "video-low";
   }
 
   const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
@@ -49,22 +47,16 @@ export function getDeviceMode(): ScrollVideoMode {
 
   // For very weak devices or data saver mode
   if (saveData || memory < 2 || effectiveType === "2g" || effectiveType === "3g") {
-    return "video-soft";
+    return "video-low";
   }
 
-  // Mobile / Touch devices should use video-scroll (hardware accelerated decoding)
-  // Safari/Firefox/Brave on desktop can also stutter heavily with huge canvas
+  // Mobile / Touch devices should use video decoding instead of frame canvas.
+  // Safari/Firefox/Brave on desktop can also stutter heavily with huge canvas.
   if (isMobileViewport || isTouchDevice || isSafari || isFirefox || isBrave) {
-    return "video-scroll";
+    return "video-mobile";
   }
 
-  // Strong desktop
-  if (memory >= 8 && concurrency >= 8) {
-    return "canvas-full";
-  }
-
-  // Average desktop
-  return "canvas-lite";
+  return memory >= 4 && concurrency >= 4 ? "video-desktop" : "video-low";
 }
 
 export function useScrollVideoMode(): ScrollVideoMode {
