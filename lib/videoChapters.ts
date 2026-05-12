@@ -29,37 +29,37 @@ export const videoChapters: VideoChapter[] = [
     id: "menu",
     start: 0.24,
     end: 0.48,
-    eyebrow: "Menu vivant premium",
+    eyebrow: "Menu client exemple",
     title: "Vos plats se présentent mieux.",
-    body: "Photos, détails, options et allergènes dans une interface claire, rapide et premium.",
-    cta: "Voir la démo",
+    body: "Maison Élyse est un restaurant exemple de présentation : il montre comment un client parcourt la carte Vistaire à table.",
+    cta: "Voir le menu client",
     ctaHref: "/demo",
-    secondaryCta: "Demander une démo",
-    secondaryCtaHref: "#demo"
+    secondaryCta: "Aperçu restaurateur",
+    secondaryCtaHref: "/admin"
   },
   {
     id: "ar",
     start: 0.48,
     end: 0.74,
-    eyebrow: "3D / AR",
+    eyebrow: "Présentation immersive",
     title: "Le plat apparaît devant lui.",
     body: "Le client visualise le plat avant de commander, directement sur son téléphone.",
-    cta: "Voir la démo",
-    ctaHref: "/demo",
-    secondaryCta: "Demander une démo",
-    secondaryCtaHref: "#demo"
+    cta: "Explorer une fiche plat",
+    ctaHref: "/demo/dishes/homard-bisque",
+    secondaryCta: "Menu client",
+    secondaryCtaHref: "/demo"
   },
   {
     id: "restaurant",
     start: 0.74,
     end: 1.01,
-    eyebrow: "Pour les restaurants",
+    eyebrow: "Lecture restaurateur",
     title: "Un menu qui donne envie.",
     body: "Valorisez vos plats signatures et transformez un simple QR code en expérience mémorable.",
-    cta: "Accéder à l'expérience",
+    cta: "Explorer Maison Élyse",
     ctaHref: "/demo",
-    secondaryCta: "Demander une démo",
-    secondaryCtaHref: "#demo"
+    secondaryCta: "Voir l’aperçu restaurateur",
+    secondaryCtaHref: "/admin"
   }
 ];
 

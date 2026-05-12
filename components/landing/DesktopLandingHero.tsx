@@ -526,7 +526,7 @@ export function DesktopLandingHero() {
         data-landing-hero-mode="desktop"
         data-hero-engine="desktop-canvas-fallback"
         className="relative h-[100vh] min-h-[560px] overflow-clip bg-[#080706]"
-        aria-label="Experience Vistaire"
+        aria-label="Expérience Vistaire"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -554,7 +554,7 @@ export function DesktopLandingHero() {
       data-landing-hero-mode="desktop"
       data-hero-engine="desktop-canvas"
       className="scroll-video-section relative overflow-clip bg-[#080706]"
-      aria-label="Experience Vistaire"
+      aria-label="Expérience Vistaire"
     >
       <div className="video-sticky-viewport sticky top-0 w-full overflow-hidden bg-[#080706] [contain:paint]">
         <canvas

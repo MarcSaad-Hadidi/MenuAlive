@@ -4,9 +4,9 @@ import { DemoSimulationProvider } from "@/components/menu/DemoSimulationContext"
 import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "Maison Élyse — La carte",
+  title: "Maison Élyse — Menu client exemple | Vistaire",
   description:
-    "Cuisine française contemporaine : entrées, plats signatures, desserts et cocktails — allergènes, accords et regard sur nos créations."
+    "Restaurant exemple de présentation : une carte Vistaire complète avec plats, allergènes, accords et vues immersives."
 };
 
 export default function DemoLayout({

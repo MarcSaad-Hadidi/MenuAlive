@@ -87,8 +87,8 @@ export function DemoExperienceShell({ children }: DemoExperienceShellProps) {
               aria-pressed={simulateMobile}
             >
               {simulateMobile
-                ? "Quitter la simulation téléphone"
-                : "Simuler l’expérience mobile"}
+                ? "Quitter l’aperçu mobile"
+                : "Afficher l’aperçu mobile"}
             </button>
           </div>
         </div>

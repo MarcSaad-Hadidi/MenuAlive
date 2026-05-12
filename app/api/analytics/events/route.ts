@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json<AnalyticsApiResponse>(
-      { ok: false, error: "Analytics event was accepted but could not be saved." },
-      { status: 503 }
+      { ok: true, persisted: false },
+      { status: 202 }
     );
   }
 

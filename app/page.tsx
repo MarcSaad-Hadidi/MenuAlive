@@ -30,7 +30,7 @@ function BenefitsSection() {
           Impact restaurant
         </p>
         <h2 className="mt-5 max-w-5xl font-display text-[clamp(2.45rem,6vw,5.8rem)] font-normal leading-[0.98] text-cream">
-          Une expérience plus claire pour vos clients. Plus forte pour votre restaurant.
+          Un menu plus clair pour vos clients. Une carte mieux valorisée pour votre restaurant.
         </h2>
 
         <div className="mt-12 grid gap-8 border-t border-white/12 pt-9 md:grid-cols-3 lg:mt-16 lg:pt-11">

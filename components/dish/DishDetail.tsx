@@ -171,7 +171,7 @@ export function DishDetail({ dish }: DishDetailProps) {
           className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-champagne/95 transition hover:text-champagne focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal"
         >
           <span aria-hidden>←</span>
-          Retour au menu
+          Retour au menu client
         </Link>
       </div>
 

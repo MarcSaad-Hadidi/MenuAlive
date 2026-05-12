@@ -25,7 +25,7 @@ export function DemoRequestSection() {
       <div className="relative mx-auto max-w-6xl">
         <div className="max-w-4xl">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-champagne/85">
-            À présenter à table
+            Expérience exemple
           </p>
           <h2 className="mt-5 font-display text-[clamp(2.4rem,5vw,5.2rem)] font-normal leading-[1.01] text-cream">
             Une expérience pensée pour élever votre carte.
@@ -34,16 +34,21 @@ export function DemoRequestSection() {
             Vistaire transforme le QR code en moment visuel, rapide et mémorable,
             fidèle à vos plats, à votre salle et à votre rythme de service.
           </p>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#b9aa94] sm:text-base">
+            Explorez Maison Élyse, un restaurant exemple conçu pour présenter le
+            menu client, puis passez à l’aperçu restaurateur pour lire l’activité
+            autour de la carte.
+          </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <PrimaryButton href="/demo" className="justify-center sm:w-auto">
-              Explorer Maison Élyse
+              Explorer le menu client
             </PrimaryButton>
             <Link
               href="/admin"
               className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
             >
-              Aperçu restaurateur
+              Voir l’aperçu restaurateur
             </Link>
           </div>
         </div>

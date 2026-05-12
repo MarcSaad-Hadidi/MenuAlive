@@ -178,7 +178,7 @@ export function ScrollScrubVideoHero() {
       data-reduced-motion={mode?.isReducedMotion ? "true" : "false"}
       data-save-data={mode?.isSaveData ? "true" : "false"}
       className="scroll-video-section relative overflow-clip bg-[#080706]"
-      aria-label="Experience Vistaire"
+      aria-label="Expérience Vistaire"
     >
       <div className="video-sticky-viewport sticky top-0 w-full overflow-hidden bg-[#080706] [contain:paint]">
         <div className="hero-video-backdrop" aria-hidden="true" />

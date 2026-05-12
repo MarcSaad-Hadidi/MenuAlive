@@ -24,7 +24,7 @@ import type {
 } from "@/lib/owner/types";
 
 const STATUS_LABELS: Record<OwnerRestaurantStatus, string> = {
-  demo: "Démo",
+  demo: "Présentation",
   active: "Actif",
   setup_needed: "À configurer",
   paused: "Pausé",
@@ -261,7 +261,7 @@ export async function getOwnerDashboardData(): Promise<OwnerDashboardData> {
     note:
       restaurantsResult.ok && restaurantsResult.rows.length
         ? "Données restaurants connectées à Supabase."
-        : "Données de démonstration affichées tant que Supabase ne répond pas."
+        : "Données de présentation affichées tant que Supabase ne répond pas."
   };
 }
 
