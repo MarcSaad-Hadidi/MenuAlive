@@ -719,7 +719,7 @@ export async function getRestaurantInsights(
   return {
     insights: getDemoAdminInsights(),
     source: "fallback",
-    note: "Données de démonstration pour illustrer les insights Vistaire."
+    note: "Lecture de présentation pour illustrer les insights Vistaire."
   };
 }
 

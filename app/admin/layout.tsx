@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "Insights clients | Vistaire",
+  title: "Aperçu restaurateur | Vistaire",
   description:
-    "Aperçu des comportements clients sur le menu Vistaire de Maison Élyse."
+    "Aperçu restaurateur de présentation pour lire les comportements clients autour du menu Vistaire de Maison Élyse."
 };
 
 export default function AdminLayout({

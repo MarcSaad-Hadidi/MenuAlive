@@ -49,27 +49,28 @@ export default async function AdminPage({
           />
           <div className="relative max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne/85">
-              {insights.serviceLabel}
+              Aperçu restaurateur · {insights.serviceLabel}
             </p>
             <h1 className="mt-4 font-display text-4xl font-normal leading-[1] text-cream [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
-              Signaux clients — {insights.generatedFor}
+              Lecture restaurateur — {insights.generatedFor}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-[#cdbfa9] sm:text-lg">
-              Comprenez les intentions, les moments d&apos;attention et les
-              explorations immersives de vos clients.
+              Cet aperçu de présentation révèle les comportements anonymes autour
+              du menu client : plats consultés, recherches, vues immersives et
+              tendances d’attention.
             </p>
           </div>
 
           <div className="relative mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <PrimaryButton href="/demo" className="justify-center sm:w-auto">
-              Voir le menu client
+              Explorer le menu client
             </PrimaryButton>
             {popularDish ? (
               <Link
                 href={`/demo/dishes/${popularDish.slug}`}
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
               >
-                Explorer une fiche populaire
+                Ouvrir une fiche populaire
               </Link>
             ) : null}
           </div>
@@ -78,7 +79,7 @@ export default async function AdminPage({
         <section className="mt-9" aria-labelledby="quick-view-heading">
           <div>
             <h2 id="quick-view-heading" className="font-display text-2xl text-cream">
-              Vue rapide du service
+              Lecture rapide du service
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
               Les signaux essentiels pour comprendre l&apos;activité du menu en moins

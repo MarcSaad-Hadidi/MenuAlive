@@ -8,7 +8,7 @@ type MenuHeroProps = {
 };
 
 export function MenuHero({ restaurant }: MenuHeroProps) {
-  const { isPhoneSimulation } = useDemoSimulation();
+  const { isPhoneSimulation, isRealMobile } = useDemoSimulation();
 
   /** En simulation téléphone, l’identité est dans la carte (DemoMenuClient) pour rester au-dessus des filtres. */
   if (isPhoneSimulation) {
@@ -20,7 +20,7 @@ export function MenuHero({ restaurant }: MenuHeroProps) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(217,184,121,0.1),transparent_50%)]" />
       <div className="relative mx-auto max-w-4xl text-center">
         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-champagne/85 sm:text-xs">
-          La carte
+          Menu client exemple
         </p>
         <div className="mx-auto mt-3 flex h-12 w-12 items-center justify-center rounded-full border border-champagne/30 bg-espresso/80 font-display text-lg text-cream shadow-champagne sm:mt-4 sm:h-14 sm:w-14 sm:text-xl">
           {restaurant.logoMonogram}
@@ -33,8 +33,9 @@ export function MenuHero({ restaurant }: MenuHeroProps) {
         </p>
         <p className="mt-2 text-xs text-[#8f806e]">{restaurant.location}</p>
         <p className="mx-auto mt-4 max-w-lg text-xs leading-relaxed text-[#7a6b5b] sm:text-sm">
-          Même parcours que sur téléphone après scan du QR à table : navigation
-          tactile native, sans application à installer.
+          {isRealMobile
+            ? "Vous consultez le parcours client tel qu’il s’ouvre après un scan QR à table."
+            : "Cette page reproduit le parcours client après scan du QR à table : navigation tactile, fiches plats et expérience immersive."}
         </p>
       </div>
     </header>

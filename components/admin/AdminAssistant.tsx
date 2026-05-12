@@ -132,7 +132,7 @@ export function AdminAssistant({
               id="admin-assistant-question"
               value={question}
               onChange={(event) => setQuestion(event.target.value.slice(0, 160))}
-              placeholder="Question rapide..."
+              placeholder="Question sur le service..."
               className="min-h-11 w-full min-w-0 rounded-full border border-white/10 bg-[#070504] px-4 text-sm text-cream outline-none transition placeholder:text-[#756856] focus:border-champagne/45 focus:ring-2 focus:ring-champagne/20"
             />
             <button
@@ -140,7 +140,7 @@ export function AdminAssistant({
               disabled={isPending}
               className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-5 text-sm font-semibold text-[#17100a] shadow-[0_12px_34px_rgba(217,184,121,0.14)] transition hover:bg-[#e3c785] disabled:cursor-wait disabled:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
             >
-              {isPending ? "Lecture" : "Demander"}
+              {isPending ? "Lecture" : "Lire les signaux"}
             </button>
           </form>
 

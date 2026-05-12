@@ -53,13 +53,13 @@ export default async function OwnerPage() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-end">
               <PrimaryButton href="/admin" className="justify-center sm:w-auto">
-                Voir dashboard démo
+                Voir l’aperçu restaurateur
               </PrimaryButton>
               <Link
                 href="/demo"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
               >
-                Voir menu démo
+                Voir le menu exemple
               </Link>
               <Link
                 href="#create-restaurant"
@@ -78,7 +78,7 @@ export default async function OwnerPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Restaurants total" value={data.stats.totalRestaurants} />
             <StatCard label="Restaurants actifs" value={data.stats.activeRestaurants} />
-            <StatCard label="Restaurants en démo" value={data.stats.demoRestaurants} />
+            <StatCard label="Restaurants en présentation" value={data.stats.demoRestaurants} />
             <StatCard
               label="Restaurants à configurer"
               value={data.stats.setupNeededRestaurants}
@@ -245,7 +245,7 @@ function RestaurantCard({ restaurant }: { restaurant: OwnerRestaurant }) {
           href={restaurant.dashboardHref}
           className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/14 px-5 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
         >
-          Voir dashboard démo
+          Voir l’aperçu restaurateur
         </Link>
         <Link
           href={`/owner?restaurant=${encodeURIComponent(restaurant.slug)}`}

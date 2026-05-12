@@ -113,7 +113,7 @@ const DEFAULT_IMAGE_FOCUS: Record<string, string> = {
   cocktails: "center 32%"
 };
 
-/** Cadrage vignettes menu démo. */
+/** Cadrage vignettes du menu exemple. */
 export function getDishCardImageObjectPosition(dish: Dish): string {
   return (
     dish.imageObjectPosition ??

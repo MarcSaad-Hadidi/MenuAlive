@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 export const metadata: Metadata = {
   title: "Pilotage Vistaire | Owner",
   description:
-    "Dashboard propriétaire Vistaire pour suivre les restaurants, les menus et les recommandations automatiques."
+    "Espace de pilotage Vistaire pour suivre les restaurants, les menus et les recommandations automatiques."
 };
 
 export default function OwnerLayout({

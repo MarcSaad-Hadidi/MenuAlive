@@ -41,7 +41,7 @@ export function Header() {
               {isOwnerRoute
                 ? "Pilotage Vistaire"
                 : isAdminRoute
-                  ? "Insights clients"
+                  ? "Aperçu restaurateur"
                   : "Maison Élyse"}
             </span>
           ) : null}
@@ -77,14 +77,15 @@ export function Header() {
                     ctaName: "demo_header"
                   })
                 }
-                className="hidden min-h-10 items-center justify-center rounded-full border border-champagne/35 px-4 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne md:inline-flex"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/35 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:px-4"
                 aria-label="Ouvrir l'aperçu restaurateur"
               >
-                Aperçu restaurateur
+                <span className="hidden min-[430px]:inline">Aperçu restaurateur</span>
+                <span className="min-[430px]:hidden">Aperçu</span>
               </Link>
               <Link
                 href="/"
-                className="text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
+                className="hidden text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline sm:text-sm"
               >
                 Accueil Vistaire
               </Link>
@@ -93,13 +94,13 @@ export function Header() {
             <>
               <Link
                 href="/demo"
-                className="hidden text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline sm:text-sm"
+                className="text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
               >
                 Menu client
               </Link>
               <Link
                 href="/"
-                className="text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
+                className="hidden text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline sm:text-sm"
               >
                 Accueil Vistaire
               </Link>
@@ -116,7 +117,7 @@ export function Header() {
                 href="/demo"
                 className="text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
               >
-                Menu démo
+                Menu exemple
               </Link>
             </>
           ) : (
@@ -136,10 +137,10 @@ export function Header() {
               <PrimaryButton
                 href="/demo"
                 size="small"
-                aria-label="Accéder à l'expérience Vistaire"
+                aria-label="Voir le menu client Vistaire"
               >
-                <span className="hidden sm:inline">Accéder à l&apos;expérience</span>
-                <span className="sm:hidden">Voir la démo</span>
+                <span className="hidden sm:inline">Voir le menu client</span>
+                <span className="sm:hidden">Menu client</span>
               </PrimaryButton>
             </>
           )}
