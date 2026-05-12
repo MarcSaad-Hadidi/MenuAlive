@@ -31,7 +31,11 @@ export const videoChapters: VideoChapter[] = [
     end: 0.48,
     eyebrow: "Menu vivant premium",
     title: "Vos plats se présentent mieux.",
-    body: "Photos, détails, options et allergènes dans une interface claire, rapide et premium."
+    body: "Photos, détails, options et allergènes dans une interface claire, rapide et premium.",
+    cta: "Voir la démo",
+    ctaHref: "/demo",
+    secondaryCta: "Demander une démo",
+    secondaryCtaHref: "#demo"
   },
   {
     id: "ar",
@@ -39,7 +43,11 @@ export const videoChapters: VideoChapter[] = [
     end: 0.74,
     eyebrow: "3D / AR",
     title: "Le plat apparaît devant lui.",
-    body: "Le client visualise le plat avant de commander, directement sur son téléphone."
+    body: "Le client visualise le plat avant de commander, directement sur son téléphone.",
+    cta: "Voir la démo",
+    ctaHref: "/demo",
+    secondaryCta: "Demander une démo",
+    secondaryCtaHref: "#demo"
   },
   {
     id: "restaurant",
@@ -49,7 +57,9 @@ export const videoChapters: VideoChapter[] = [
     title: "Un menu qui donne envie.",
     body: "Valorisez vos plats signatures et transformez un simple QR code en expérience mémorable.",
     cta: "Accéder à l'expérience",
-    ctaHref: "/demo"
+    ctaHref: "/demo",
+    secondaryCta: "Demander une démo",
+    secondaryCtaHref: "#demo"
   }
 ];
 

@@ -264,6 +264,110 @@ function tuneRaviolesArScene(scene) {
   );
 }
 
+function isSoufflePlateMesh(mesh) {
+  const name = `${mesh.name} ${mesh.material?.name ?? ""}`.toLowerCase();
+  return (
+    name.includes("assiette") ||
+    name.includes("rebord") ||
+    name.includes("céramique") ||
+    name.includes("ceramique")
+  );
+}
+
+function makeWarmWhitePlateMaterial(scene, name) {
+  const material = new PBRMaterial(name, scene);
+  material.alpha = 1;
+  material.transparencyMode = PBRMaterial.PBRMATERIAL_OPAQUE;
+  material.albedoColor = new Color3(1, 0.985, 0.94);
+  material.emissiveColor = new Color3(0.18, 0.16, 0.11);
+  material.metallic = 0;
+  material.roughness = 0.48;
+  material.backFaceCulling = false;
+  return material;
+}
+
+function recenterRenderableMeshesForAr(scene) {
+  const meshes = getRenderableMeshes(scene);
+  if (meshes.length === 0) return;
+
+  const bounds = scene.getWorldExtends((mesh) => meshes.includes(mesh));
+  const center = bounds.min.add(bounds.max).scale(0.5);
+  const translate = Matrix.Translation(-center.x, -bounds.min.y, -center.z);
+  for (const mesh of meshes) {
+    mesh.bakeTransformIntoVertices(translate);
+    mesh.refreshBoundingInfo(true);
+  }
+}
+
+function averageTopNormalY(mesh) {
+  const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
+  const normals = mesh.getVerticesData(VertexBuffer.NormalKind);
+  if (!positions || !normals) return 0;
+
+  const ys = [];
+  for (let i = 1; i < positions.length; i += 3) {
+    ys.push(positions[i]);
+  }
+  ys.sort((a, b) => a - b);
+  const topCutoff = ys[Math.floor(ys.length * 0.85)];
+
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < positions.length; i += 3) {
+    if (positions[i + 1] < topCutoff) continue;
+    sum += normals[i + 1];
+    count += 1;
+  }
+  return count === 0 ? 0 : sum / count;
+}
+
+function flipMeshFaceOrientation(mesh) {
+  const indices = mesh.getIndices();
+  if (indices) {
+    const flipped = [];
+    for (let i = 0; i < indices.length; i += 3) {
+      flipped.push(indices[i], indices[i + 2], indices[i + 1]);
+    }
+    mesh.setIndices(flipped);
+  }
+
+  const normals = mesh.getVerticesData(VertexBuffer.NormalKind);
+  if (normals) {
+    mesh.setVerticesData(
+      VertexBuffer.NormalKind,
+      normals.map((normal) => -normal)
+    );
+  }
+  mesh.refreshBoundingInfo(true);
+}
+
+function tuneSouffleArScene(scene) {
+  const meshes = getRenderableMeshes(scene);
+  const plateMeshes = meshes.filter(isSoufflePlateMesh);
+  if (plateMeshes.length === 0) return;
+
+  const plateMaterial = makeWarmWhitePlateMaterial(
+    scene,
+    "souffle-ar-warm-white-plate-material"
+  );
+
+  for (const mesh of plateMeshes) {
+    mesh.material = plateMaterial;
+    if (mesh.name.toLowerCase().includes("assiette") && averageTopNormalY(mesh) < 0) {
+      flipMeshFaceOrientation(mesh);
+    }
+  }
+
+  recenterRenderableMeshesForAr(scene);
+
+  const plateBounds = scene.getWorldExtends((mesh) => plateMeshes.includes(mesh));
+  console.log(
+    `souffle AR source plate preserved: meshes=${plateMeshes.length} size=${JSON.stringify(
+      formatVector(plateBounds.max.subtract(plateBounds.min))
+    )}`
+  );
+}
+
 function ensureMeshNormals(scene) {
   for (const mesh of getRenderableMeshes(scene)) {
     if (mesh.getVerticesData(VertexBuffer.NormalKind)) continue;
@@ -345,6 +449,9 @@ async function convertOne(glbName) {
     }
     if (glbName === "ravioles-chevre-miel.glb") {
       tuneRaviolesArScene(scene);
+    }
+    if (glbName === "souffle-chocolat.glb") {
+      tuneSouffleArScene(scene);
     }
     ensureMeshNormals(scene);
     boundsAfter = getSceneBounds(scene);
