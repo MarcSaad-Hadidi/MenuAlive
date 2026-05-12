@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DemoRequestSection } from "@/components/DemoRequestSection";
 import { Header } from "@/components/Header";
 import { ResponsiveLandingHero } from "@/components/landing/ResponsiveLandingHero";
@@ -57,7 +58,15 @@ function Footer() {
     <footer className="border-t border-white/10 bg-[#050403] px-5 py-10 text-sm text-[#b9aa94] sm:px-10 lg:px-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-display text-xl text-cream">Vistaire</p>
-        <p>Menu digital premium pour restaurants.</p>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <p>Menu vivant premium pour restaurants.</p>
+          <Link
+            href="/owner"
+            className="text-[10px] text-white/25 transition hover:text-champagne/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+          >
+            Accès interne
+          </Link>
+        </div>
       </div>
     </footer>
   );

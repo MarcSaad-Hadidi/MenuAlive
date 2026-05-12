@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Category, CurrencyCode, Dish } from "@/lib/demoMenuData";
 import { getRestaurant } from "@/lib/demoMenuData";
+import { trackMenuEvent } from "@/lib/analytics/client";
 import {
   applyMenuFilters,
   defaultMenuFilterState,
@@ -34,6 +35,49 @@ export function DemoMenuClient({
   const [activeSlug, setActiveSlug] = useState<string>(MENU_ALL_CATEGORY_SLUG);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<MenuFilterState>(defaultMenuFilterState);
+
+  useEffect(() => {
+    trackMenuEvent({ eventName: "session_started" });
+    trackMenuEvent({ eventName: "menu_opened" });
+  }, []);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 2) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      trackMenuEvent({
+        eventName: "search_used",
+        searchQuery: query
+      });
+    }, 700);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const handleCategorySelect = useCallback(
+    (slug: string) => {
+      setActiveSlug(slug);
+      if (slug !== activeSlug) {
+        trackMenuEvent({
+          eventName: "category_viewed",
+          categorySlug: slug
+        });
+      }
+    },
+    [activeSlug]
+  );
+
+  const handleFiltersChange = useCallback(
+    (next: MenuFilterState, filterName = "filter_change") => {
+      setFilters(next);
+      trackMenuEvent({
+        eventName: "filter_used",
+        filterName
+      });
+    },
+    []
+  );
 
   const useStickyTabs = isRealMobile || simulateMobile;
 
@@ -85,7 +129,7 @@ export function DemoMenuClient({
       />
       <MenuFilterBar
         filters={filters}
-        onChange={setFilters}
+        onChange={handleFiltersChange}
         compact={compactControls}
       />
       {(searchActive || filterActive) && (
@@ -140,7 +184,7 @@ export function DemoMenuClient({
           <CategoryTabs
             tabs={categoryTabs}
             activeSlug={activeSlug}
-            onSelect={setActiveSlug}
+            onSelect={handleCategorySelect}
             stickyMode={categoryStickyMode}
           />
 
@@ -157,7 +201,7 @@ export function DemoMenuClient({
           <CategoryTabs
             tabs={categoryTabs}
             activeSlug={activeSlug}
-            onSelect={setActiveSlug}
+            onSelect={handleCategorySelect}
             stickyMode={categoryStickyMode}
           />
         </>
@@ -188,7 +232,9 @@ export function DemoMenuClient({
             {filterActive ? (
               <button
                 type="button"
-                onClick={() => setFilters(defaultMenuFilterState())}
+                onClick={() =>
+                  handleFiltersChange(defaultMenuFilterState(), "reset_filters")
+                }
                 className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/30 bg-champagne/8 px-5 text-sm font-medium text-champagne transition hover:bg-champagne/12 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
               >
                 Réinitialiser

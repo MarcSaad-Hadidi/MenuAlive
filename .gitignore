@@ -32,6 +32,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.local
 
 # vercel
 .vercel
@@ -47,3 +48,6 @@ lint.txt
 lint_utf8.txt
 public/videos/optimized/
 
+
+# clerk configuration (can include secrets)
+/.clerk/

@@ -1,11 +1,16 @@
 import type { Metadata, Viewport } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { SmoothScrollProvider } from "@/components/SmoothScrollProvider";
+import {
+  vistaireClerkAppearance,
+  vistaireClerkLocalization
+} from "@/lib/clerkAppearance";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Vistaire — Le menu qui donne vie à vos plats",
   description:
-    "Vistaire transforme le QR code restaurant en menu digital premium, visuel, interactif et immersif avec expérience 3D / AR."
+    "Vistaire transforme le QR code restaurant en menu vivant, visuel, interactif et immersif avec expérience 3D / AR."
 };
 
 export const viewport: Viewport = {
@@ -23,7 +28,15 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body>
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        <ClerkProvider
+          appearance={vistaireClerkAppearance}
+          localization={vistaireClerkLocalization}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-in"
+          afterSignOutUrl="/"
+        >
+          <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

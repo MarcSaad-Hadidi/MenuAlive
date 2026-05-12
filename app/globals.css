@@ -70,6 +70,14 @@ button[aria-label="Open Next.js Dev Tools"] {
   display: none !important;
 }
 
+button[aria-label="Keyless prompt"] {
+  display: none !important;
+}
+
+#clerk-components:has(a[href*="dashboard.clerk.com/apps/claim"]) {
+  display: none !important;
+}
+
 .scroll-video-section {
   height: 400svh;
   padding-left: env(safe-area-inset-left, 0);
