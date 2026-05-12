@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import type { Dish } from "@/lib/demoMenuData";
 import { getRestaurant } from "@/lib/demoMenuData";
+import { trackMenuEvent } from "@/lib/analytics/client";
 import { dishHas3dModel } from "@/lib/menuQuery";
 import { useDemoSimulation } from "@/components/menu/DemoSimulationContext";
 import { formatPrice } from "@/lib/formatPrice";
@@ -128,6 +129,7 @@ export function DishDetail({ dish }: DishDetailProps) {
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const plat3dAnchorRef = useRef<HTMLDivElement | null>(null);
   const modelViewerRef = useRef<DishModelViewerHandle | null>(null);
+  const viewStartRef = useRef(0);
   const canExpectMobileUi = immersive;
   const isIos = isIosDevice();
   const canOpenQuickLookDirectly = canUseIosQuickLookDirectly();
@@ -138,6 +140,25 @@ export function DishDetail({ dish }: DishDetailProps) {
     if (!has3d) return;
     void import("@google/model-viewer");
   }, [has3d]);
+
+  useEffect(() => {
+    viewStartRef.current = Date.now();
+    trackMenuEvent({
+      eventName: "dish_opened",
+      dishSlug: dish.slug,
+      categorySlug: dish.categorySlug
+    });
+
+    return () => {
+      trackMenuEvent({
+        eventName: "session_duration",
+        dishSlug: dish.slug,
+        metadata: {
+          durationMs: Date.now() - viewStartRef.current
+        }
+      });
+    };
+  }, [dish.categorySlug, dish.slug]);
 
   const showAndScrollToPlat3d = useCallback(() => {
     setShowPlat3d(true);
@@ -150,14 +171,24 @@ export function DishDetail({ dish }: DishDetailProps) {
   }, []);
 
   const handleVoir3dClick = useCallback(() => {
+    trackMenuEvent({
+      eventName: "dish_3d_clicked",
+      dishSlug: dish.slug,
+      categorySlug: dish.categorySlug
+    });
     setDesktopArHint(false);
     setPhoneSimulationArHint(false);
     setHeroArDeferredHint(false);
     setArBrowserHandoff(false);
     showAndScrollToPlat3d();
-  }, [showAndScrollToPlat3d]);
+  }, [dish.categorySlug, dish.slug, showAndScrollToPlat3d]);
 
   const handleVoirDevantMoiClick = useCallback(() => {
+    trackMenuEvent({
+      eventName: "dish_ar_clicked",
+      dishSlug: dish.slug,
+      categorySlug: dish.categorySlug
+    });
     const isNarrowViewport = isNarrowViewportNow();
     const canExpectMobileUiNow = canExpectMobileUi || isNarrowViewport;
     const isRealMobileNow = isRealMobile || isNarrowViewport;
@@ -250,7 +281,9 @@ export function DishDetail({ dish }: DishDetailProps) {
     canOpenQuickLookDirectly,
     needsBrowserHandoff,
     dish.usdzUrl,
-    dish.model3dUrl
+    dish.model3dUrl,
+    dish.slug,
+    dish.categorySlug
   ]);
 
   return (
@@ -491,6 +524,13 @@ export function DishDetail({ dish }: DishDetailProps) {
                   rel="ar"
                   className={AR_BUTTON_CLASS}
                   aria-label="Voir devant moi"
+                  onClick={() =>
+                    trackMenuEvent({
+                      eventName: "dish_ar_clicked",
+                      dishSlug: dish.slug,
+                      categorySlug: dish.categorySlug
+                    })
+                  }
                 >
                   {/* Safari Quick Look exige un enfant img/picture sur les liens rel="ar". */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}

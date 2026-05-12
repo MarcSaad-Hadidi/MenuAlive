@@ -145,9 +145,11 @@ test.describe("Landing scroll experience", () => {
       .toBeGreaterThan(videoBefore + 0.1);
   });
 
-  test('primary CTA "Voir la demo" points to /demo', async ({ page }) => {
+  test('primary CTA "Explorer l\'expérience" points to /demo', async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const link = page.getByRole("link", { name: /Voir la d.mo/i }).first();
+    const link = page
+      .getByRole("link", { name: /Explorer l'expérience/i })
+      .first();
     await expect(link).toBeVisible();
     await expect(link).toHaveAttribute("href", "/demo");
   });

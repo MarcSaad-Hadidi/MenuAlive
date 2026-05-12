@@ -21,7 +21,7 @@ const ALLERGEN_OPTIONS: { value: Allergen | ""; label: string }[] = [
 
 type MenuFilterBarProps = {
   filters: MenuFilterState;
-  onChange: (next: MenuFilterState) => void;
+  onChange: (next: MenuFilterState, filterName?: string) => void;
   compact?: boolean;
 };
 
@@ -51,7 +51,7 @@ export function MenuFilterBar({
   compact
 }: MenuFilterBarProps) {
   const toggle = (key: ToggleKey) => {
-    onChange({ ...filters, [key]: !filters[key] });
+    onChange({ ...filters, [key]: !filters[key] }, key);
   };
 
   const active = hasActiveFilters(filters);
@@ -111,7 +111,7 @@ export function MenuFilterBar({
             onChange({
               ...filters,
               excludeAllergen: v === "" ? null : (v as Allergen)
-            });
+            }, v === "" ? "allergens_reset" : `exclude_${v}`);
           }}
           className={
             compact
@@ -129,7 +129,7 @@ export function MenuFilterBar({
         {active ? (
           <button
             type="button"
-            onClick={() => onChange(defaultMenuFilterState())}
+            onClick={() => onChange(defaultMenuFilterState(), "reset_filters")}
             className={
               compact
                 ? "text-left text-[11px] font-medium text-champagne/90 underline decoration-champagne/30 underline-offset-2 transition hover:text-champagne"

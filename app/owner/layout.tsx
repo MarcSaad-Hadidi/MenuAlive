@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "Insights clients | Vistaire",
+  title: "Pilotage Vistaire | Owner",
   description:
-    "Aperçu des comportements clients sur le menu Vistaire de Maison Élyse."
+    "Dashboard propriétaire Vistaire pour suivre les restaurants, les menus et les recommandations automatiques."
 };
 
-export default function AdminLayout({
+export default function OwnerLayout({
   children
 }: Readonly<{
   children: React.ReactNode;

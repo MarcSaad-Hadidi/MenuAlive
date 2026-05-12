@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CurrencyCode, Dish } from "@/lib/demoMenuData";
 import { getDishCardImageObjectPosition } from "@/lib/demoMenuData";
+import { trackMenuEvent } from "@/lib/analytics/client";
 import { dishHas3dModel } from "@/lib/menuQuery";
 import { formatPrice } from "@/lib/formatPrice";
 import { AllergenBadge } from "@/components/dish/AllergenBadge";
@@ -170,6 +171,13 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
             ) : (
               <Link
                 href={`/demo/dishes/${dish.slug}`}
+                onClick={() =>
+                  trackMenuEvent({
+                    eventName: "cta_clicked",
+                    dishSlug: dish.slug,
+                    ctaName: "dish_card_open"
+                  })
+                }
                 className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-champagne/[0.12] text-[11px] font-semibold text-cream ring-1 ring-inset ring-champagne/35 transition active:bg-champagne/[0.18] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#080706]"
                 aria-label={`Voir le plat — ${dish.name}`}
               >
@@ -249,6 +257,13 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
           ) : (
             <Link
               href={`/demo/dishes/${dish.slug}`}
+              onClick={() =>
+                trackMenuEvent({
+                  eventName: "cta_clicked",
+                  dishSlug: dish.slug,
+                  ctaName: "dish_card_open"
+                })
+              }
               className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-champagne/40 bg-champagne/[0.1] text-center text-xs font-semibold text-cream transition hover:border-champagne/55 hover:bg-champagne/[0.16] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0806]"
               aria-label={`Voir le plat — ${dish.name}`}
             >

@@ -1,17 +1,21 @@
 "use client";
 
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { trackMenuEvent } from "@/lib/analytics/client";
 
 export function Header() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isDemoRoute = pathname.startsWith("/demo");
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isOwnerRoute = pathname.startsWith("/owner");
+  const isPrivateRoute = isDemoRoute || isAdminRoute || isOwnerRoute;
 
   const experienceHref = isHome ? "#experience" : "/#experience";
   const beneficesHref = isHome ? "#benefices" : "/#benefices";
-  const demoHref = isHome ? "#demo" : "/#demo";
   const logoHref = isHome ? "#experience" : "/";
 
   return (
@@ -27,19 +31,23 @@ export function Header() {
             aria-label={
               isHome
                 ? "Vistaire — accueil de la page"
-                : "Vistaire — retour à la page d’accueil"
+                : "Vistaire — retour à la page d'accueil"
             }
           >
             Vistaire
           </Link>
-          {isDemoRoute ? (
+          {isPrivateRoute ? (
             <span className="hidden truncate border-l border-white/15 pl-3 text-[11px] font-medium uppercase tracking-[0.18em] text-champagne/85 sm:inline">
-              Maison Élyse
+              {isOwnerRoute
+                ? "Pilotage Vistaire"
+                : isAdminRoute
+                  ? "Insights clients"
+                  : "Maison Élyse"}
             </span>
           ) : null}
         </div>
 
-        {!isDemoRoute ? (
+        {!isPrivateRoute ? (
           <div className="hidden min-w-0 flex-1 items-center justify-center gap-6 text-sm text-[#dbcdb8] md:flex lg:gap-8">
             <Link
               className="transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
@@ -60,30 +68,86 @@ export function Header() {
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {isDemoRoute ? (
-            <Link
-              href="/"
-              className="text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
-            >
-              Accueil Vistaire
-            </Link>
-          ) : (
+            <>
+              <Link
+                href="/admin"
+                onClick={() =>
+                  trackMenuEvent({
+                    eventName: "dashboard_demo_opened",
+                    ctaName: "demo_header"
+                  })
+                }
+                className="hidden min-h-10 items-center justify-center rounded-full border border-champagne/35 px-4 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne md:inline-flex"
+                aria-label="Ouvrir l'aperçu restaurateur"
+              >
+                Aperçu restaurateur
+              </Link>
+              <Link
+                href="/"
+                className="text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
+              >
+                Accueil Vistaire
+              </Link>
+            </>
+          ) : isAdminRoute ? (
             <>
               <Link
                 href="/demo"
-                className="hidden min-h-10 max-w-[9.5rem] items-center justify-center rounded-full border border-champagne/35 bg-transparent px-3 text-center text-xs font-semibold text-champagne transition hover:border-champagne/55 hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline-flex sm:max-w-none sm:min-h-11 sm:px-4 sm:text-sm"
-                aria-label="Voir la démo du menu interactif"
+                className="hidden text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline sm:text-sm"
               >
-                Voir la démo
+                Menu client
+              </Link>
+              <Link
+                href="/"
+                className="text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
+              >
+                Accueil Vistaire
+              </Link>
+            </>
+          ) : isOwnerRoute ? (
+            <>
+              <Link
+                href="/admin"
+                className="hidden text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline sm:text-sm"
+              >
+                Aperçu restaurateur
+              </Link>
+              <Link
+                href="/demo"
+                className="text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
+              >
+                Menu démo
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/admin"
+                onClick={() =>
+                  trackMenuEvent({
+                    eventName: "dashboard_demo_opened",
+                    ctaName: "landing_header"
+                  })
+                }
+                className="hidden min-h-11 items-center justify-center rounded-full border border-white/14 px-4 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne lg:inline-flex"
+              >
+                Aperçu restaurateur
               </Link>
               <PrimaryButton
-                href={demoHref}
+                href="/demo"
                 size="small"
-                aria-label="Demander une démo"
+                aria-label="Accéder à l'expérience Vistaire"
               >
-                Demander une démo
+                <span className="hidden sm:inline">Accéder à l&apos;expérience</span>
+                <span className="sm:hidden">Voir la démo</span>
               </PrimaryButton>
             </>
           )}
+          {isOwnerRoute ? (
+            <div className="ml-1 flex items-center">
+              <UserButton />
+            </div>
+          ) : null}
         </div>
       </nav>
     </header>

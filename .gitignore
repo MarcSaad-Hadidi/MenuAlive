@@ -42,6 +42,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.local
 
 # vercel
 .vercel
@@ -59,3 +60,6 @@ public/videos/optimized/*
 !public/videos/optimized/
 !public/videos/optimized/upscaled-video-desktop-scrub.mp4
 
+
+# clerk configuration (can include secrets)
+/.clerk/
