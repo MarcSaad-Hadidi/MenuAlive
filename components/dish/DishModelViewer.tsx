@@ -512,6 +512,7 @@ export function DishModelViewer({
     (androidArUnavailable || (isAndroid && runtimeArFailed));
   const showMissingIosAr = showArReady && missingIosAr;
   const showDesktopArHint = showArReady && !isIos && !isAndroid;
+  const showNoModelIosHandoff = !hasModel && needsIosHandoff && Boolean(iosSrc);
 
   useEffect(() => {
     if (!isLoadingModel) return undefined;
@@ -539,6 +540,8 @@ export function DishModelViewer({
           >
             {showIosQuickLookButton
               ? "La vue 3D sera bientôt disponible ici. Vous pouvez déjà placer le plat devant vous dans Safari."
+              : showNoModelIosHandoff
+                ? "La vue 3D sera bientôt disponible ici. Pour placer le plat devant vous, ouvrez cette fiche dans Safari."
               : "Ce plat sera bientôt disponible en 3D."}
           </p>
           {showIosQuickLookButton ? (
@@ -547,6 +550,45 @@ export function DishModelViewer({
               onClick={trackArIntent}
               className="relative mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-5 text-sm font-semibold text-[#17100a] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
             />
+          ) : null}
+          {showNoModelIosHandoff ? (
+            <div
+              className="mt-5 w-full max-w-md rounded-xl border border-champagne/25 bg-champagne/10 p-3 text-left"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="font-display text-base leading-tight text-cream">
+                Réalité augmentée disponible dans Safari
+              </p>
+              <p className="mt-1.5 text-sm leading-relaxed text-[#eadcc6]">
+                {getArUnavailableMessage("iosHandoff")}
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  className="min-h-10 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  onClick={() => {
+                    void copyPageLink().then((ok) => {
+                      setCopyConfirmed(ok);
+                      if (ok) {
+                        window.setTimeout(() => setCopyConfirmed(false), 1800);
+                      }
+                    });
+                  }}
+                >
+                  {copyConfirmed ? "Lien copié" : "Copier le lien"}
+                </button>
+                <button
+                  type="button"
+                  className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  onClick={() => {
+                    void sharePageLink(dish.name);
+                  }}
+                >
+                  Partager
+                </button>
+              </div>
+            </div>
           ) : null}
         </div>
       </section>
