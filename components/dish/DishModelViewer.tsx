@@ -11,6 +11,7 @@ import {
 } from "react";
 import { trackMenuEvent } from "@/lib/analytics/client";
 import type { Dish } from "@/lib/demoMenuData";
+import { warmDishAssets } from "@/lib/dishAssetWarmup";
 import {
   getArUnavailableMessage,
   isAndroidDevice,
@@ -23,7 +24,7 @@ const MV_INIT_TIMEOUT_MS = 12_000;
 const MODEL_LOAD_TIMEOUT_MS = 15_000;
 const LOADER_REVEAL_DELAY_MS = 700;
 const AR_HELP_TEXT =
-  "Faites tourner le plat en 3D. Sur téléphone compatible, le bouton AR apparaît dès que le modèle est prêt.";
+  "Faites tourner le plat en 3D. Sur téléphone compatible, le plat peut aussi s'afficher devant vous en réalité augmentée.";
 const IOS_USDZ_MISSING_TEXT =
   "Pour activer l'AR iPhone, ajoutez un fichier USDZ à ce plat.";
 const MODEL_FRAME_CLASS =
@@ -175,7 +176,7 @@ function PremiumLoadingState({
 
   return (
     <div
-      className={`absolute inset-0 z-20 isolate flex ${MODEL_FRAME_CLASS} flex-col justify-end overflow-hidden px-5 py-6 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`}
+      className={`pointer-events-none absolute inset-0 z-20 isolate flex ${MODEL_FRAME_CLASS} flex-col justify-end overflow-hidden px-5 py-6 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`}
       role="status"
       aria-live="polite"
       aria-busy="true"
@@ -326,6 +327,10 @@ export function DishModelViewer({
   const directIosQuickLookHref =
     isIos && !needsIosHandoff && iosSrc ? iosSrc : "";
 
+  useEffect(() => {
+    if (hasModel) warmDishAssets(dish);
+  }, [dish, hasModel]);
+
   const markModelLoaded = useCallback(() => {
     setModelLoaded(true);
     setModelLoadError(false);
@@ -411,19 +416,24 @@ export function DishModelViewer({
   );
 
   useEffect(() => {
-    const resetAfterArReturn = () => setRuntimeArFailed(false);
+    const resetTemporaryArState = () => {
+      setRuntimeArFailed(false);
+      setLoaderRevealed(false);
+    };
     const resetWhenVisible = () => {
-      if (document.visibilityState === "visible") resetAfterArReturn();
+      if (document.visibilityState === "visible") resetTemporaryArState();
     };
 
     document.addEventListener("visibilitychange", resetWhenVisible);
-    window.addEventListener("pageshow", resetAfterArReturn);
-    window.addEventListener("focus", resetAfterArReturn);
+    window.addEventListener("pageshow", resetTemporaryArState);
+    window.addEventListener("focus", resetTemporaryArState);
+    window.addEventListener("pagehide", resetTemporaryArState);
 
     return () => {
       document.removeEventListener("visibilitychange", resetWhenVisible);
-      window.removeEventListener("pageshow", resetAfterArReturn);
-      window.removeEventListener("focus", resetAfterArReturn);
+      window.removeEventListener("pageshow", resetTemporaryArState);
+      window.removeEventListener("focus", resetTemporaryArState);
+      window.removeEventListener("pagehide", resetTemporaryArState);
     };
   }, []);
 
@@ -461,11 +471,15 @@ export function DishModelViewer({
 
   const trackArIntent = useCallback(() => {
     window.setTimeout(() => {
-      trackMenuEvent({
-        eventName: "dish_ar_clicked",
-        dishSlug: dish.slug,
-        categorySlug: dish.categorySlug
-      });
+      try {
+        trackMenuEvent({
+          eventName: "dish_ar_clicked",
+          dishSlug: dish.slug,
+          categorySlug: dish.categorySlug
+        });
+      } catch {
+        // Analytics must never block Safari Quick Look navigation.
+      }
     }, 0);
   }, [dish.categorySlug, dish.slug]);
 
@@ -488,7 +502,7 @@ export function DishModelViewer({
   const showLoader = isLoadingModel && loaderRevealed;
   const showArReady = modelLoaded && !showLoadFailure;
   const showIosQuickLookButton =
-    showArReady && iosNativeArEnabled && Boolean(directIosQuickLookHref);
+    iosNativeArEnabled && Boolean(directIosQuickLookHref);
   const showAndroidSceneViewerButton = showArReady && androidNativeArEnabled;
   const showHandoff =
     showArReady && !handoffDismissed && needsIosHandoff;
@@ -498,6 +512,7 @@ export function DishModelViewer({
     (androidArUnavailable || (isAndroid && runtimeArFailed));
   const showMissingIosAr = showArReady && missingIosAr;
   const showDesktopArHint = showArReady && !isIos && !isAndroid;
+  const showNoModelIosHandoff = !hasModel && needsIosHandoff && Boolean(iosSrc);
 
   useEffect(() => {
     if (!isLoadingModel) return undefined;
@@ -523,8 +538,58 @@ export function DishModelViewer({
             id={titleId}
             className="max-w-md font-display text-base leading-relaxed text-[#d8caba] sm:text-lg"
           >
-            Ce plat sera bientôt disponible en 3D.
+            {showIosQuickLookButton
+              ? "La vue 3D sera bientôt disponible ici. Vous pouvez déjà placer le plat devant vous dans Safari."
+              : showNoModelIosHandoff
+                ? "La vue 3D sera bientôt disponible ici. Pour placer le plat devant vous, ouvrez cette fiche dans Safari."
+              : "Ce plat sera bientôt disponible en 3D."}
           </p>
+          {showIosQuickLookButton ? (
+            <IosQuickLookArLink
+              href={directIosQuickLookHref}
+              onClick={trackArIntent}
+              className="relative mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-5 text-sm font-semibold text-[#17100a] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+            />
+          ) : null}
+          {showNoModelIosHandoff ? (
+            <div
+              className="mt-5 w-full max-w-md rounded-xl border border-champagne/25 bg-champagne/10 p-3 text-left"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="font-display text-base leading-tight text-cream">
+                Réalité augmentée disponible dans Safari
+              </p>
+              <p className="mt-1.5 text-sm leading-relaxed text-[#eadcc6]">
+                {getArUnavailableMessage("iosHandoff")}
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  className="min-h-10 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  onClick={() => {
+                    void copyPageLink().then((ok) => {
+                      setCopyConfirmed(ok);
+                      if (ok) {
+                        window.setTimeout(() => setCopyConfirmed(false), 1800);
+                      }
+                    });
+                  }}
+                >
+                  {copyConfirmed ? "Lien copié" : "Copier le lien"}
+                </button>
+                <button
+                  type="button"
+                  className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  onClick={() => {
+                    void sharePageLink(dish.name);
+                  }}
+                >
+                  Partager
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
     );
@@ -600,7 +665,7 @@ export function DishModelViewer({
                 <IosQuickLookArLink
                   href={directIosQuickLookHref}
                   onClick={trackArIntent}
-                  className="absolute bottom-4 left-1/2 z-10 inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full border border-champagne/45 bg-[#080706]/92 px-5 text-sm font-semibold text-champagne shadow-[0_14px_40px_rgba(0,0,0,0.48)] backdrop-blur transition hover:border-champagne/70 hover:bg-[#120d09] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#10100e]"
+                  className="absolute bottom-4 left-1/2 z-30 inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full border border-champagne/45 bg-[#080706]/92 px-5 text-sm font-semibold text-champagne shadow-[0_14px_40px_rgba(0,0,0,0.48)] backdrop-blur transition hover:border-champagne/70 hover:bg-[#120d09] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#10100e]"
                 />
               ) : null}
               {showLoader ? (

@@ -23,16 +23,18 @@ export function dishMatchesSearch(dish: Dish, rawQuery: string): boolean {
   return haystack.includes(q);
 }
 
-/** Vrai si le plat dispose d’un modèle 3D rattaché. */
-export function dishHas3dModel(dish: Pick<Dish, "model3dUrl">): boolean {
-  return Boolean(dish.model3dUrl?.trim());
+/** True when a dish has a web 3D or iOS AR asset. */
+export function dishHasImmersiveAsset(
+  dish: Pick<Dish, "model3dUrl" | "usdzUrl">
+): boolean {
+  return Boolean(dish.model3dUrl?.trim() || dish.usdzUrl?.trim());
 }
 
 export type MenuFilterState = {
   signatureOnly: boolean;
   recommendedOnly: boolean;
   availableOnly: boolean;
-  /** Garder uniquement les plats avec une vue 3D rattachée. */
+  /** Keep dishes with a web 3D or iOS AR asset. */
   with3dOnly: boolean;
   /** Exclure les plats contenant cet allergène (“sans …”). */
   excludeAllergen: Allergen | null;
@@ -54,7 +56,7 @@ export function applyMenuFilters(
     if (filters.signatureOnly && !dish.isSignature) return false;
     if (filters.recommendedOnly && !dish.isRecommended) return false;
     if (filters.availableOnly && !dish.isAvailable) return false;
-    if (filters.with3dOnly && !dishHas3dModel(dish)) return false;
+    if (filters.with3dOnly && !dishHasImmersiveAsset(dish)) return false;
     if (
       filters.excludeAllergen &&
       dish.allergens.includes(filters.excludeAllergen)
