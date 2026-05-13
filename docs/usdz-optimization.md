@@ -80,10 +80,15 @@ npm.cmd run build
 npm.cmd run dev
 ```
 
-USDZ binary-layer optimization requires the Python `usd-core` package:
+USDZ binary-layer optimization and binary USDZ asset validation require the
+Python `usd-core` package. `demo:validate-assets` intentionally fails for
+binary-only USDZ files if OpenUSD is not available, because otherwise it cannot
+verify geometry, plate meshes, placement, materials, or resolved textures.
 
 ```powershell
 python -m pip install --user usd-core
+$env:USDZ_VALIDATION_PYTHON = "python"
+npm.cmd run demo:validate-assets
 python scripts/optimize-usdz-binary-layers.py public/models/demo/ravioles-chevre-miel.usdz public/models/demo/review/ravioles-chevre-miel.candidate.usdz
 python scripts/compare-usdz-scenes.py path/to/original.usdz path/to/candidate.usdz
 ```
