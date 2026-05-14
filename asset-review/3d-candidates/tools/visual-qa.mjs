@@ -45,7 +45,15 @@ function toUrl(path) {
   return `/${path.replaceAll("\\", "/").split("/").map(encodeURIComponent).join("/")}`;
 }
 
-function htmlFor(original, candidate, orbit) {
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function htmlFor({ original, candidate, orbit }) {
   return `<!doctype html>
 <html>
   <head>
@@ -65,11 +73,11 @@ function htmlFor(original, candidate, orbit) {
     <main class="grid">
       <section class="panel">
         <div class="label">original</div>
-        <model-viewer id="original" src="${toUrl(original)}" camera-controls interaction-prompt="none" camera-orbit="${orbit}" camera-target="0m 0m 0m" field-of-view="30deg" exposure="1.05" shadow-intensity="1"></model-viewer>
+        <model-viewer id="original" src="${escapeHtml(toUrl(original))}" camera-controls interaction-prompt="none" camera-orbit="${escapeHtml(orbit)}" camera-target="0m 0m 0m" field-of-view="30deg" exposure="1.05" shadow-intensity="1"></model-viewer>
       </section>
       <section class="panel">
         <div class="label">candidate</div>
-        <model-viewer id="candidate" src="${toUrl(candidate)}" camera-controls interaction-prompt="none" camera-orbit="${orbit}" camera-target="0m 0m 0m" field-of-view="30deg" exposure="1.05" shadow-intensity="1"></model-viewer>
+        <model-viewer id="candidate" src="${escapeHtml(toUrl(candidate))}" camera-controls interaction-prompt="none" camera-orbit="${escapeHtml(orbit)}" camera-target="0m 0m 0m" field-of-view="30deg" exposure="1.05" shadow-intensity="1"></model-viewer>
       </section>
     </main>
   </body>
@@ -81,11 +89,21 @@ function startServer() {
     try {
       const url = new URL(req.url || "/", `http://127.0.0.1:${PORT}`);
       if (url.pathname === "/visual-qa.html") {
-        const original = url.searchParams.get("original");
-        const candidate = url.searchParams.get("candidate");
-        const orbit = url.searchParams.get("orbit");
+        const pair = PAIRS.find(
+          ([slug, candidateName]) =>
+            slug === url.searchParams.get("slug") &&
+            candidateName === url.searchParams.get("candidate")
+        );
+        const angle = ANGLES.find(([angleName]) => angleName === url.searchParams.get("angle"));
+        if (!pair || !angle) {
+          res.writeHead(404);
+          res.end("Unknown QA target");
+          return;
+        }
+        const [, , original, candidate] = pair;
+        const [, orbit] = angle;
         res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-        res.end(htmlFor(original, candidate, orbit));
+        res.end(htmlFor({ original, candidate, orbit }));
         return;
       }
       const decoded = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
@@ -123,12 +141,12 @@ const context = await browser.newContext({
 
 const results = [];
 try {
-  for (const [slug, candidateName, original, candidate] of PAIRS) {
+  for (const [slug, candidateName] of PAIRS) {
     for (const [angleName, orbit] of ANGLES) {
       const page = await context.newPage();
       const consoleMessages = [];
       page.on("console", (message) => consoleMessages.push({ type: message.type(), text: message.text() }));
-      const url = `http://127.0.0.1:${PORT}/visual-qa.html?original=${encodeURIComponent(original)}&candidate=${encodeURIComponent(candidate)}&orbit=${encodeURIComponent(orbit)}`;
+      const url = `http://127.0.0.1:${PORT}/visual-qa.html?slug=${encodeURIComponent(slug)}&candidate=${encodeURIComponent(candidateName)}&angle=${encodeURIComponent(angleName)}`;
       let loaded = false;
       let error = null;
       try {
