@@ -55,11 +55,21 @@ test("allows useful crawlers while keeping internal surfaces out of robots crawl
   const rules = buildRobotsRules();
   const searchBotRule = rules.find((rule) => rule.userAgent === "OAI-SearchBot");
   const defaultRule = rules.find((rule) => rule.userAgent === "*");
+  const expectedInternalDisallow = [
+    "/api/",
+    "/owner",
+    "/owner/",
+    "/sign-in",
+    "/sign-in/",
+    "/todos",
+    "/todos/"
+  ];
 
   assert.ok(searchBotRule);
   assert.ok(defaultRule);
   assert.deepEqual(searchBotRule.allow, "/");
   assert.deepEqual(defaultRule.allow, "/");
+  assert.deepEqual(INTERNAL_ROBOTS_DISALLOW, expectedInternalDisallow);
   assert.deepEqual(searchBotRule.disallow, INTERNAL_ROBOTS_DISALLOW);
   assert.deepEqual(defaultRule.disallow, INTERNAL_ROBOTS_DISALLOW);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/_next/"), false);

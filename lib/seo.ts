@@ -11,7 +11,15 @@ const SITE_URL_ENV_KEYS = [
   "VERCEL_URL"
 ] as const;
 
-export const INTERNAL_ROBOTS_DISALLOW = ["/api/", "/owner/", "/todos/"] as const;
+export const INTERNAL_ROBOTS_DISALLOW = [
+  "/api/",
+  "/owner",
+  "/owner/",
+  "/sign-in",
+  "/sign-in/",
+  "/todos",
+  "/todos/"
+] as const;
 
 type SiteUrlEnv = {
   [key: string]: string | undefined;
