@@ -45,8 +45,9 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
     "https://www.vistaire.ca/demo/dishes/ravioles-romarin",
     "https://www.vistaire.ca/admin"
   ]);
-  assert.equal(urls.some((url) => url.includes("/owner")), false);
-  assert.equal(urls.some((url) => url.includes("/api/")), false);
+  for (const internalPath of ["/owner", "/sign-in", "/todos", "/api/"]) {
+    assert.equal(urls.some((url) => url.includes(internalPath)), false);
+  }
   assert.equal(entries.every((entry) => entry.lastModified === lastModified), true);
   assert.equal(entries.every((entry) => entry.priority > 0 && entry.priority <= 1), true);
 });
@@ -70,11 +71,16 @@ test("allows useful crawlers while keeping internal surfaces out of robots crawl
   assert.deepEqual(searchBotRule.allow, "/");
   assert.deepEqual(defaultRule.allow, "/");
   assert.deepEqual(INTERNAL_ROBOTS_DISALLOW, expectedInternalDisallow);
+  for (const internalPath of expectedInternalDisallow) {
+    assert.equal(INTERNAL_ROBOTS_DISALLOW.includes(internalPath), true);
+  }
   assert.deepEqual(searchBotRule.disallow, INTERNAL_ROBOTS_DISALLOW);
   assert.deepEqual(defaultRule.disallow, INTERNAL_ROBOTS_DISALLOW);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/_next/"), false);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/images/"), false);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/models/"), false);
+  assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/videos/"), false);
+  assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/frames/"), false);
 });
 
 test("emits honest global JSON-LD without fictional restaurant markup", () => {
