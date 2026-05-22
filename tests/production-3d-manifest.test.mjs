@@ -16,6 +16,7 @@ const validManifest = {
   dishSlug: "homard-bisque",
   activeVersion: "v1",
   status: "review",
+  isSignature: true,
   variants: {
     web: {
       url: "/models/restaurants/maison-elyse/demo/homard-bisque/v1/web/homard-bisque-web.glb",

@@ -42,6 +42,7 @@ Valider le manifest et les fichiers references:
 
 ```bash
 npm run 3d:validate -- --manifest assets/3d/fixtures/maison-elyse/demo/maison-elyse-n1/v1/manifest.json --context demo-fixture
+npm run 3d:validate-dish -- --manifest assets/3d/fixtures/maison-elyse/demo/maison-elyse-n1/v1/manifest.json --context demo-fixture
 ```
 
 Generer un manifest restaurant depuis un ou plusieurs manifests plat:
@@ -54,6 +55,7 @@ Lire un report Markdown pour revue humaine:
 
 ```bash
 npm run 3d:report -- --manifest assets/3d/fixtures/maison-elyse/demo/maison-elyse-n1/v1/manifest.json --context demo-fixture
+npm run 3d:quality-report -- --manifest assets/3d/fixtures/maison-elyse/demo/maison-elyse-n1/v1/manifest.json --context demo-fixture
 ```
 
 Par defaut, les commandes pointent vers un fixture non public de Maison Elyse
@@ -87,11 +89,13 @@ Quick Look iOS production ne doivent jamais contenir de query string ou de hash.
 
 Les budgets officiels vivent dans `scripts/3d/shared/budgets.mjs`.
 
-- Web GLB: cible 10 MiB, warning 15 MiB, fail 18 MiB.
-- Mobile GLB: cible 6 MiB, warning 10 MiB, fail 12 MiB.
-- AR-lite GLB: cible 8 MiB, warning 10 MiB, fail 12 MiB, sans extension requise.
-- iOS USDZ: cible 4.5 MiB, fail 5 MiB.
-- Poster: cible 250 KiB, warning 400 KiB, fail 700 KiB.
+- Web GLB: cible 6 MB, warning 8 MB, fail 12 MB.
+- Mobile GLB: cible 3 MB, warning 5 MB, fail 8 MB.
+- AR-lite GLB: cible 4 MB, warning 6 MB, fail 8 MB, sans extension requise.
+- iOS USDZ: cible 3.5 MB, warning 4.5 MB, fail 5 MiB.
+- Poster: cible 150 KB, warning 250 KB, fail 500 KB.
+- Total public plat simple: cible 5 MB, warning 8 MB, fail 12 MB.
+- Total public plat signature: cible 10 MB, warning 14 MB, fail 18 MB.
 - Texture max: cible 1024 px, warning 2048 px, fail 4096 px.
 - Materials: cible 4, warning 6, fail 8.
 - Meshes/primitives: cible 3, warning 6, fail 10.

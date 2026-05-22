@@ -61,7 +61,9 @@ function walkJsonFiles(folder) {
 const args = parseArgs(process.argv.slice(2));
 const dishManifests =
   args.restaurant && args.root
-    ? walkJsonFiles(args.root).map(readJsonFile)
+    ? walkJsonFiles(args.root)
+        .map(readJsonFile)
+        .filter((manifest) => manifest?.variants && manifest?.dishSlug)
     : [readJsonFile(args.dishManifest)];
 const restaurantSlug = args.restaurant || dishManifests[0]?.restaurantSlug;
 
