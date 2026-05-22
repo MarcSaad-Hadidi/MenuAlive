@@ -60,6 +60,7 @@ export type Dish = {
   arModel3dUrl?: string;
   usdzUrl: string;
   arUsdzUrl?: string;
+  arVisualStatus?: "approved" | "failed-real-device" | "needs-review";
 };
 
 const RESTAURANT: Restaurant = {
@@ -168,7 +169,7 @@ const DISHES: Dish[] = [
     model3dUrl: "/models/demo/ravioles-chevre-miel.glb",
     webModel3dUrl: "/models/demo/ravioles-chevre-miel-meshopt-6b812a04.glb",
     usdzUrl: "/models/demo/ravioles-chevre-miel.usdz",
-    arUsdzUrl: "/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz"
+    arVisualStatus: "failed-real-device"
   },
   {
     id: "dish-2",
@@ -235,7 +236,8 @@ const DISHES: Dish[] = [
     webModel3dUrl: "/models/demo/homard-bisque-meshopt-73be7175.glb",
     arModel3dUrl: "/models/demo/ar-lite/homard-bisque-ar-lite.glb",
     usdzUrl: "/models/demo/homard-bisque.usdz",
-    arUsdzUrl: "/models/demo/ar-lite/homard-bisque-ios-quicklook-ultra.usdz"
+    arUsdzUrl: "/models/demo/ar-lite/homard-bisque-ios-quicklook-ultra.usdz",
+    arVisualStatus: "approved"
   },
   {
     id: "dish-4",
@@ -393,7 +395,7 @@ const DISHES: Dish[] = [
     model3dUrl: "/models/demo/souffle-chocolat.glb",
     webModel3dUrl: "/models/demo/souffle-chocolat-meshopt-76eb0faa.glb",
     usdzUrl: "/models/demo/souffle-chocolat.usdz?v=plate-source-20260511",
-    arUsdzUrl: "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz"
+    arVisualStatus: "failed-real-device"
   },
   {
     id: "dish-9",

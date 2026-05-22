@@ -1,0 +1,62 @@
+{
+  "restaurantSlug": "maison-elyse",
+  "menuSlug": "demo",
+  "dishSlug": "maison-elyse-n1",
+  "activeVersion": "v1",
+  "status": "review",
+  "variants": {
+    "web": {
+      "url": "/models/demo/maison-elyse-n1.glb",
+      "bytes": 86380,
+      "sha256": "7f12cd7bc6f47ec97f6cef3b65c453bbef537aa7c095289899c51782e48eebef"
+    },
+    "mobile": {
+      "url": "/models/demo/maison-elyse-n1.glb",
+      "bytes": 86380,
+      "sha256": "7f12cd7bc6f47ec97f6cef3b65c453bbef537aa7c095289899c51782e48eebef"
+    },
+    "arLite": {
+      "url": "/models/demo/maison-elyse-n1.glb",
+      "bytes": 86380,
+      "sha256": "7f12cd7bc6f47ec97f6cef3b65c453bbef537aa7c095289899c51782e48eebef"
+    },
+    "iosUsdz": {
+      "url": "/models/demo/maison-elyse-n1.usdz",
+      "bytes": 208984,
+      "sha256": "0c3f6233e237cc27c26d0784927059ef0ea7ba15e83b92e9a472a3dd2961213a"
+    },
+    "poster": {
+      "url": "/models/restaurants/maison-elyse/demo/maison-elyse-n1/v1/poster/maison-elyse-n1-poster.svg",
+      "bytes": 810,
+      "sha256": "1f06a763218a4d9371bc8eaee88d1231ae6d47fa958fe4160358510394d0d092"
+    }
+  },
+  "budgets": {
+    "source": "scripts/3d/shared/budgets.mjs",
+    "profile": "production-initial-v1",
+    "webGlbTargetBytes": 10485760,
+    "mobileGlbTargetBytes": 6291456,
+    "arLiteGlbTargetBytes": 8388608,
+    "iosUsdzTargetBytes": 4718592,
+    "posterTargetBytes": 256000,
+    "textureMaxDimensionTarget": 1024,
+    "materialsTarget": 4,
+    "meshesTarget": 3,
+    "triangleCount": "placeholder until measured by asset build tooling"
+  },
+  "physicalDimensions": {
+    "unit": "meters",
+    "width": 0.095,
+    "height": 0.12,
+    "depth": 0.095
+  },
+  "validation": {
+    "warnings": [
+      "Demo fixture only: references existing /models/demo assets and must not be treated as a published restaurant asset."
+    ],
+    "fails": []
+  },
+  "generatedAt": "2026-05-22T00:00:00.000Z",
+  "approvedAt": null,
+  "publishedAt": null
+}

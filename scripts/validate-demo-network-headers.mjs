@@ -57,7 +57,8 @@ function extractDishes() {
       webModel3dUrl: block.match(/webModel3dUrl:\s*"([^"]*)"/)?.[1] ?? "",
       arModel3dUrl: block.match(/arModel3dUrl:\s*"([^"]*)"/)?.[1] ?? "",
       usdzUrl: block.match(/usdzUrl:\s*"([^"]*)"/)?.[1] ?? "",
-      arUsdzUrl: block.match(/arUsdzUrl:\s*"([^"]*)"/)?.[1] ?? ""
+      arUsdzUrl: block.match(/arUsdzUrl:\s*"([^"]*)"/)?.[1] ?? "",
+      arVisualStatus: block.match(/arVisualStatus:\s*"([^"]*)"/)?.[1] ?? ""
     }))
     .filter((dish) => dish.slug);
 }
@@ -197,6 +198,9 @@ async function main() {
       });
     }
     if (dish.arUsdzUrl) {
+      if (dish.arVisualStatus !== "approved") {
+        fail(`${dish.slug} active arUsdzUrl must have arVisualStatus approved`);
+      }
       assets.push({
         url: dish.arUsdzUrl,
         label: `${dish.slug} AR-lite USDZ ${dish.arUsdzUrl}`,

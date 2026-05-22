@@ -3,8 +3,9 @@
 ## Current Demo Assets
 
 These assets are served from `public/models/demo`. GLB files are used by
-`model-viewer` for web 3D and Android AR. USDZ files are used by iOS Quick Look
-through `ios-src` and the direct `rel="ar"` link.
+`model-viewer` for web 3D and Android AR. Source USDZ files remain public
+reference assets, but iPhone Quick Look production handoff must use only an
+approved `arUsdzUrl` under `/models/demo/ar-lite/`.
 
 | Dish | GLB bytes | GLB MiB | USDZ bytes | USDZ MiB | USDZ change |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -25,6 +26,12 @@ Only these production 3D assets should live in `public/models/demo`:
 - `souffle-chocolat.usdz`
 - `maison-elyse-n1.glb`
 - `maison-elyse-n1.usdz`
+
+The former ravioles and souffle iPhone AR-lite USDZ files failed real iPhone
+Quick Look visual QA and must not remain as public production assets:
+
+- `ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz`
+- `ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz`
 
 ## Public Asset Hygiene
 
@@ -67,9 +74,9 @@ Texture compression alone cannot meaningfully solve the ravioles USDZ size.
 
 ## Applied Optimization
 
-The production USDZ files for ravioles, homard, and souffle were rebuilt with
-Pixar OpenUSD (`usd-core`) by converting package layers from text USDA to binary
-USDC and repacking with `UsdUtils.CreateNewUsdzPackage`.
+The production USDZ files were rebuilt with Pixar OpenUSD (`usd-core`) by
+converting package layers from text USDA to binary USDC and repacking with
+`UsdUtils.CreateNewUsdzPackage`.
 
 This is a data-preserving optimization:
 
@@ -83,6 +90,44 @@ This is a data-preserving optimization:
 Do not use blind geometry simplification or texture resizing for these final
 USDZ files unless a rendered old-vs-new review proves the result is visually
 lossless.
+
+## Real-Device Failure Status
+
+The latest real iPhone Safari / Quick Look testing invalidated two earlier
+technical approvals:
+
+- Ravioles: visually broken, fragmented, hole-filled/noisy, not premium.
+- Souffle: plate rendered black, ice cream rendered gray, material/color
+  fidelity broken.
+- Homard: remains the approved reference and should not be changed unless a
+  regression is discovered.
+
+Ravioles and souffle must keep their original `model3dUrl`, `webModel3dUrl`,
+and `usdzUrl` source fields, but they must not declare `arUsdzUrl` until a new
+candidate passes both the 5 MiB production gate and real iPhone visual review.
+
+Souffle investigation notes:
+
+- Source plate material is warm off-white, metallic `0`, roughness about `0.68`;
+  a black plate is therefore a Quick Look/export/candidate failure, not the
+  intended art direction.
+- The source food base-color texture has alpha despite an opaque material. Avoid
+  letting Quick Look interpret that texture alpha as opacity.
+- The old ultra path used a 512px texture cap and very low final JPEG quality,
+  which is a likely cause of gray/flat ice cream and weak dessert color.
+- The iOS builder now reuses the source converter's souffle plate material and
+  normal-safety approach before candidate export, but candidates still require
+  real iPhone approval.
+
+Ravioles investigation notes:
+
+- The source food topology is fragmented: duplicate shells plus many tiny
+  disconnected components.
+- Automatic duplicate-shell removal and island pruning can delete visible food,
+  sauce, and herb detail.
+- Simplifying that topology with unlocked borders can produce holes and noisy
+  scan-like fragments.
+- A clean retopology or dedicated AR rebuild is required before reactivation.
 
 ## Quality Rule
 
@@ -103,8 +148,10 @@ Do not replace a production USDZ unless the candidate is visually lossless:
    rezipping package contents.
 5. Run structural validation before any visual review.
 6. Run browser/model-viewer visual QA for GLB candidates.
-7. Run real iPhone Safari Quick Look QA for USDZ candidates before production
-   when the environment is available.
+7. Run real iPhone Safari Quick Look QA for USDZ candidates before production.
+   Without real-device evidence tied to the exact URL, byte size, SHA-256, and
+   commit/deploy ID, the candidate remains `needs-review` and must not declare
+   `arUsdzUrl`.
 
 ## Validation Commands
 
@@ -143,13 +190,18 @@ npm.cmd run demo:validate-network
 
 Run this on a real iPhone in Safari over HTTPS:
 
-1. Open `/demo/dishes/ravioles-romarin`.
-2. Tap `Voir en 3D`.
-3. Tap `Afficher devant moi`.
-4. Confirm Quick Look opens and the dish appears at the expected scale.
-5. Check color, material, plate/support, orientation, and visible details.
-6. Exit AR and launch it again from the same page.
-7. Repeat for homard, souffle, and Maison Elyse N1.
+1. Freeze the candidate manifest: dish slug, URL, byte size, SHA-256,
+   commit/deploy ID, device model, iOS/Safari version, network, and reviewer.
+2. Open each active dish in iPhone Safari over HTTPS.
+3. Confirm inactive dishes show no `Vue AR prête`, no Quick Look button, and no
+   source or failed-candidate USDZ request.
+4. For active dishes, tap `Voir en 3D`, then `Afficher devant moi`.
+5. Record first-open and second-open timings on WiFi and 5G, with and without
+   clearing Safari website data.
+6. Capture screen recording plus an external AR photo/video with a scale
+   reference.
+7. Check color, material, plate/support, orientation, visible details, scale,
+   grounding, and redownload behavior.
 
 Desktop Chrome or Playwright with an iOS user agent can verify UI branching, but
 it does not validate real Apple Quick Look behavior.

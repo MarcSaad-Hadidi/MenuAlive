@@ -30,6 +30,29 @@ type SitemapDish = {
   isAvailable?: boolean;
 };
 
+export const PUBLIC_SEO_SITEMAP_ENTRIES = [
+  {
+    path: "/menu-digital-restaurant",
+    changeFrequency: "monthly",
+    priority: 0.88
+  },
+  {
+    path: "/menu-qr-code-restaurant",
+    changeFrequency: "monthly",
+    priority: 0.82
+  },
+  {
+    path: "/menu-3d-ar-restaurant",
+    changeFrequency: "monthly",
+    priority: 0.78
+  },
+  {
+    path: "/menu-pdf-vs-menu-digital",
+    changeFrequency: "monthly",
+    priority: 0.84
+  }
+] as const;
+
 export type SitemapEntry = {
   url: string;
   lastModified: Date;
@@ -100,6 +123,13 @@ export function buildSitemapEntries(
       priority: 0.7
     }));
 
+  const seoPageEntries = PUBLIC_SEO_SITEMAP_ENTRIES.map((entry) => ({
+    url: absoluteUrl(entry.path, env),
+    lastModified,
+    changeFrequency: entry.changeFrequency,
+    priority: entry.priority
+  }));
+
   return [
     {
       url: absoluteUrl("/", env),
@@ -107,6 +137,7 @@ export function buildSitemapEntries(
       changeFrequency: "monthly",
       priority: 1
     },
+    ...seoPageEntries,
     {
       url: absoluteUrl("/demo", env),
       lastModified,
@@ -172,6 +203,88 @@ export function buildVistaireServiceJsonLd(env?: SiteUrlEnv): JsonLdObject {
     name: "Menu digital premium Vistaire",
     serviceType: "Menu digital premium pour restaurants",
     description: DEFAULT_SITE_DESCRIPTION,
+    provider: {
+      "@id": `${absoluteUrl("/", env)}#organization`
+    },
+    areaServed: "Canada",
+    audience: {
+      "@type": "BusinessAudience",
+      audienceType: "Restaurants"
+    }
+  };
+}
+
+export function buildWebPageJsonLd(
+  page: {
+    path: string;
+    name: string;
+    description: string;
+    dateModified?: Date | string;
+  },
+  env?: SiteUrlEnv
+): JsonLdObject {
+  const dateModified =
+    page.dateModified instanceof Date
+      ? page.dateModified.toISOString()
+      : page.dateModified;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${absoluteUrl(page.path, env)}#webpage`,
+    url: absoluteUrl(page.path, env),
+    name: page.name,
+    description: page.description,
+    inLanguage: "fr-CA",
+    isPartOf: {
+      "@id": `${absoluteUrl("/", env)}#website`
+    },
+    publisher: {
+      "@id": `${absoluteUrl("/", env)}#organization`
+    },
+    ...(dateModified ? { dateModified } : {})
+  };
+}
+
+export function buildFaqPageJsonLd(
+  page: {
+    path: string;
+    questions: Array<{ question: string; answer: string }>;
+  },
+  env?: SiteUrlEnv
+): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${absoluteUrl(page.path, env)}#faq`,
+    mainEntity: page.questions.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer
+      }
+    }))
+  };
+}
+
+export function buildPageServiceJsonLd(
+  service: {
+    path: string;
+    name: string;
+    serviceType: string;
+    description: string;
+  },
+  env?: SiteUrlEnv
+): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${absoluteUrl(service.path, env)}#service`,
+    name: service.name,
+    serviceType: service.serviceType,
+    description: service.description,
+    url: absoluteUrl(service.path, env),
     provider: {
       "@id": `${absoluteUrl("/", env)}#organization`
     },

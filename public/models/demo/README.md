@@ -37,6 +37,13 @@ Après modification des GLB, relancer **generate-3d** puis **convert-usdz**, et 
 
 Pour **AR** : servir le site en **HTTPS** (ex. Vercel). Le comportement exact dépend du navigateur (Safari iOS privilégie souvent Quick Look avec `ios-src`).
 
+## iPhone Quick Look production
+
+Seul `ar-lite/homard-bisque-ios-quicklook-ultra.usdz` est approuve et actif
+pour iPhone Quick Look. Les anciens fichiers AR-lite ravioles et souffle ont
+ete retires apres echec visuel sur vrai iPhone; ne pas les reactiver sans une
+nouvelle validation Safari / Quick Look reelle.
+
 ## Version commerciale
 
 Pour la production : remplacer par la **photogrammétrie**, un scan pro ou une **modélisation** par un artiste 3D selon vos standards.

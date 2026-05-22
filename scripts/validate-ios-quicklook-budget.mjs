@@ -10,6 +10,10 @@ const PUBLIC_DIR = join(ROOT, "public");
 const DEMO_DATA = join(ROOT, "lib", "demoMenuData.ts");
 
 export const MAX_PRODUCTION_IOS_USDZ_BYTES = 5 * 1024 * 1024;
+const KNOWN_FAILED_REAL_DEVICE_USDZ_URLS = new Set([
+  "/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz",
+  "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz"
+]);
 
 function fail(message) {
   console.error(`FAIL ${message}`);
@@ -56,8 +60,18 @@ function readActiveArUsdzUrls() {
     const slug = block.match(/slug:\s*"([^"]+)"/)?.[1] ?? "(unknown-slug)";
     const name = block.match(/name:\s*"([^"]+)"/)?.[1] ?? slug;
     const arUsdzUrl = block.match(/arUsdzUrl:\s*"([^"]+)"/)?.[1] ?? "";
+    const arVisualStatus = block.match(/arVisualStatus:\s*"([^"]+)"/)?.[1] ?? "";
 
+    if (arVisualStatus === "failed-real-device" && arUsdzUrl) {
+      fail(`${slug} failed real-device visual QA but still declares arUsdzUrl`);
+    }
+    if (KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(arUsdzUrl)) {
+      fail(`${slug} active arUsdzUrl is a known real-device failed asset: ${arUsdzUrl}`);
+    }
     if (!arUsdzUrl) continue;
+    if (arVisualStatus !== "approved") {
+      fail(`${slug} active arUsdzUrl must have arVisualStatus approved`);
+    }
 
     dishes.push({
       slug,

@@ -1,0 +1,38 @@
+import type { Metadata } from "next";
+import { PremiumSeoPage } from "@/components/seo/PremiumSeoPage";
+import { absoluteUrl } from "@/lib/seo";
+import { getSeoPage } from "@/lib/seoPages";
+
+const page = getSeoPage("menu-3d-ar-restaurant");
+
+export const metadata: Metadata = {
+  title: {
+    absolute: page.metadataTitle
+  },
+  description: page.metadataDescription,
+  alternates: {
+    canonical: page.path
+  },
+  openGraph: {
+    url: absoluteUrl(page.path),
+    title: page.metadataTitle,
+    description: page.metadataDescription,
+    type: "website",
+    images: [
+      {
+        url: absoluteUrl(page.heroImage.src),
+        alt: page.heroImage.alt
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: page.metadataTitle,
+    description: page.metadataDescription,
+    images: [absoluteUrl(page.heroImage.src)]
+  }
+};
+
+export default function Menu3dArRestaurantPage() {
+  return <PremiumSeoPage page={page} />;
+}

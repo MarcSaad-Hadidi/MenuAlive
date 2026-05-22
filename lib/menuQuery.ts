@@ -24,17 +24,32 @@ export function dishMatchesSearch(dish: Dish, rawQuery: string): boolean {
 }
 
 /** True when a dish has a web 3D or iOS AR asset. */
+const KNOWN_FAILED_REAL_DEVICE_USDZ_URLS = new Set([
+  "/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz",
+  "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz"
+]);
+
 export function dishHasImmersiveAsset(
   dish: Pick<
     Dish,
-    "model3dUrl" | "webModel3dUrl" | "arModel3dUrl" | "usdzUrl" | "arUsdzUrl"
+    | "model3dUrl"
+    | "webModel3dUrl"
+    | "arModel3dUrl"
+    | "usdzUrl"
+    | "arUsdzUrl"
+    | "arVisualStatus"
   >
 ): boolean {
+  const arUsdzUrl = dish.arUsdzUrl?.trim() ?? "";
   return Boolean(
     dish.arModel3dUrl?.trim() ||
       dish.webModel3dUrl?.trim() ||
       dish.model3dUrl?.trim() ||
-      dish.arUsdzUrl?.trim()
+      (dish.arVisualStatus === "approved" &&
+        arUsdzUrl.startsWith("/models/demo/ar-lite/") &&
+        arUsdzUrl.endsWith(".usdz") &&
+        !/[?#]/.test(arUsdzUrl) &&
+        !KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(arUsdzUrl))
   );
 }
 

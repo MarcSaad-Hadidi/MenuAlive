@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { DemoRequestSection } from "@/components/DemoRequestSection";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
+import { SiteFooter } from "@/components/SiteFooter";
 import { ResponsiveLandingHero } from "@/components/landing/ResponsiveLandingHero";
 import {
   DEFAULT_SITE_DESCRIPTION,
@@ -82,25 +82,6 @@ function BenefitsSection() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="border-t border-white/10 bg-[#050403] px-5 py-10 text-sm text-[#b9aa94] sm:px-10 lg:px-16">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-display text-xl text-cream">Vistaire</p>
-        <div className="flex flex-col gap-2 sm:items-end">
-          <p>Menu vivant premium pour restaurants.</p>
-          <Link
-            href="/owner"
-            className="rounded-sm text-[10px] text-[#cdbd9f] transition hover:text-cream focus:outline-none focus-visible:text-cream focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#050403]"
-          >
-            Accès interne
-          </Link>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 export default function Home() {
   return (
     <>
@@ -111,7 +92,7 @@ export default function Home() {
         <BenefitsSection />
         <DemoRequestSection />
       </main>
-      <Footer />
+      <SiteFooter />
     </>
   );
 }

@@ -11,7 +11,16 @@ import { spawnSync } from "node:child_process";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { NullEngine, Scene, TransformNode, Vector3 } from "@babylonjs/core";
+import {
+  Color3,
+  NullEngine,
+  PBRMaterial,
+  Scene,
+  TransformNode,
+  Vector3,
+  VertexBuffer,
+  VertexData
+} from "@babylonjs/core";
 import { AppendSceneAsync } from "@babylonjs/core/Loading/sceneLoader.js";
 import "@babylonjs/loaders/glTF/index.js";
 import { GLTF2Export } from "@babylonjs/serializers/glTF/2.0/glTFSerializer.js";
@@ -62,6 +71,7 @@ const DISHES = new Map([
     {
       sourceGlb: "ravioles-chevre-miel.glb",
       quickLookPreparation: "ravioles-visible-shell",
+      realDeviceFailure: true,
       targetMaxDimMeters: 0.2,
       productionOutputs: {
         ultra: "ravioles-chevre-miel-ios-quicklook-ultra.usdz",
@@ -120,6 +130,8 @@ const DISHES = new Map([
     "souffle-chocolat",
     {
       sourceGlb: "souffle-chocolat.glb",
+      realDeviceFailure: true,
+      quickLookPreparation: "souffle-material-safe",
       targetMaxDimMeters: 0.18,
       productionOutputs: {
         ultra: "souffle-chocolat-ios-quicklook-ultra.usdz",
@@ -203,14 +215,16 @@ function levelsForDish(dish) {
 function usage() {
   return [
     "Usage:",
-    "  npm run demo:build-ios-ultra -- <dish-slug> [--promote ultra|extreme] [--quality-approved]",
+    "  npm run demo:build-ios-ultra -- <dish-slug> [--promote ultra|extreme] [--quality-approved] [--real-device-approved]",
     "",
     "Examples:",
     "  npm run demo:build-ios-ultra -- homard-bisque",
     "  npm run demo:build-ios-ultra -- homard-bisque --promote ultra --quality-approved",
+    "  npm run demo:build-ios-ultra -- souffle-chocolat --promote ultra --quality-approved --real-device-approved",
     "",
     "The script builds candidates under asset-review/3d-candidates/ios-quicklook-ultra.",
-    "It promotes a public production USDZ only when --promote and --quality-approved are both present."
+    "It promotes a public production USDZ only when --promote and --quality-approved are both present.",
+    "Dishes with previous real-device failure also require --real-device-approved."
   ].join("\n");
 }
 
@@ -219,6 +233,7 @@ function parseArgs(argv) {
   const options = {
     promote: null,
     qualityApproved: false,
+    realDeviceApproved: false,
     keepWork: false
   };
 
@@ -231,6 +246,8 @@ function parseArgs(argv) {
       options.promote = arg.split("=")[1] ?? "";
     } else if (arg === "--quality-approved") {
       options.qualityApproved = true;
+    } else if (arg === "--real-device-approved") {
+      options.realDeviceApproved = true;
     } else if (arg === "--keep-work") {
       options.keepWork = true;
     } else if (arg === "--help" || arg === "-h") {
@@ -706,7 +723,96 @@ function centerBakedScene(scene) {
   }
 }
 
-async function normalizeGlbForAr(inputPath, outputPath, targetMaxDimMeters) {
+function isSoufflePlateMesh(mesh) {
+  const name = `${mesh.name} ${mesh.material?.name ?? ""}`.toLowerCase();
+  return (
+    name.includes("assiette") ||
+    name.includes("rebord") ||
+    name.includes("céramique") ||
+    name.includes("ceramique")
+  );
+}
+
+function makeWarmWhitePlateMaterial(scene) {
+  const material = new PBRMaterial("souffle-ios-warm-white-plate-material", scene);
+  material.alpha = 1;
+  material.transparencyMode = PBRMaterial.PBRMATERIAL_OPAQUE;
+  material.albedoColor = new Color3(1, 0.985, 0.94);
+  material.emissiveColor = new Color3(0.12, 0.105, 0.075);
+  material.metallic = 0;
+  material.roughness = 0.52;
+  material.backFaceCulling = false;
+  return material;
+}
+
+function averageTopNormalY(mesh) {
+  const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
+  const normals = mesh.getVerticesData(VertexBuffer.NormalKind);
+  if (!positions || !normals) return 0;
+
+  const ys = [];
+  for (let index = 1; index < positions.length; index += 3) ys.push(positions[index]);
+  ys.sort((a, b) => a - b);
+  const topCutoff = ys[Math.floor(ys.length * 0.85)] ?? 0;
+
+  let sum = 0;
+  let count = 0;
+  for (let index = 0; index < positions.length; index += 3) {
+    if (positions[index + 1] < topCutoff) continue;
+    sum += normals[index + 1];
+    count += 1;
+  }
+  return count === 0 ? 0 : sum / count;
+}
+
+function flipMeshFaceOrientation(mesh) {
+  const indices = mesh.getIndices();
+  if (indices) {
+    const flipped = [];
+    for (let index = 0; index < indices.length; index += 3) {
+      flipped.push(indices[index], indices[index + 2], indices[index + 1]);
+    }
+    mesh.setIndices(flipped);
+  }
+
+  const normals = mesh.getVerticesData(VertexBuffer.NormalKind);
+  if (normals) {
+    mesh.setVerticesData(
+      VertexBuffer.NormalKind,
+      normals.map((normal) => -normal)
+    );
+  }
+  mesh.refreshBoundingInfo(true);
+}
+
+function ensureMeshNormals(scene) {
+  for (const mesh of getRenderableMeshes(scene)) {
+    if (mesh.getVerticesData(VertexBuffer.NormalKind)) continue;
+    const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
+    const indices = mesh.getIndices();
+    if (!positions || !indices) continue;
+
+    const normals = [];
+    VertexData.ComputeNormals(positions, indices, normals);
+    mesh.setVerticesData(VertexBuffer.NormalKind, normals);
+    mesh.refreshBoundingInfo(true);
+  }
+}
+
+function tuneSouffleMaterialSafeScene(scene) {
+  const plateMeshes = getRenderableMeshes(scene).filter(isSoufflePlateMesh);
+  if (plateMeshes.length === 0) return;
+
+  const plateMaterial = makeWarmWhitePlateMaterial(scene);
+  for (const mesh of plateMeshes) {
+    mesh.material = plateMaterial;
+    if (mesh.name.toLowerCase().includes("assiette") && averageTopNormalY(mesh) < 0) {
+      flipMeshFaceOrientation(mesh);
+    }
+  }
+}
+
+async function normalizeGlbForAr(inputPath, outputPath, targetMaxDimMeters, dish) {
   const engine = new NullEngine();
   const scene = new Scene(engine);
   await AppendSceneAsync(new Uint8Array(readFileSync(inputPath)), scene, {
@@ -717,6 +823,10 @@ async function normalizeGlbForAr(inputPath, outputPath, targetMaxDimMeters) {
   forcePositiveScales(scene);
   normalizeSceneForAr(scene, targetMaxDimMeters);
   bakeWorldTransforms(scene);
+  ensureMeshNormals(scene);
+  if (dish.quickLookPreparation === "souffle-material-safe") {
+    tuneSouffleMaterialSafeScene(scene);
+  }
   centerBakedScene(scene);
 
   const glb = await GLTF2Export.GLBAsync(scene, "ios-quicklook-normalized.glb", {
@@ -928,7 +1038,7 @@ async function buildCandidate({
     "*"
   ]);
 
-  await normalizeGlbForAr(preJpegGlb, normalizedGlb, dish.targetMaxDimMeters);
+  await normalizeGlbForAr(preJpegGlb, normalizedGlb, dish.targetMaxDimMeters, dish);
 
   run(process.execPath, [
     GLTF_TRANSFORM_CLI,
@@ -998,6 +1108,7 @@ function writeManifest(candidateDir, slug, sourcePath, candidates) {
       "Original source assets stay untouched.",
       "Candidates are review artifacts and are not production-approved by default.",
       "Promotion requires <= 5 MiB, valid USDZ contents, centered/grounded GLB bounds, and manual visual approval.",
+      "Dishes with previous real iPhone Quick Look failure require --real-device-approved before promotion.",
       "If no candidate preserves premium restaurant quality, keep the original active asset untouched and require artist optimization."
     ],
     candidates
@@ -1007,7 +1118,7 @@ function writeManifest(candidateDir, slug, sourcePath, candidates) {
   return manifestPath;
 }
 
-function promoteCandidate({ dish, levelKey, candidate, qualityApproved }) {
+function promoteCandidate({ dish, levelKey, candidate, qualityApproved, realDeviceApproved }) {
   if (candidate.failed) {
     throw new Error(
       `Refusing production promotion: ${candidate.label} candidate failed to build.`
@@ -1016,6 +1127,11 @@ function promoteCandidate({ dish, levelKey, candidate, qualityApproved }) {
   if (!qualityApproved) {
     throw new Error(
       "Refusing production promotion without --quality-approved. Manual visual review must reject cheap/cartoon/placeholder-looking candidates."
+    );
+  }
+  if (dish.realDeviceFailure && !realDeviceApproved) {
+    throw new Error(
+      "Refusing production promotion: this dish previously failed real iPhone Quick Look QA and requires --real-device-approved after a fresh iPhone Safari review."
     );
   }
   if (!candidate.productionBudgetPass) {
@@ -1152,7 +1268,8 @@ async function main() {
         dish,
         levelKey: options.promote,
         candidate,
-        qualityApproved: options.qualityApproved
+        qualityApproved: options.qualityApproved,
+        realDeviceApproved: options.realDeviceApproved
       });
     } else {
       console.log("\nNo production file was promoted. Review candidates before using --promote.");

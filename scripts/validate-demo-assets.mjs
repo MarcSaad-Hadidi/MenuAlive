@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import * as fflate from "fflate";
@@ -86,33 +86,21 @@ const ACTIVE_PUBLIC_USDZ_FILES = new Set([
   "homard-bisque-ios-quicklook-ultra.usdz",
   "homard-bisque.usdz",
   "maison-elyse-n1.usdz",
-  "ravioles-chevre-miel-ios-quicklook-ultra.usdz",
   "ravioles-chevre-miel.usdz",
-  "souffle-chocolat-ios-quicklook-ultra.usdz",
   "souffle-chocolat.usdz"
 ]);
 const APPROVED_IOS_QUICK_LOOK_USDZ = new Map([
-  [
-    "ravioles-romarin",
-    {
-      url: "/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz",
-      sha256: "7b4ea63dbcdd92f3e41a8f7d062d307a8242ecb86cbfaa452fef7a6398924908"
-    }
-  ],
   [
     "homard-bisque",
     {
       url: "/models/demo/ar-lite/homard-bisque-ios-quicklook-ultra.usdz",
       sha256: "2bc1c0e6f33b807417bd03e931ae552a724935b8b193c419cdbf989337a18a13"
     }
-  ],
-  [
-    "souffle-chocolat",
-    {
-      url: "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz",
-      sha256: "1ab81a3e292e0f290441028e20b7f2fb56e547c07851e2818abb651c8acfcea5"
-    }
   ]
+]);
+const KNOWN_FAILED_REAL_DEVICE_USDZ_URLS = new Set([
+  "/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz",
+  "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz"
 ]);
 const MESHOPT_DECODER_EXPECTATION = {
   url: "/model-viewer/meshopt-decoder-74188840.js",
@@ -208,6 +196,11 @@ function checkExpectedWebGlb(dish, label) {
 }
 
 function checkApprovedArUsdz(dish, label) {
+  if (KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(dish.arUsdzUrl)) {
+    fail(`${label} pointe vers un ancien USDZ refuse en vrai iPhone: ${dish.arUsdzUrl}`);
+    return;
+  }
+
   const expected = APPROVED_IOS_QUICK_LOOK_USDZ.get(dish.slug);
   if (!expected) {
     if (dish.arUsdzUrl) {
@@ -497,7 +490,8 @@ function extractDishes() {
       webModel3dUrl: block.match(/webModel3dUrl:\s*"([^"]*)"/)?.[1] ?? "",
       arModel3dUrl: block.match(/arModel3dUrl:\s*"([^"]*)"/)?.[1] ?? "",
       usdzUrl: block.match(/usdzUrl:\s*"([^"]*)"/)?.[1] ?? "",
-      arUsdzUrl: block.match(/arUsdzUrl:\s*"([^"]*)"/)?.[1] ?? ""
+      arUsdzUrl: block.match(/arUsdzUrl:\s*"([^"]*)"/)?.[1] ?? "",
+      arVisualStatus: block.match(/arVisualStatus:\s*"([^"]*)"/)?.[1] ?? ""
     }))
     .filter((dish) => dish.slug);
 }
@@ -615,6 +609,15 @@ const ravioles = dishes.find((dish) => dish.slug === "ravioles-romarin");
 const souffle = dishes.find((dish) => dish.slug === "souffle-chocolat");
 
 checkExpectedCoreAssets(dishes);
+
+for (const dish of dishes) {
+  if (dish.arVisualStatus === "failed-real-device" && dish.arUsdzUrl) {
+    fail(`${dish.slug} failed real-device visual QA but still declares arUsdzUrl`);
+  }
+  if (dish.arUsdzUrl && dish.arVisualStatus !== "approved") {
+    fail(`${dish.slug} declares arUsdzUrl without arVisualStatus approved`);
+  }
+}
 
 if (!homard) {
   fail("plat homard-bisque introuvable dans demoMenuData.ts");
@@ -797,7 +800,12 @@ function walkFiles(dir) {
 }
 
 for (const filePath of walkFiles(PUBLIC_DIR).filter((path) => path.endsWith(".usdz"))) {
+  const publicRelativePath = relative(PUBLIC_DIR, filePath).split(sep).join("/");
+  const publicUrl = `/${publicRelativePath}`;
   const fileName = basename(filePath);
+  if (KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(publicUrl)) {
+    fail(`USDZ refuse en vrai iPhone encore present dans public: ${filePath}`);
+  }
   if (!ACTIVE_PUBLIC_USDZ_FILES.has(fileName)) {
     fail(`USDZ non actif dans public: ${filePath}`);
   }

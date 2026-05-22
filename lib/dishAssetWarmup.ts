@@ -15,14 +15,12 @@ const SMALL_ASSET_WARMUP_MAX_BYTES = 1024 * 1024;
 const demoAssetByteSizes = new Map<string, number>([
   ["/models/demo/ravioles-chevre-miel.glb", 76_609_104],
   ["/models/demo/ravioles-chevre-miel.usdz", 70_375_208],
-  ["/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz", 3_540_884],
   ["/models/demo/homard-bisque.glb", 29_010_112],
   ["/models/demo/homard-bisque.usdz", 26_352_806],
   ["/models/demo/ar-lite/homard-bisque-ar-lite.glb", 12_032_888],
   ["/models/demo/ar-lite/homard-bisque-ios-quicklook-ultra.usdz", 5_239_742],
   ["/models/demo/souffle-chocolat.glb", 27_286_348],
   ["/models/demo/souffle-chocolat.usdz", 24_873_890],
-  ["/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz", 5_231_780],
   ["/models/demo/maison-elyse-n1.glb", 86_380],
   ["/models/demo/maison-elyse-n1.usdz", 208_984]
 ]);
@@ -46,6 +44,10 @@ type QuickLookPrefetchRecord = {
 
 const quickLookPrefetchLinks = new Set<string>();
 const quickLookPrefetchRecords = new Map<string, QuickLookPrefetchRecord>();
+const KNOWN_FAILED_REAL_DEVICE_USDZ_URLS = new Set([
+  "/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz",
+  "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz"
+]);
 
 export function prepareDemoAssetOrigin(): void {
   if (typeof window === "undefined" || typeof document === "undefined") return;
@@ -132,11 +134,13 @@ function canWarmAssetFromMenuCard(normalizedUrl: string): boolean {
 }
 
 function resolveDishUsdzUrl(dish: WarmableDish): string {
+  if (dish.arVisualStatus !== "approved") return "";
   const url = dish.arUsdzUrl?.trim() ?? "";
   if (!url) return "";
   if (/[?#]/.test(url)) return "";
   if (!url.startsWith("/models/demo/ar-lite/")) return "";
   if (!url.endsWith(".usdz")) return "";
+  if (KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(url)) return "";
   return url;
 }
 
@@ -265,7 +269,7 @@ export function warmAsset(url: string, kind: AssetKind): void {
 
 type WarmableDish = Pick<
   Dish,
-  "model3dUrl" | "webModel3dUrl" | "arModel3dUrl" | "arUsdzUrl"
+  "model3dUrl" | "webModel3dUrl" | "arModel3dUrl" | "arUsdzUrl" | "arVisualStatus"
 >;
 
 function getWarmupOrder(dish: WarmableDish): AssetWarmupRequest[] {

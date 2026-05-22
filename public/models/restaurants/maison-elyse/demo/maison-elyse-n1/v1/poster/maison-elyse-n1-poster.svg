@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-label="Fixture poster placeholder for Maison Elyse pilot asset">
+  <rect width="1200" height="900" fill="#080706"/>
+  <rect x="96" y="96" width="1008" height="708" rx="18" fill="#15100c" stroke="#d9b879" stroke-opacity="0.55" stroke-width="2"/>
+  <circle cx="600" cy="390" r="156" fill="#21170f" stroke="#d9b879" stroke-opacity="0.28" stroke-width="12"/>
+  <circle cx="600" cy="390" r="86" fill="#d9b879" fill-opacity="0.18"/>
+  <text x="600" y="617" text-anchor="middle" fill="#f5ead8" font-family="Georgia, serif" font-size="56">Maison Elyse N1</text>
+  <text x="600" y="674" text-anchor="middle" fill="#d9b879" font-family="Arial, sans-serif" font-size="24" letter-spacing="8">3D FIXTURE</text>
+</svg>

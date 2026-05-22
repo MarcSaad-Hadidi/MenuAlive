@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, normalize, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,26 +37,16 @@ const AR_GLB_ASSETS = new Map([
 
 const APPROVED_IOS_QUICK_LOOK_USDZ = new Map([
   [
-    "ravioles-romarin",
-    {
-      url: "/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz",
-      sha256: "7b4ea63dbcdd92f3e41a8f7d062d307a8242ecb86cbfaa452fef7a6398924908"
-    }
-  ],
-  [
     "homard-bisque",
     {
       url: "/models/demo/ar-lite/homard-bisque-ios-quicklook-ultra.usdz",
       sha256: "2bc1c0e6f33b807417bd03e931ae552a724935b8b193c419cdbf989337a18a13"
     }
-  ],
-  [
-    "souffle-chocolat",
-    {
-      url: "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz",
-      sha256: "1ab81a3e292e0f290441028e20b7f2fb56e547c07851e2818abb651c8acfcea5"
-    }
   ]
+]);
+const KNOWN_FAILED_REAL_DEVICE_USDZ_URLS = new Set([
+  "/models/demo/ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz",
+  "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz"
 ]);
 
 function fail(message) {
@@ -218,11 +208,24 @@ function readDishes() {
   return blocks.map((block) => ({
     slug: block.match(/slug:\s*"([^"]+)"/)?.[1] ?? "",
     arModel3dUrl: block.match(/arModel3dUrl:\s*"([^"]*)"/)?.[1] ?? "",
-    arUsdzUrl: block.match(/arUsdzUrl:\s*"([^"]*)"/)?.[1] ?? ""
+    arUsdzUrl: block.match(/arUsdzUrl:\s*"([^"]*)"/)?.[1] ?? "",
+    arVisualStatus: block.match(/arVisualStatus:\s*"([^"]*)"/)?.[1] ?? ""
   }));
 }
 
 function checkDishData(dishes) {
+  for (const dish of dishes) {
+    if (KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(dish.arUsdzUrl)) {
+      fail(`${dish.slug} declares a known real-device failed arUsdzUrl: ${dish.arUsdzUrl}`);
+    }
+    if (dish.arVisualStatus === "failed-real-device" && dish.arUsdzUrl) {
+      fail(`${dish.slug} failed real-device visual QA but still declares arUsdzUrl`);
+    }
+    if (dish.arUsdzUrl && dish.arVisualStatus !== "approved") {
+      fail(`${dish.slug} declares arUsdzUrl without arVisualStatus approved`);
+    }
+  }
+
   for (const [slug, asset] of AR_GLB_ASSETS) {
     const dish = dishes.find((item) => item.slug === slug);
     if (!dish) {
@@ -261,6 +264,14 @@ function checkNoPublicCandidates() {
   const candidateDir = join(AR_LITE_DIR, "_candidates");
   if (existsSync(candidateDir)) {
     fail(`temporary candidate folder must not remain in public: ${candidateDir}`);
+  }
+
+  for (const entry of readdirSync(AR_LITE_DIR, { withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const url = `/models/demo/ar-lite/${entry.name}`;
+    if (KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(url)) {
+      fail(`known real-device failed USDZ must not remain in public ar-lite: ${url}`);
+    }
   }
 }
 

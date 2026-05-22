@@ -26,7 +26,7 @@ const LOADER_REVEAL_DELAY_MS = 700;
 const AR_HELP_TEXT =
   "Faites tourner le plat en 3D. Sur téléphone compatible, le plat peut aussi s'afficher devant vous en réalité augmentée.";
 const IOS_USDZ_MISSING_TEXT =
-  "Pour activer l'AR iPhone, ajoutez un fichier USDZ à ce plat.";
+  "AR iPhone temporairement indisponible pendant l'optimisation visuelle.";
 const MODEL_FRAME_CLASS =
   "h-[min(58vh,420px)] min-h-[280px] w-full rounded-xl bg-[#10100e] ring-1 ring-white/8 sm:h-[min(65vh,460px)] sm:min-h-[340px]";
 const MESHOPT_DECODER_URL = "/model-viewer/meshopt-decoder-74188840.js";
@@ -41,6 +41,7 @@ export type DishModelViewerProps = {
     | "webModel3dUrl"
     | "arModel3dUrl"
     | "arUsdzUrl"
+    | "arVisualStatus"
     | "image"
     | "imageObjectPosition"
     | "imageObjectPositionDetail"
@@ -355,8 +356,12 @@ export function DishModelViewer({
   const modelSrc = arModelSrc || webModelSrc || originalModelSrc;
   const hasModel = Boolean(modelSrc);
   const iosSrc = useMemo(
-    () => resolveActiveQuickLookUsdzUrl({ arUsdzUrl: dish.arUsdzUrl }),
-    [dish.arUsdzUrl]
+    () =>
+      resolveActiveQuickLookUsdzUrl({
+        arUsdzUrl: dish.arUsdzUrl,
+        arVisualStatus: dish.arVisualStatus
+      }),
+    [dish.arUsdzUrl, dish.arVisualStatus]
   );
   const arEnvironment = useMemo(
     () => readArClientEnvironment(iosSrc),

@@ -19,7 +19,11 @@
     "demo:validate-ar-lite": "node scripts/validate-demo-ar-lite-assets.mjs",
     "demo:validate-ios-budget": "node scripts/validate-ios-quicklook-budget.mjs",
     "demo:validate-assets": "node scripts/validate-demo-assets.mjs",
-    "demo:validate-network": "node scripts/validate-demo-network-headers.mjs"
+    "demo:validate-network": "node scripts/validate-demo-network-headers.mjs",
+    "3d:analyze": "node scripts/3d/analyze.mjs",
+    "3d:validate": "node scripts/3d/validate.mjs",
+    "3d:manifest": "node scripts/3d/manifest.mjs",
+    "3d:report": "node scripts/3d/report.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.3",
