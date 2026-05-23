@@ -1,0 +1,17 @@
+# Non-runtime source drops and generated review output.
+3D Plat/
+3D photo/
+Homar/
+PhotoPlatDemo/
+asset-review/
+assets/3d/source/
+assets/3d/work/
+assets/3d/reports/
+video/
+
+# Local build/test output.
+.next/
+coverage/
+test-results/
+playwright-report/
+.playwright-mcp/

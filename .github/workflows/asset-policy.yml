@@ -1,0 +1,64 @@
+name: Asset Policy
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".gitattributes"
+      - ".gitignore"
+      - ".github/workflows/asset-policy.yml"
+      - "docs/repo-asset-policy.md"
+      - "package-lock.json"
+      - "package.json"
+      - "scripts/check-large-files.mjs"
+      - "scripts/check-lfs-policy.mjs"
+      - "public/models/**"
+      - "public/videos/**"
+      - "3D Plat/**"
+      - "3D photo/**"
+      - "assets/3d/**"
+  push:
+    branches: ["main"]
+    paths:
+      - ".gitattributes"
+      - ".gitignore"
+      - ".github/workflows/asset-policy.yml"
+      - "docs/repo-asset-policy.md"
+      - "package-lock.json"
+      - "package.json"
+      - "scripts/check-large-files.mjs"
+      - "scripts/check-lfs-policy.mjs"
+      - "public/models/**"
+      - "public/videos/**"
+      - "3D Plat/**"
+      - "3D photo/**"
+      - "assets/3d/**"
+
+permissions:
+  contents: read
+
+jobs:
+  asset-policy:
+    name: Asset policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Large file guard
+        run: npm run assets:check
+
+      - name: LFS policy guard
+        run: npm run lfs:check
