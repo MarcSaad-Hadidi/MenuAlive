@@ -20,7 +20,7 @@ const SOURCE_ASSETS = new Map([
   ["homard-bisque", { sourceGlb: "homard-bisque.glb", sourceUsdz: "homard-bisque.usdz" }],
   [
     "ravioles-romarin",
-    { sourceGlb: "ravioles-chevre-miel.glb", sourceUsdz: "ravioles-chevre-miel.usdz" }
+    { sourceGlb: "ravioles-chevre-miel.glb", sourceUsdz: "" }
   ],
   [
     "souffle-chocolat",
@@ -269,7 +269,11 @@ checkDishData(dishes);
 
 for (const [slug, asset] of SOURCE_ASSETS) {
   checkFile(join(DEMO_DIR, asset.sourceGlb), `${slug} original GLB ${asset.sourceGlb}`);
-  checkFile(join(DEMO_DIR, asset.sourceUsdz), `${slug} original USDZ ${asset.sourceUsdz}`);
+  if (asset.sourceUsdz) {
+    checkFile(join(DEMO_DIR, asset.sourceUsdz), `${slug} original USDZ ${asset.sourceUsdz}`);
+  } else {
+    ok(`${slug} original USDZ lourd retire du tree public de deploiement`);
+  }
 }
 
 for (const [slug, asset] of AR_GLB_ASSETS) {

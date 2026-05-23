@@ -49,9 +49,7 @@ const CORE_ASSET_EXPECTATIONS = new Map([
     "ravioles-romarin",
     {
       model3dUrl: "/models/demo/ravioles-chevre-miel.glb",
-      modelSha256: "c665ca403a9543296383a8234310b01c58e5bfce47efa9fa1bae39caa28847b0",
-      usdzUrl: "/models/demo/ravioles-chevre-miel.usdz",
-      usdzSha256: "b22994f9ce416d9342bcbea0d9d0ba71a4005c258ecd33cca7210a844ec11d53"
+      modelSha256: "c665ca403a9543296383a8234310b01c58e5bfce47efa9fa1bae39caa28847b0"
     }
   ],
   [
@@ -87,7 +85,6 @@ const ACTIVE_PUBLIC_USDZ_FILES = new Set([
   "homard-bisque.usdz",
   "maison-elyse-n1.usdz",
   "ravioles-chevre-miel-ios-quicklook-ultra.usdz",
-  "ravioles-chevre-miel.usdz",
   "souffle-chocolat-ios-quicklook-ultra.usdz",
   "souffle-chocolat.usdz"
 ]);
@@ -267,7 +264,13 @@ function checkExpectedCoreAssets(dishes) {
       checkFileHash(assetPath(expected.model3dUrl), expected.modelSha256, `${slug} GLB original`);
     }
 
-    if (dish.usdzUrl !== expected.usdzUrl) {
+    if (!expected.usdzUrl) {
+      if (dish.usdzUrl) {
+        fail(`${slug} usdzUrl source legacy doit rester vide: ${dish.usdzUrl}`);
+      } else {
+        ok(`${slug} ne publie pas d'USDZ source legacy`);
+      }
+    } else if (dish.usdzUrl !== expected.usdzUrl) {
       fail(`${slug} usdzUrl actif modifie: ${dish.usdzUrl || "(absent)"}`);
     } else {
       ok(`${slug} usdzUrl actif conserve`);
@@ -668,10 +671,10 @@ if (!ravioles) {
     ok("ravioles pointe vers /models/demo/ravioles-chevre-miel.glb");
   }
 
-  if (ravioles.usdzUrl !== "/models/demo/ravioles-chevre-miel.usdz") {
-    fail(`ravioles usdzUrl inattendu: ${ravioles.usdzUrl}`);
+  if (ravioles.usdzUrl !== "") {
+    fail(`ravioles usdzUrl source legacy doit rester vide: ${ravioles.usdzUrl}`);
   } else {
-    ok("ravioles pointe vers /models/demo/ravioles-chevre-miel.usdz");
+    ok("ravioles ne publie pas l'ancien USDZ source LFS");
   }
 
   if (/lite/i.test(`${ravioles.model3dUrl} ${ravioles.usdzUrl}`)) {

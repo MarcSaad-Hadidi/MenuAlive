@@ -1,42 +1,50 @@
-# Modèles 3D démo Maison Élyse (MVP stylisés)
+# Demo 3D models
 
-Ces fichiers **GLB** et **USDZ** sont des **assets de démonstration stylisés**. Ce ne sont **pas** des scans photoréalistes.
+These GLB and USDZ files are stylized Maison Elyse demo assets. They are not
+photorealistic scans.
 
-| Fichier | Usage |
-| ------- | ----- |
-| `.glb`  | Web et Android (Chrome, `model-viewer`, AR via WebXR / Scene Viewer) |
-| `.usdz` | iPhone / iPad — attribut `ios-src` de `model-viewer` (Quick Look quand le navigateur l’expose) |
+| File | Usage |
+| --- | --- |
+| `.glb` | Web and Android via Chrome, `model-viewer`, WebXR, and Scene Viewer. |
+| `ar-lite/*.usdz` | Active iPhone/iPad Quick Look assets through `ios-src` and `rel="ar"` links. |
 
-## Régénérer les GLB
+Heavy source USDZ exports that are not the active Quick Look asset must not stay
+in this public deploy tree. The old ravioles source USDZ was removed so Vercel
+can clone and deploy without Git LFS.
 
-Sans Blender :
+## Regenerate GLB
+
+Without Blender:
 
 ```bash
 npm run demo:generate-3d
 ```
 
-Avec Blender (3.6+) :
+With Blender 3.6+:
 
 ```bash
 blender --background --python scripts/create-demo-3d-models.py
 ```
 
-## Régénérer les USDZ (à partir des GLB)
+## Regenerate USDZ
 
-Conversion locale (Babylon.js + `fflate`, fonctionne sur Windows) :
+Local conversion:
 
 ```bash
 npm run demo:convert-usdz
 ```
 
-Après modification des GLB, relancer **generate-3d** puis **convert-usdz**, et vérifier les chemins dans `lib/demoMenuData.ts` (`model3dUrl` / `usdzUrl`).
+After GLB changes, run the generation/conversion workflow and verify the active
+paths in `lib/demoMenuData.ts`, especially `model3dUrl`, `webModel3dUrl`,
+`arModel3dUrl`, and `arUsdzUrl`. Heavy exports that are not active runtime
+assets belong outside `public`.
 
-**macOS (alternative)** : `xcrun usdz_converter` ou l’app **Reality Converter** peuvent produire des USDZ ; les fichiers générés par le script npm restent valides pour la démo.
+## Deployment
 
-## Déploiement
+For AR, serve the site over HTTPS. Exact behavior depends on the browser; iOS
+Safari exposes Quick Look through the active `ar-lite` USDZ files.
 
-Pour **AR** : servir le site en **HTTPS** (ex. Vercel). Le comportement exact dépend du navigateur (Safari iOS privilégie souvent Quick Look avec `ios-src`).
+## Commercial Version
 
-## Version commerciale
-
-Pour la production : remplacer par la **photogrammétrie**, un scan pro ou une **modélisation** par un artiste 3D selon vos standards.
+For production, replace demo assets with photogrammetry, professional scans, or
+artist-authored 3D models that meet the restaurant's quality bar.

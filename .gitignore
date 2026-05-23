@@ -33,13 +33,38 @@ yarn-error.log*
 /frames-chunk-*.json
 /menualive-desktop.png
 /vistaire-desktop-*.png
-/asset-review/3d-candidates/
+/asset-review/
+asset-review/
 
-# local heavy 3D source drops
+# local heavy 3D source drops and generated review assets
+3D Plat/
+3D photo/
 3D Plat/RavioliAvecAssiete.glb
 3D Plat/HomardAvecAssiette.glb
 3D Plat/Homard bleu Meshy.glb
 3D Plat/SouffleAvecAssiette.glb
+assets/3d/source/**
+!assets/3d/source/**/
+!assets/3d/source/**/.gitkeep
+assets/3d/work/**
+!assets/3d/work/**/
+!assets/3d/work/**/.gitkeep
+assets/3d/reports/**
+!assets/3d/reports/**/
+!assets/3d/reports/**/.gitkeep
+
+# heavy binary authoring/export formats
+*.fbx
+*.blend
+*.obj
+*.mov
+*.zip
+*.psd
+*.ai
+
+# production restaurant model binaries must be reviewed before allowlisting
+public/models/restaurants/**/*.glb
+public/models/restaurants/**/*.usdz
 
 # local env files
 .env*.local
@@ -59,6 +84,8 @@ ffmpeg_bin/
 lint.txt
 lint_utf8.txt
 public/videos/optimized/*
+public/videos/optimized/*.mp4
+public/videos/optimized/*.webm
 !public/videos/optimized/
 !public/videos/optimized/upscaled-video-desktop-scrub.mp4
 !public/videos/optimized/upscaled-video-mobile-scrub.mp4

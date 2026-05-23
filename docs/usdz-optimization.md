@@ -3,20 +3,21 @@
 ## Current Demo Assets
 
 These assets are served from `public/models/demo`. GLB files are used by
-`model-viewer` for web 3D and Android AR. USDZ files are used by iOS Quick Look
-through `ios-src` and the direct `rel="ar"` link.
+`model-viewer` for web 3D and Android AR. Active iOS Quick Look USDZ files are
+the production `arUsdzUrl` files under `public/models/demo/ar-lite`.
 
-| Dish | GLB bytes | GLB MiB | USDZ bytes | USDZ MiB | USDZ change |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Ravioles chevre miel | 76,609,104 | 73.06 | 70,375,208 | 67.12 | -60.30% |
-| Homard bisque | 29,010,112 | 27.67 | 26,352,806 | 25.13 | -48.33% |
-| Souffle chocolat | 27,286,348 | 26.02 | 24,873,890 | 23.72 | -47.29% |
-| Maison Elyse N1 | 86,380 | 0.08 | 208,984 | 0.20 | unchanged |
+| Dish | Web GLB bytes | Web GLB MiB | Active iOS USDZ bytes | Active iOS USDZ MiB |
+| --- | ---: | ---: | ---: | ---: |
+| Ravioles chevre miel | 27,714,228 | 26.43 | 3,540,884 | 3.38 |
+| Homard bisque | 12,032,888 | 11.48 | 5,239,742 | 5.00 |
+| Souffle chocolat | 17,011,872 | 16.22 | 5,231,780 | 4.99 |
+| Maison Elyse N1 | 86,380 | 0.08 | 208,984 | 0.20 |
 
 Only these production 3D assets should live in `public/models/demo`:
 
 - `ravioles-chevre-miel.glb`
-- `ravioles-chevre-miel.usdz`
+- `ravioles-chevre-miel-meshopt-6b812a04.glb`
+- `ar-lite/ravioles-chevre-miel-ios-quicklook-ultra.usdz`
 - `homard-bisque.glb`
 - `homard-bisque.usdz`
 - `ar-lite/homard-bisque-ar-lite.glb`
@@ -54,8 +55,10 @@ non-public source area; otherwise keep local drops ignored and outside commits.
 
 ## Ravioles Diagnosis
 
-`ravioles-chevre-miel.usdz` is heavy because geometry dominates the package.
-The two largest USDZ entries are USDA geometry files:
+The former public `ravioles-chevre-miel.usdz` source asset was heavy because
+geometry dominated the package. It has been removed from the public deploy tree
+so Vercel can clone the repo without Git LFS. The two largest USDZ entries were
+USDA geometry files:
 
 | Entry | Bytes | MiB | Points |
 | --- | ---: | ---: | ---: |
@@ -67,9 +70,9 @@ Texture compression alone cannot meaningfully solve the ravioles USDZ size.
 
 ## Applied Optimization
 
-The production USDZ files for ravioles, homard, and souffle were rebuilt with
-Pixar OpenUSD (`usd-core`) by converting package layers from text USDA to binary
-USDC and repacking with `UsdUtils.CreateNewUsdzPackage`.
+The production iOS Quick Look USDZ files for ravioles, homard, and souffle were
+rebuilt with Pixar OpenUSD (`usd-core`) by converting package layers from text
+USDA to binary USDC and repacking with `UsdUtils.CreateNewUsdzPackage`.
 
 This is a data-preserving optimization:
 
@@ -128,7 +131,7 @@ verify geometry, plate meshes, placement, materials, or resolved textures.
 python -m pip install --user usd-core
 $env:USDZ_VALIDATION_PYTHON = "python"
 npm.cmd run demo:validate-assets
-python scripts/optimize-usdz-binary-layers.py public/models/demo/ravioles-chevre-miel.usdz public/models/demo/review/ravioles-chevre-miel.candidate.usdz
+python scripts/optimize-usdz-binary-layers.py path/to/source/ravioles-chevre-miel.usdz assets/3d/work/ravioles-chevre-miel.candidate.usdz
 python scripts/compare-usdz-scenes.py path/to/original.usdz path/to/candidate.usdz
 ```
 

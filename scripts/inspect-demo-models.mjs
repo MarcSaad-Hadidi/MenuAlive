@@ -18,7 +18,7 @@ const TARGETS = [
   {
     label: "ravioles",
     glb: "ravioles-chevre-miel.glb",
-    usdz: "ravioles-chevre-miel.usdz"
+    usdz: ""
   },
   {
     label: "homard",
@@ -284,6 +284,11 @@ function parseUsdPoints(text) {
 }
 
 function inspectUsdz(target) {
+  if (!target.usdz) {
+    console.log(`\n${target.label.toUpperCase()} USDZ source legacy removed from public deploy tree`);
+    return;
+  }
+
   const filePath = join(DEMO_DIR, target.usdz);
   const zip = fflate.unzipSync(readFileSync(filePath));
   const geometryEntries = Object.entries(zip).filter(([name]) =>
