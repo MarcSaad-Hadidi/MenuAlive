@@ -12,7 +12,7 @@ const highlights = [
   },
   {
     title: "Une expérience sans application",
-    body: "Le QR code ouvre immédiatement le menu vivant, avec 3D / AR quand le plat s’y prête."
+    body: "Le QR code ouvre immédiatement le menu digital, avec 3D / AR quand le plat s’y prête."
   }
 ];
 

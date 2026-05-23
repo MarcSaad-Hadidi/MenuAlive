@@ -36,7 +36,6 @@ type ScrollDebugState = {
 declare global {
   interface Window {
     __VISTAIRE_SCROLL_DEBUG__?: ScrollDebugState;
-    __MENUALIVE_SCROLL_DEBUG__?: ScrollDebugState;
   }
 }
 
@@ -264,7 +263,6 @@ export function DesktopLandingHero() {
       };
 
       window.__VISTAIRE_SCROLL_DEBUG__ = debug;
-      window.__MENUALIVE_SCROLL_DEBUG__ = debug;
     };
 
     const updateActiveChapter = (progress: number) => {
@@ -515,7 +513,6 @@ export function DesktopLandingHero() {
 
       trigger?.kill();
       delete window.__VISTAIRE_SCROLL_DEBUG__;
-      delete window.__MENUALIVE_SCROLL_DEBUG__;
     };
   }, []);
 

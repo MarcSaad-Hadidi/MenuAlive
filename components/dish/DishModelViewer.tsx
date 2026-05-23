@@ -18,6 +18,7 @@ import {
   isIosDevice,
   shouldShowArBrowserHandoff
 } from "@/lib/arEnvironment";
+import { resolveDishModelViewerSrc } from "@/lib/dishModelVariantSelection";
 import { resolveActiveQuickLookUsdzUrl } from "@/lib/quickLookAssets";
 
 const MV_INIT_TIMEOUT_MS = 12_000;
@@ -39,6 +40,7 @@ export type DishModelViewerProps = {
     | "name"
     | "model3dUrl"
     | "webModel3dUrl"
+    | "mobileModel3dUrl"
     | "arModel3dUrl"
     | "arUsdzUrl"
     | "arVisualStatus"
@@ -117,6 +119,11 @@ function readArClientEnvironment(iosSrc: string): ArClientEnvironment {
 function getCurrentPageUrl(): string {
   if (typeof window === "undefined") return "";
   return window.location.href;
+}
+
+function readPrefersMobileModel(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(max-width: 767px)").matches;
 }
 
 async function copyPageLink(): Promise<boolean> {
@@ -337,6 +344,9 @@ export function DishModelViewer({
   const [modelAttempt, setModelAttempt] = useState(0);
   const [handoffDismissed, setHandoffDismissed] = useState(false);
   const [copyConfirmed, setCopyConfirmed] = useState(false);
+  const [prefersMobileModel, setPrefersMobileModel] = useState(
+    readPrefersMobileModel
+  );
   const loadWatchRef = useRef<ModelViewerElement | null>(null);
   const listenerCleanupRef = useRef<(() => void) | null>(null);
 
@@ -349,11 +359,22 @@ export function DishModelViewer({
     () => dish.webModel3dUrl?.trim() ?? "",
     [dish.webModel3dUrl]
   );
+  const mobileModelSrc = useMemo(
+    () => dish.mobileModel3dUrl?.trim() ?? "",
+    [dish.mobileModel3dUrl]
+  );
   const arModelSrc = useMemo(
     () => dish.arModel3dUrl?.trim() ?? "",
     [dish.arModel3dUrl]
   );
-  const modelSrc = arModelSrc || webModelSrc || originalModelSrc;
+  const modelSrc = resolveDishModelViewerSrc({
+    arModelSrc,
+    isAndroid,
+    mobileModelSrc,
+    originalModelSrc,
+    prefersMobileModel,
+    webModelSrc
+  });
   const hasModel = Boolean(modelSrc);
   const iosSrc = useMemo(
     () =>
@@ -374,6 +395,14 @@ export function DishModelViewer({
   const androidNativeArEnabled = isAndroid && !androidArUnavailable;
   const directIosQuickLookHref =
     isIos && !needsIosHandoff && iosSrc ? iosSrc : "";
+
+  useEffect(() => {
+    if (!window.matchMedia) return undefined;
+    const media = window.matchMedia("(max-width: 767px)");
+    const onChange = () => setPrefersMobileModel(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   const markModelLoaded = useCallback(() => {
     setModelLoaded(true);

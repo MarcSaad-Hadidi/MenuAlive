@@ -159,10 +159,10 @@ export function DishDetail({ dish }: DishDetailProps) {
   }, [dish.categorySlug, dish.slug]);
 
   useEffect(() => {
-    if (!shouldPrefetchQuickLook) return undefined;
+    if (!shouldPrefetchQuickLook || !hasMountedPlat3d) return undefined;
 
     return prefetchUsdzForQuickLook(dish, setQuickLookPrefetchState);
-  }, [dish, shouldPrefetchQuickLook]);
+  }, [dish, hasMountedPlat3d, shouldPrefetchQuickLook]);
 
   const showAndScrollToPlat3d = useCallback(() => {
     setHasMountedPlat3d(true);

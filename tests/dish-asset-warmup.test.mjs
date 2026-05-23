@@ -149,6 +149,33 @@ test("iPhone Quick Look prefetch warms only the current dish AR-lite USDZ with a
   assert.deepEqual(states, ["preparing", "ready"]);
 });
 
+test("iPhone Quick Look prefetch accepts stable production restaurant USDZ URLs", async () => {
+  const env = installBrowserLikeEnvironment({
+    origin: "http://localhost:3010",
+    platform: "iPhone",
+    userAgent:
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
+  });
+  const states = [];
+
+  prefetchUsdzForQuickLook(
+    {
+      model3dUrl: "/models/demo/homard-bisque.glb",
+      arUsdzUrl:
+        "/models/restaurants/maison-elyse/main/homard-bisque/v1/ios/homard-bisque-ios-quicklook-ultra.usdz",
+      arVisualStatus: "approved"
+    },
+    (state) => states.push(state)
+  );
+  await env.settleWarmupQueue();
+
+  assert.deepEqual(env.fetchCalls, [
+    "http://localhost:3010/models/restaurants/maison-elyse/main/homard-bisque/v1/ios/homard-bisque-ios-quicklook-ultra.usdz"
+  ]);
+  assert.equal(env.fetchCalls[0].includes("?"), false);
+  assert.deepEqual(states, ["preparing", "ready"]);
+});
+
 test("iPhone Quick Look prefetch stays idle for a visually failed dish without approved AR USDZ", async () => {
   const env = installBrowserLikeEnvironment({
     origin: "http://localhost:3006",

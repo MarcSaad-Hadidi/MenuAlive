@@ -7,6 +7,7 @@ import {
   getDishBySlug,
   getRestaurant
 } from "@/lib/demoMenuData";
+import { resolveDemoDishModelAssets } from "@/lib/dishAssetManifests.server";
 import { absoluteUrl, buildBreadcrumbJsonLd } from "@/lib/seo";
 
 type PageProps = {
@@ -19,7 +20,8 @@ export function generateStaticParams(): { slug: string }[] {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const dish = getDishBySlug(slug);
+  const rawDish = getDishBySlug(slug);
+  const dish = rawDish ? resolveDemoDishModelAssets(rawDish) : undefined;
   const restaurant = getRestaurant();
   if (!dish) {
     return {
@@ -73,10 +75,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DishPage({ params }: PageProps) {
   const { slug } = await params;
-  const dish = getDishBySlug(slug);
-  if (!dish) {
+  const rawDish = getDishBySlug(slug);
+  if (!rawDish) {
     notFound();
   }
+  const dish = resolveDemoDishModelAssets(rawDish);
 
   return (
     <>

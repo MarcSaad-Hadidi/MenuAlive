@@ -18,7 +18,7 @@ export function SiteFooter() {
             Vistaire
           </Link>
           <p className="mt-2 max-w-sm leading-6">
-            Menu vivant premium pour restaurants.
+            Menu digital premium pour restaurants.
           </p>
           <Link
             href="/owner"

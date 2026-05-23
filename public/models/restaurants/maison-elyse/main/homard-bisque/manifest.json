@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "restaurantSlug": "maison-elyse",
+  "menuSlug": "main",
+  "dishSlug": "homard-bisque",
+  "activeVersion": "v1",
+  "status": "review",
+  "validationStatus": "review",
+  "isSignature": true,
+  "sourceNote": "Migrated from demo assets for the first production manifest pilot. Original demo assets remain retained and unchanged.",
+  "variants": {
+    "web": {
+      "url": "/models/restaurants/maison-elyse/main/homard-bisque/v1/web/homard-bisque-web.glb",
+      "sourceUrl": "/models/demo/homard-bisque-meshopt-73be7175.glb",
+      "bytes": 17732992,
+      "sha256": "73be717526e94964c581de1e2bcf983e826a2ea16ee71044e10651b8eb6b69c3",
+      "validationStatus": "review",
+      "notes": [
+        "Meshopt demo GLB copied as the web pilot variant.",
+        "Not suitable as an AR-lite default."
+      ]
+    },
+    "arLite": {
+      "url": "/models/restaurants/maison-elyse/main/homard-bisque/v1/ar-lite/homard-bisque-ar-lite.glb",
+      "sourceUrl": "/models/demo/ar-lite/homard-bisque-ar-lite.glb",
+      "bytes": 12032888,
+      "sha256": "76c30180ca12fafd8f6ed792ffd04fd7f1400cc0923741ab53938d067e92db11",
+      "validationStatus": "review",
+      "notes": [
+        "Copied from the existing demo AR-lite path.",
+        "Android AR still requires real-device revalidation before publication."
+      ]
+    },
+    "iosUsdz": {
+      "url": "/models/restaurants/maison-elyse/main/homard-bisque/v1/ios/homard-bisque-ios-quicklook-ultra.usdz",
+      "sourceUrl": "/models/demo/ar-lite/homard-bisque-ios-quicklook-ultra.usdz",
+      "bytes": 5239742,
+      "sha256": "2bc1c0e6f33b807417bd03e931ae552a724935b8b193c419cdbf989337a18a13",
+      "validationStatus": "approved",
+      "notes": [
+        "Stable Quick Look URL without query or hash.",
+        "Same bytes and hash as the current demo-approved iOS asset."
+      ]
+    }
+  },
+  "budgets": {
+    "source": "scripts/3d/shared/budgets.mjs",
+    "profile": "signature",
+    "webGlbTargetBytes": 6000000,
+    "webGlbFailBytes": 12000000,
+    "arLiteGlbTargetBytes": 4000000,
+    "arLiteGlbFailBytes": 8000000,
+    "iosUsdzTargetBytes": 3500000,
+    "iosUsdzFailBytes": 5242880,
+    "mobile": "not copied: no distinct optimized mobile GLB exists in public/models/demo",
+    "poster": "not copied: no stable poster exists in public/models/demo"
+  },
+  "physicalDimensions": {
+    "unit": "meters",
+    "width": 0.21,
+    "height": 0.075,
+    "depth": 0.21,
+    "status": "approximate_from_existing_demo_ar_lite_bounds"
+  },
+  "validation": {
+    "warnings": [
+      "Review-stage migration manifest: not published.",
+      "web exceeds the current production target and fail budget; retained only because it is the existing optimized demo web variant.",
+      "arLite exceeds the current production target and fail budget; retained only because it is the existing demo AR-lite variant.",
+      "iosUsdz is approved in demo data but remains close to the 5 MiB iPhone budget.",
+      "No mobile or poster variant was copied because no safe dedicated source exists in public/models/demo."
+    ],
+    "fails": []
+  },
+  "generatedAt": "2026-05-22T00:00:00.000Z",
+  "approvedAt": null,
+  "publishedAt": null
+}

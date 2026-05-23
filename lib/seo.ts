@@ -144,13 +144,7 @@ export function buildSitemapEntries(
       changeFrequency: "weekly",
       priority: 0.9
     },
-    ...availableDishEntries,
-    {
-      url: absoluteUrl("/admin", env),
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.75
-    }
+    ...availableDishEntries
   ];
 }
 

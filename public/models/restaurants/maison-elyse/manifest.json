@@ -7,6 +7,12 @@
       "dishes": [
         "maison-elyse-n1"
       ]
+    },
+    {
+      "menuSlug": "main",
+      "dishes": [
+        "homard-bisque"
+      ]
     }
   ],
   "dishes": [
@@ -16,10 +22,18 @@
       "activeVersion": "v1",
       "status": "review",
       "validationStatus": "review"
+    },
+    {
+      "menuSlug": "main",
+      "dishSlug": "homard-bisque",
+      "activeVersion": "v1",
+      "status": "review",
+      "validationStatus": "review"
     }
   ],
   "activeVersions": {
-    "demo/maison-elyse-n1": "v1"
+    "demo/maison-elyse-n1": "v1",
+    "main/homard-bisque": "v1"
   },
   "globalValidationStatus": "review",
   "generatedAt": "2026-05-22T00:00:00.000Z"

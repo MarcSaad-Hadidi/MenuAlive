@@ -198,7 +198,6 @@ export function ScrollScrubVideoHero() {
     const writeDebugState = () => {
       const debugWindow = window as unknown as {
         __VISTAIRE_SCROLL_DEBUG__?: ScrollDebugState;
-        __MENUALIVE_SCROLL_DEBUG__?: ScrollDebugState;
       };
       const debug: ScrollDebugState = {
         progress: progressRef.current,
@@ -213,7 +212,6 @@ export function ScrollScrubVideoHero() {
       };
 
       debugWindow.__VISTAIRE_SCROLL_DEBUG__ = debug;
-      debugWindow.__MENUALIVE_SCROLL_DEBUG__ = debug;
     };
 
     const revealVideo = () => {
@@ -317,7 +315,6 @@ export function ScrollScrubVideoHero() {
     return () => {
       const debugWindow = window as unknown as {
         __VISTAIRE_SCROLL_DEBUG__?: ScrollDebugState;
-        __MENUALIVE_SCROLL_DEBUG__?: ScrollDebugState;
       };
       cancelled = true;
       video.removeEventListener("loadedmetadata", onLoadedMetadata);
@@ -335,7 +332,6 @@ export function ScrollScrubVideoHero() {
       }
 
       delete debugWindow.__VISTAIRE_SCROLL_DEBUG__;
-      delete debugWindow.__MENUALIVE_SCROLL_DEBUG__;
       setReadyRequestId((current) =>
         current === activeLoadRequest.id ? null : current
       );

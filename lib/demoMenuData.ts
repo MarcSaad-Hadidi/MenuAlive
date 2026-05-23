@@ -57,6 +57,7 @@ export type Dish = {
   preparationTime: string;
   model3dUrl: string;
   webModel3dUrl?: string;
+  mobileModel3dUrl?: string;
   arModel3dUrl?: string;
   usdzUrl: string;
   arUsdzUrl?: string;

@@ -4,6 +4,8 @@ const BRAVE_IOS_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1 Brave/1.67.0";
 const IOS_SAFARI_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
+const HOMARD_PRODUCTION_QUICK_LOOK_URL =
+  "/models/restaurants/maison-elyse/main/homard-bisque/v1/ios/homard-bisque-ios-quicklook-ultra.usdz";
 
 async function simulateIosBrowser(page: Page, userAgent: string) {
   await page.addInitScript((ua) => {
@@ -88,7 +90,7 @@ test.describe("AR fallback resilience", () => {
     await expect(arButton).toBeVisible({ timeout: 5_000 });
     await expect(arButton).toHaveAttribute(
       "href",
-      "/models/demo/ar-lite/homard-bisque-ios-quicklook-ultra.usdz"
+      HOMARD_PRODUCTION_QUICK_LOOK_URL
     );
     await expect(
       page.locator('model-viewer button[slot="ar-button"]', {

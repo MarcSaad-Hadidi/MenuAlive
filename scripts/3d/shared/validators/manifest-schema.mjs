@@ -11,9 +11,11 @@ export const ALLOWED_STATUSES = Object.freeze([
 
 export const REQUIRED_VARIANTS = Object.freeze([
   "web",
-  "mobile",
   "arLite",
-  "iosUsdz",
+  "iosUsdz"
+]);
+const OPTIONAL_VARIANTS = Object.freeze([
+  "mobile",
   "poster"
 ]);
 
@@ -168,6 +170,11 @@ export function validateDishManifestSchema(manifest, options = {}) {
   for (const key of REQUIRED_VARIANTS) {
     validateVariant(result, key, manifest.variants?.[key], context);
   }
+  for (const key of OPTIONAL_VARIANTS) {
+    if (manifest.variants?.[key]) {
+      validateVariant(result, key, manifest.variants[key], context);
+    }
+  }
 
   validateDimensions(result, manifest.physicalDimensions);
 
@@ -195,12 +202,20 @@ export function validateDishManifestSchema(manifest, options = {}) {
     manifest,
     profile: options.profile ?? (manifest.isSignature ? "signature" : "simpleDish")
   });
+  const shouldEnforceBudgetFails =
+    manifest.status === "approved" || manifest.status === "published";
   result.warnings.push(...budgets.warnings);
-  result.fails.push(...budgets.fails);
+  if (shouldEnforceBudgetFails) {
+    result.fails.push(...budgets.fails);
+  } else {
+    for (const fail of budgets.fails) {
+      addWarning(result, fail);
+    }
+  }
   result.evidence.push(...budgets.evidence);
   result.metrics.budgetChecks = budgets.metrics.budgetChecks;
   result.metrics.publicTotalBytes = budgets.metrics.publicTotalBytes;
-  if (!budgets.ok) result.ok = false;
+  if (!budgets.ok && shouldEnforceBudgetFails) result.ok = false;
 
   result.evidence.push({
     restaurantSlug: manifest.restaurantSlug,

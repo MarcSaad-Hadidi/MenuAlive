@@ -7,6 +7,7 @@ import {
   getCategories,
   getRestaurant
 } from "@/lib/demoMenuData";
+import { resolveDemoDishesModelAssets } from "@/lib/dishAssetManifests.server";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 
 function PresentationPathway() {
@@ -51,7 +52,7 @@ function PresentationPathway() {
 export default function DemoPage() {
   const restaurant = getRestaurant();
   const categories = getCategories();
-  const dishes = getAllDishes();
+  const dishes = resolveDemoDishesModelAssets(getAllDishes());
 
   return (
     <>

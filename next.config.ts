@@ -22,6 +22,11 @@ const RESTAURANT_STATIC_ASSET_HEADERS = [
   { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
 ] as const;
 
+const RESTAURANT_MANIFEST_HEADERS = [
+  { key: "Content-Type", value: "application/json" },
+  { key: "Cache-Control", value: "public, max-age=300, stale-while-revalidate=3600" },
+] as const;
+
 const GLB_RESTAURANT_HEADERS = [
   { key: "Content-Type", value: "model/gltf-binary" },
   ...RESTAURANT_STATIC_ASSET_HEADERS,
@@ -50,6 +55,10 @@ const nextConfig: NextConfig = {
       {
         source: "/models/restaurants/:path*.glb",
         headers: [...GLB_RESTAURANT_HEADERS],
+      },
+      {
+        source: "/models/restaurants/:path*.json",
+        headers: [...RESTAURANT_MANIFEST_HEADERS],
       },
       {
         source: "/models/restaurants/:path*.png",

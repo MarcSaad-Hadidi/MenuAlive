@@ -139,7 +139,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       }
     ],
     visual: {
-      heading: "Du QR code au menu vivant",
+      heading: "Du QR code au menu digital",
       body:
         "Le parcours doit rester simple: scanner, comprendre, choisir, puis approfondir seulement si le client en a envie.",
       steps: [
@@ -409,7 +409,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       {
         href: "/menu-pdf-vs-menu-digital",
         label: "Alternative au menu PDF",
-        description: "Comparer concrètement PDF QR et menu vivant."
+        description: "Comparer concrètement PDF QR et menu digital."
       },
       {
         href: "/demo",

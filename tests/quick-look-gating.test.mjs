@@ -73,6 +73,32 @@ test("Quick Look resolver rejects known real-device failed USDZ filenames even i
   }
 });
 
+test("Quick Look resolver accepts approved production restaurant USDZ URLs", () => {
+  const arUsdzUrl =
+    "/models/restaurants/maison-elyse/main/homard-bisque/v1/ios/homard-bisque-ios-quicklook-ultra.usdz";
+
+  assert.equal(
+    resolveActiveQuickLookUsdzUrl({
+      arUsdzUrl,
+      arVisualStatus: "approved"
+    }),
+    arUsdzUrl
+  );
+
+  assert.equal(
+    dishHasImmersiveAsset({
+      model3dUrl: "",
+      webModel3dUrl: "",
+      mobileModel3dUrl: "",
+      arModel3dUrl: "",
+      usdzUrl: "",
+      arUsdzUrl,
+      arVisualStatus: "approved"
+    }),
+    true
+  );
+});
+
 test("runtime and validator policy surfaces deny known failed real-device USDZ filenames", () => {
   const policyFiles = [
     join(ROOT, "lib", "quickLookAssets.ts"),

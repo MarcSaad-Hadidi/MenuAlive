@@ -18,7 +18,7 @@ export const videoChapters: VideoChapter[] = [
     start: 0,
     end: 0.24,
     eyebrow: "Vistaire",
-    title: "Du QR code au menu vivant.",
+    title: "Du QR code au menu digital.",
     body: "Le client scanne à table. L’expérience s’ouvre instantanément, sans application.",
     cta: "Explorer l'expérience",
     ctaHref: "/demo",

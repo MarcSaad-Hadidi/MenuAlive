@@ -29,27 +29,41 @@ const KNOWN_FAILED_REAL_DEVICE_USDZ_URLS = new Set([
   "/models/demo/ar-lite/souffle-chocolat-ios-quicklook-ultra.usdz"
 ]);
 
+function isActiveQuickLookUsdzUrl(
+  dish: Pick<Dish, "arUsdzUrl" | "arVisualStatus">
+): boolean {
+  if (dish.arVisualStatus !== "approved") return false;
+  const url = dish.arUsdzUrl?.trim() ?? "";
+  if (!url) return false;
+  if (!url.endsWith(".usdz")) return false;
+  if (/[?#]/.test(url)) return false;
+  if (
+    !url.startsWith("/models/demo/ar-lite/") &&
+    !url.startsWith("/models/restaurants/")
+  ) {
+    return false;
+  }
+  return !KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(url);
+}
+
 export function dishHasImmersiveAsset(
   dish: Pick<
     Dish,
     | "model3dUrl"
     | "webModel3dUrl"
+    | "mobileModel3dUrl"
     | "arModel3dUrl"
     | "usdzUrl"
     | "arUsdzUrl"
     | "arVisualStatus"
   >
 ): boolean {
-  const arUsdzUrl = dish.arUsdzUrl?.trim() ?? "";
   return Boolean(
     dish.arModel3dUrl?.trim() ||
+      dish.mobileModel3dUrl?.trim() ||
       dish.webModel3dUrl?.trim() ||
       dish.model3dUrl?.trim() ||
-      (dish.arVisualStatus === "approved" &&
-        arUsdzUrl.startsWith("/models/demo/ar-lite/") &&
-        arUsdzUrl.endsWith(".usdz") &&
-        !/[?#]/.test(arUsdzUrl) &&
-        !KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(arUsdzUrl))
+      isActiveQuickLookUsdzUrl(dish)
   );
 }
 

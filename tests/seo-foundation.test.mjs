@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import {
   INTERNAL_ROBOTS_DISALLOW,
@@ -50,8 +52,7 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
     "https://www.vistaire.ca/menu-pdf-vs-menu-digital",
     "https://www.vistaire.ca/demo",
     "https://www.vistaire.ca/demo/dishes/homard-bisque",
-    "https://www.vistaire.ca/demo/dishes/ravioles-romarin",
-    "https://www.vistaire.ca/admin"
+    "https://www.vistaire.ca/demo/dishes/ravioles-romarin"
   ]);
   assert.deepEqual(
     PUBLIC_SEO_SITEMAP_ENTRIES.map((entry) => [
@@ -66,11 +67,21 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
       ["/menu-pdf-vs-menu-digital", "monthly", 0.84]
     ]
   );
-  for (const internalPath of ["/owner", "/sign-in", "/todos", "/api/"]) {
+  for (const internalPath of ["/admin", "/owner", "/sign-in", "/todos", "/api/"]) {
     assert.equal(urls.some((url) => url.includes(internalPath)), false);
   }
   assert.equal(entries.every((entry) => entry.lastModified === lastModified), true);
   assert.equal(entries.every((entry) => entry.priority > 0 && entry.priority <= 1), true);
+});
+
+test("keeps public admin demo visible but out of search indexes", () => {
+  const source = readFileSync(
+    join(process.cwd(), "app", "admin", "layout.tsx"),
+    "utf8"
+  );
+
+  assert.match(source, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true/s);
+  assert.match(source, /Aper(?:Ã§|ç)u restaurateur de d(?:Ã©|é)monstration/);
 });
 
 test("allows useful crawlers while keeping internal surfaces out of robots crawl", () => {

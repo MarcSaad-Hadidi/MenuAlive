@@ -86,6 +86,52 @@ test("production manifest rejects unstable iOS Quick Look URLs", () => {
   assert.match(result.fails.join("\n"), /iosUsdz.*query|hash/i);
 });
 
+test("production manifest allows missing mobile and poster variants during migration", () => {
+  const requiredVariants = { ...validManifest.variants };
+  delete requiredVariants.mobile;
+  delete requiredVariants.poster;
+  const result = validateDishManifest(
+    {
+      ...validManifest,
+      variants: requiredVariants
+    },
+    { context: "production" }
+  );
+
+  assert.equal(result.valid, true);
+  assert.deepEqual(result.fails, []);
+});
+
+test("review manifests report budget overages as warnings until publication approval", () => {
+  const overBudgetManifest = {
+    ...validManifest,
+    variants: {
+      ...validManifest.variants,
+      web: {
+        ...validManifest.variants.web,
+        bytes: 13_000_000
+      }
+    }
+  };
+
+  const reviewResult = validateDishManifest(overBudgetManifest, {
+    context: "production"
+  });
+  assert.equal(reviewResult.valid, true);
+  assert.match(reviewResult.warnings.join("\n"), /web.*fail budget/i);
+
+  const approvedResult = validateDishManifest(
+    {
+      ...overBudgetManifest,
+      status: "approved",
+      approvedAt: "2026-05-22T00:00:00.000Z"
+    },
+    { context: "production" }
+  );
+  assert.equal(approvedResult.valid, false);
+  assert.match(approvedResult.fails.join("\n"), /web.*fail budget/i);
+});
+
 test("production manifest rejects assets outside public restaurant model roots", () => {
   const result = validateDishManifest(
     {

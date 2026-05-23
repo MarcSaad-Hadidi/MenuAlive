@@ -138,8 +138,13 @@ function resolveDishUsdzUrl(dish: WarmableDish): string {
   const url = dish.arUsdzUrl?.trim() ?? "";
   if (!url) return "";
   if (/[?#]/.test(url)) return "";
-  if (!url.startsWith("/models/demo/ar-lite/")) return "";
   if (!url.endsWith(".usdz")) return "";
+  if (
+    !url.startsWith("/models/demo/ar-lite/") &&
+    !url.startsWith("/models/restaurants/")
+  ) {
+    return "";
+  }
   if (KNOWN_FAILED_REAL_DEVICE_USDZ_URLS.has(url)) return "";
   return url;
 }
@@ -269,13 +274,19 @@ export function warmAsset(url: string, kind: AssetKind): void {
 
 type WarmableDish = Pick<
   Dish,
-  "model3dUrl" | "webModel3dUrl" | "arModel3dUrl" | "arUsdzUrl" | "arVisualStatus"
+  | "model3dUrl"
+  | "webModel3dUrl"
+  | "mobileModel3dUrl"
+  | "arModel3dUrl"
+  | "arUsdzUrl"
+  | "arVisualStatus"
 >;
 
 function getWarmupOrder(dish: WarmableDish): AssetWarmupRequest[] {
   const glbUrl =
-    dish.arModel3dUrl?.trim() ||
+    dish.mobileModel3dUrl?.trim() ||
     dish.webModel3dUrl?.trim() ||
+    dish.arModel3dUrl?.trim() ||
     dish.model3dUrl?.trim();
   const usdzUrl = resolveDishUsdzUrl(dish);
   const requests: AssetWarmupRequest[] = [];

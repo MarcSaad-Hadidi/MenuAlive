@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -233,4 +233,12 @@ test("network header validator uses Content-Range total when HEAD falls back to 
       ["GET", "bytes=0-0"]
     ]
   );
+});
+
+test("next config explicitly covers restaurant manifest JSON headers", () => {
+  const source = readFileSync(join(process.cwd(), "next.config.ts"), "utf8");
+
+  assert.match(source, /source:\s*"\/models\/restaurants\/:path\*\.json"/);
+  assert.match(source, /Content-Type",\s*value:\s*"application\/json"/);
+  assert.match(source, /max-age=300/);
 });
