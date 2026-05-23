@@ -40,11 +40,21 @@ const GLB_RESTAURANT_HEADERS = [
   ...RESTAURANT_STATIC_ASSET_HEADERS,
 ] as const;
 
+const FRAME_PUBLIC_ALIAS_REWRITES = [
+  {
+    source: "/frames/vistaire/:path*",
+    destination: "/frames/menualive/:path*",
+  },
+] as const;
+
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   devIndicators: false,
   images: {
     qualities: [75, 82, 90],
+  },
+  async rewrites() {
+    return [...FRAME_PUBLIC_ALIAS_REWRITES];
   },
   async headers() {
     return [

@@ -67,7 +67,7 @@ project-root/
   index.html
   css/style.css
   js/app.js
-  frames/frame_0001.webp ...
+  frames/frame_%04d.webp ...
 ```
 
 No bundler. Vanilla HTML/CSS/JS + CDN libraries.

@@ -114,7 +114,7 @@ button[aria-label="Keyless prompt"] {
   position: absolute;
   inset: -2.5rem;
   pointer-events: none;
-  background-image: url("/frames/menualive/frame_0001.webp");
+  background-image: url("/frames/vistaire/frame_0001.webp");
   background-position: center;
   background-size: cover;
   filter: blur(22px);

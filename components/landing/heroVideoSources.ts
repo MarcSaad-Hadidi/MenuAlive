@@ -34,4 +34,4 @@ export const HERO_VIDEO_SOURCES: Record<HeroVideoVariant, HeroVideoSource> = {
   }
 };
 
-export const HERO_VIDEO_POSTER = "/frames/menualive/frame_0001.webp";
+export const HERO_VIDEO_POSTER = "/frames/vistaire/frame_0001.webp";

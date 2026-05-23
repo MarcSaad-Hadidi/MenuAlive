@@ -2,11 +2,12 @@ import { readdir, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 /**
- * Script de synchro : compte les frames dans `public/frames/menualive` (source réelle actuelle).
- * Futur : dupliquer la logique ou ajouter un flag pour `public/frames/vistaire` sans casser le déploiement.
+ * Script de synchro : compte les frames dans le dossier source conserve.
+ * Le chemin public actif reste `/frames/vistaire/*` via rewrite Next.
  */
-const LEGACY_FRAMES_DIR_SEGMENT = "menualive";
-const framesDir = join(process.cwd(), "public", "frames", LEGACY_FRAMES_DIR_SEGMENT);
+const FRAME_SOURCE_DIR_SEGMENT = "menualive";
+const PUBLIC_FRAMES_PATH_SEGMENT = "vistaire";
+const framesDir = join(process.cwd(), "public", "frames", FRAME_SOURCE_DIR_SEGMENT);
 const frameConfigPath = join(process.cwd(), "lib", "frameConfig.ts");
 const frameNamePattern = /^frame_(\d{4})\.(webp|jpe?g)$/i;
 
@@ -44,21 +45,15 @@ if (missingFrames.length > 0) {
 
 const contents = `/**
  * Segments de dossiers sous \`public/frames/\`.
- * Les assets actuels restent sous \`menualive\` (chemin technique / legacy).
- * Quand une séquence \`vistaire\` sera publiée dans \`public/frames/vistaire\`,
- * basculer \`ACTIVE_FRAMES_SEGMENT\` vers \`FUTURE_VISTAIRE_FRAMES_SEGMENT\`.
+ * Le chemin public actif utilise Vistaire; Next preserve les anciens liens
+ * avec une rewrite serveur definie dans \`next.config.ts\`.
  */
-export const LEGACY_FRAMES_PATH_SEGMENT = "menualive" as const;
-
-export const FUTURE_VISTAIRE_FRAMES_SEGMENT = "vistaire" as const;
-
-const ACTIVE_FRAMES_SEGMENT: typeof LEGACY_FRAMES_PATH_SEGMENT =
-  LEGACY_FRAMES_PATH_SEGMENT;
+export const PUBLIC_FRAMES_PATH_SEGMENT = "${PUBLIC_FRAMES_PATH_SEGMENT}" as const;
 
 export const frameConfig = {
   frameCount: ${extensionFiles.length},
   framePath: (index: number) =>
-    \`/frames/\${ACTIVE_FRAMES_SEGMENT}/frame_\${String(index + 1).padStart(4, "0")}.${extension}\`
+    \`/frames/\${PUBLIC_FRAMES_PATH_SEGMENT}/frame_\${String(index + 1).padStart(4, "0")}.${extension}\`
 };
 `;
 
