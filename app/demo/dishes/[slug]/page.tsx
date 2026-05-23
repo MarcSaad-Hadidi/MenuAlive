@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       canonical: canonicalPath
     },
     robots: {
-      index: dish.isAvailable,
+      index: false,
       follow: true
     },
     openGraph: {

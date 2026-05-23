@@ -404,7 +404,7 @@ export function ScrollScrubVideoHero() {
             <DynamicVideoText chapter={chapter} />
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-32 bg-gradient-to-t from-[#080706] via-[#080706]/72 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-32 bg-gradient-to-t from-[#080706] via-[#080706]/72 to-transparent" />
       </div>
     </section>
   );

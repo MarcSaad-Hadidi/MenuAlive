@@ -3,16 +3,16 @@ import { PrimaryButton } from "@/components/PrimaryButton";
 
 const highlights = [
   {
-    title: "Une carte plus lisible",
-    body: "Les plats, allergènes et options restent faciles à parcourir pendant le service."
+    title: "Le menu client",
+    body: "Une carte mobile rapide à parcourir, avec photos, allergènes, accords et fiches plats claires."
   },
   {
-    title: "Des signatures mieux valorisées",
-    body: "Chaque fiche met en scène l’image, le récit et les détails utiles du plat."
+    title: "La 3D/AR utile",
+    body: "Quelques signatures peuvent être vues en volume quand cela apporte une vraie compréhension du plat."
   },
   {
-    title: "Une expérience sans application",
-    body: "Le QR code ouvre immédiatement le menu digital, avec 3D / AR quand le plat s’y prête."
+    title: "L’aperçu restaurateur",
+    body: "Plats consultés, recherches et vues immersives montrent les signaux d’attention autour de la carte."
   }
 ];
 
@@ -25,28 +25,29 @@ export function DemoRequestSection() {
       <div className="relative mx-auto max-w-6xl">
         <div className="max-w-4xl">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-champagne/85">
-            Expérience exemple
+            Maison Élyse · démonstration
           </p>
           <h2 className="mt-5 font-display text-[clamp(2.4rem,5vw,5.2rem)] font-normal leading-[1.01] text-cream">
-            Une expérience pensée pour élever votre carte.
+            Parcourez Maison Élyse comme un client à table.
           </h2>
           <p className="mt-6 max-w-2xl text-base leading-7 text-[#d1c2aa] sm:text-lg sm:leading-8">
-            Vistaire transforme le QR code en moment visuel, rapide et mémorable,
-            fidèle à vos plats, à votre salle et à votre rythme de service.
+            Maison Élyse est une démonstration, pas une référence client
+            réelle : un parcours conçu pour montrer Vistaire en situation, du
+            menu client à la vue restaurateur.
           </p>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-[#b9aa94] sm:text-base">
-            Explorez Maison Élyse, un restaurant exemple conçu pour présenter le
-            menu client, puis passez à l’aperçu restaurateur pour lire l’activité
-            autour de la carte.
+            Ouvrez la carte mobile, explorez une fiche avec 3D quand elle est
+            disponible, puis passez côté restaurant pour lire les plats consultés,
+            les recherches et les vues immersives.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <PrimaryButton href="/demo" className="justify-center sm:w-auto">
-              Explorer le menu client
+              Voir le menu client
             </PrimaryButton>
             <Link
               href="/admin"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+              className="inline-flex min-h-12 max-w-full items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold leading-tight text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
             >
               Voir l’aperçu restaurateur
             </Link>

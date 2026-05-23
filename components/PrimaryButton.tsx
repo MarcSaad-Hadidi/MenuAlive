@@ -13,7 +13,7 @@ export function PrimaryButton({
 }: PrimaryButtonProps) {
   const sizeClass =
     size === "small"
-      ? "h-10 px-4 text-sm"
+      ? "min-h-11 px-4 py-2 text-sm"
       : "min-h-12 px-6 py-3 text-base";
 
   return (

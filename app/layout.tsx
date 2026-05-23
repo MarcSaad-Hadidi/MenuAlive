@@ -12,7 +12,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: getSiteUrl(),
   title: {
-    default: "Vistaire — Menu digital premium pour restaurants",
+    default: "Vistaire — Menu digital QR premium pour restaurants",
     template: `%s | ${SITE_NAME}`
   },
   description: DEFAULT_SITE_DESCRIPTION,
@@ -30,12 +30,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_CA",
     siteName: SITE_NAME,
-    title: "Vistaire — Menu digital premium pour restaurants",
+    title: "Vistaire — Menu digital QR premium pour restaurants",
     description: DEFAULT_SITE_DESCRIPTION
   },
   twitter: {
     card: "summary",
-    title: "Vistaire — Menu digital premium pour restaurants",
+    title: "Vistaire — Menu digital QR premium pour restaurants",
     description: DEFAULT_SITE_DESCRIPTION
   }
 };

@@ -1,7 +1,7 @@
 export const SITE_NAME = "Vistaire";
 export const SITE_URL_FALLBACK = "https://www.vistaire.ca";
 export const DEFAULT_SITE_DESCRIPTION =
-  "Vistaire transforme le QR code restaurant en menu digital premium, rapide, visuel et immersif avec fiches plats, vues 3D/AR quand disponibles et aperçu restaurateur.";
+  "Vistaire transforme le QR code à table en menu digital premium pour restaurants : fiches plats, photos, allergènes, 3D/AR sélective et aperçu restaurateur.";
 
 const SITE_URL_ENV_KEYS = [
   "NEXT_PUBLIC_SITE_URL",
@@ -110,19 +110,10 @@ export function absoluteUrl(path = "/", env?: SiteUrlEnv): string {
 }
 
 export function buildSitemapEntries(
-  dishes: SitemapDish[],
+  _dishes: SitemapDish[],
   lastModified = new Date(),
   env?: SiteUrlEnv
 ): SitemapEntry[] {
-  const availableDishEntries = dishes
-    .filter((dish) => dish.isAvailable !== false)
-    .map((dish) => ({
-      url: absoluteUrl(`/demo/dishes/${dish.slug}`, env),
-      lastModified,
-      changeFrequency: "monthly" as const,
-      priority: 0.7
-    }));
-
   const seoPageEntries = PUBLIC_SEO_SITEMAP_ENTRIES.map((entry) => ({
     url: absoluteUrl(entry.path, env),
     lastModified,
@@ -143,8 +134,7 @@ export function buildSitemapEntries(
       lastModified,
       changeFrequency: "weekly",
       priority: 0.9
-    },
-    ...availableDishEntries
+    }
   ];
 }
 
@@ -195,15 +185,56 @@ export function buildVistaireServiceJsonLd(env?: SiteUrlEnv): JsonLdObject {
     "@type": "Service",
     "@id": `${absoluteUrl("/", env)}#service`,
     name: "Menu digital premium Vistaire",
-    serviceType: "Menu digital premium pour restaurants",
+    serviceType: "Menu digital QR premium pour restaurants",
+    url: absoluteUrl("/", env),
     description: DEFAULT_SITE_DESCRIPTION,
+    mainEntityOfPage: {
+      "@id": `${absoluteUrl("/", env)}#webpage`
+    },
     provider: {
       "@id": `${absoluteUrl("/", env)}#organization`
     },
-    areaServed: "Canada",
+    areaServed: {
+      "@type": "Country",
+      name: "Canada"
+    },
     audience: {
       "@type": "BusinessAudience",
       audienceType: "Restaurants"
+    },
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Fonctionnalités Vistaire",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Menu QR mobile"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Fiches plats visuelles"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "3D/AR sélective pour plats signatures"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Aperçu restaurateur des signaux d’attention"
+          }
+        }
+      ]
     }
   };
 }

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const viewports = [
+  { label: "iphone-375", width: 375, height: 812 },
   { label: "iphone-390", width: 390, height: 844 },
   { label: "iphone-430", width: 430, height: 932 },
   { label: "tablet-768", width: 768, height: 1024 },
@@ -148,6 +149,18 @@ test.describe("Landing scroll experience", () => {
   test("mobile viewport uses the upscaled mobile scrub video", async ({
     page
   }) => {
+    const desktopVideoRequests: string[] = [];
+
+    page.on("request", (request) => {
+      if (
+        request
+          .url()
+          .includes("/videos/optimized/upscaled-video-desktop-scrub.mp4")
+      ) {
+        desktopVideoRequests.push(request.url());
+      }
+    });
+
     await page.setViewportSize({ width: 390, height: 844 });
     await page.addInitScript(() => {
       Object.defineProperty(navigator, "deviceMemory", {
@@ -181,6 +194,9 @@ test.describe("Landing scroll experience", () => {
           .evaluate((video) => (video as HTMLVideoElement).currentSrc)
       )
       .toContain("/videos/optimized/upscaled-video-mobile-scrub.mp4");
+
+    await page.waitForTimeout(2_000);
+    expect(desktopVideoRequests).toEqual([]);
   });
 
   test("low-end desktop still uses the upscaled desktop scrub video", async ({
@@ -216,13 +232,45 @@ test.describe("Landing scroll experience", () => {
     );
   });
 
-  test('primary CTA "Explorer l\'expérience" points to /demo', async ({ page }) => {
+  test('hero primary CTA "Voir le menu client" points to /demo', async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const link = page
-      .getByRole("link", { name: /Explorer l'expérience/i })
+      .locator("#experience .chapter-copy")
+      .getByRole("link", { name: /Voir le menu client/i })
       .first();
     await expect(link).toBeVisible();
     await expect(link).toHaveAttribute("href", "/demo");
+  });
+
+  test("mobile landing keeps primary tap targets visible at 375px", async ({
+    page
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    const headerCta = page.locator('header nav a[href="/demo"]').first();
+    await expect(headerCta).toBeVisible();
+    const headerBox = await headerCta.boundingBox();
+    expect(headerBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+    const heroPrimary = page
+      .locator("#experience .chapter-copy")
+      .getByRole("link", { name: /Voir le menu client/i })
+      .first();
+    await expect(heroPrimary).toBeVisible();
+    const heroBox = await heroPrimary.boundingBox();
+    expect(heroBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+    await page.locator("#demo").scrollIntoViewIfNeeded();
+    await expect(
+      page.locator("#demo").getByRole("link", { name: /Voir le menu client/i })
+    ).toBeVisible();
+
+    const gap = await page.evaluate(() => {
+      const el = document.documentElement;
+      return el.scrollWidth - el.clientWidth;
+    });
+    expect(gap).toBeLessThanOrEqual(2);
   });
 
   test("benefits section follows hero (non-regression layout)", async ({ page }) => {

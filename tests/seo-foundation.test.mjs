@@ -35,7 +35,7 @@ test("resolves canonical production URLs with a stable Vistaire fallback", () =>
   );
 });
 
-test("builds a focused sitemap for public Vistaire surfaces", () => {
+test("builds a focused sitemap for public Vistaire brand surfaces", () => {
   const lastModified = new Date("2026-05-18T00:00:00.000Z");
   const entries = buildSitemapEntries(
     [{ slug: "homard-bisque" }, { slug: "ravioles-romarin" }],
@@ -50,9 +50,7 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
     "https://www.vistaire.ca/menu-qr-code-restaurant",
     "https://www.vistaire.ca/menu-3d-ar-restaurant",
     "https://www.vistaire.ca/menu-pdf-vs-menu-digital",
-    "https://www.vistaire.ca/demo",
-    "https://www.vistaire.ca/demo/dishes/homard-bisque",
-    "https://www.vistaire.ca/demo/dishes/ravioles-romarin"
+    "https://www.vistaire.ca/demo"
   ]);
   assert.deepEqual(
     PUBLIC_SEO_SITEMAP_ENTRIES.map((entry) => [
@@ -70,6 +68,7 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
   for (const internalPath of ["/admin", "/owner", "/sign-in", "/todos", "/api/"]) {
     assert.equal(urls.some((url) => url.includes(internalPath)), false);
   }
+  assert.equal(urls.some((url) => url.includes("/demo/dishes/")), false);
   assert.equal(entries.every((entry) => entry.lastModified === lastModified), true);
   assert.equal(entries.every((entry) => entry.priority > 0 && entry.priority <= 1), true);
 });
@@ -171,6 +170,10 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   assert.equal(faq["@type"], "FAQPage");
   assert.equal(breadcrumb["@type"], "BreadcrumbList");
   assert.equal(service.provider["@id"], organization["@id"]);
+  assert.equal(service.url, "https://www.vistaire.ca/");
+  assert.deepEqual(service.mainEntityOfPage, {
+    "@id": "https://www.vistaire.ca/#webpage"
+  });
   assert.equal(servicePage.provider["@id"], organization["@id"]);
   assert.equal(webPage.isPartOf["@id"], website["@id"]);
   assert.equal(webPage.publisher["@id"], organization["@id"]);

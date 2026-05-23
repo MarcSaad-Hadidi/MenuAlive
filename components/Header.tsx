@@ -19,7 +19,7 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
   const logoHref = isHome ? "#experience" : "/";
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-[#050403]/95 to-transparent pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
+    <header className="fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-[#050403]/95 to-transparent px-3 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
       <nav
         aria-label="Navigation principale"
         className="mx-auto flex min-h-14 max-w-7xl items-center justify-between gap-3 rounded-full border border-white/10 bg-[#070504]/92 px-3 py-2 shadow-[0_18px_80px_rgba(0,0,0,0.35)] sm:min-h-16 sm:gap-4 sm:px-5 sm:py-2.5"
@@ -77,15 +77,15 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
                     ctaName: "demo_header"
                   })
                 }
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/35 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:px-4"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/35 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:px-4"
                 aria-label="Ouvrir l'aperçu restaurateur"
               >
-                <span className="hidden min-[430px]:inline">Aperçu restaurateur</span>
-                <span className="min-[430px]:hidden">Aperçu</span>
+                <span className="hidden min-[480px]:inline">Aperçu restaurateur</span>
+                <span className="min-[480px]:hidden">Aperçu</span>
               </Link>
               <Link
                 href="/"
-                className="hidden text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline sm:text-sm"
+                className="hidden min-h-11 items-center text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[480px]:inline-flex sm:text-sm"
               >
                 Accueil Vistaire
               </Link>
@@ -94,13 +94,13 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
             <>
               <Link
                 href="/demo"
-                className="text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
+                className="inline-flex min-h-11 items-center text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
               >
                 Menu client
               </Link>
               <Link
                 href="/"
-                className="hidden text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline sm:text-sm"
+                className="hidden min-h-11 items-center text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[480px]:inline-flex sm:text-sm"
               >
                 Accueil Vistaire
               </Link>
@@ -109,13 +109,13 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
             <>
               <Link
                 href="/admin"
-                className="hidden text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[390px]:inline sm:text-sm"
+                className="hidden min-h-11 items-center text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[480px]:inline-flex sm:text-sm"
               >
                 Aperçu restaurateur
               </Link>
               <Link
                 href="/demo"
-                className="text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
+                className="inline-flex min-h-11 items-center text-xs font-medium text-[#cdbfa9] transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:text-sm"
               >
                 Menu exemple
               </Link>
