@@ -62,7 +62,7 @@ test.describe("Vistaire MVP smoke", () => {
       heroCopy.getByRole("link", { name: /Voir la carte/i }).first()
     ).toHaveAttribute("href", "/demo");
     await expect(
-      heroCopy.getByRole("link", { name: /aper.u de d.monstration/i }).first()
+      heroCopy.getByRole("link", { name: /aper.u restaurateur d.mo/i }).first()
     ).toHaveAttribute("href", "/admin");
 
     const demoSection = page.locator("#demo");
@@ -71,7 +71,7 @@ test.describe("Vistaire MVP smoke", () => {
       demoSection.getByRole("link", { name: /Voir la carte/i })
     ).toHaveAttribute("href", "/demo");
     await expect(
-      demoSection.getByRole("link", { name: /aper.u de d.monstration/i })
+      demoSection.getByRole("link", { name: /aper.u restaurateur d.mo/i })
     ).toHaveAttribute("href", "/admin");
     await expect(page.locator("#benefices")).toBeVisible();
     await expect(page.getByRole("contentinfo")).toBeVisible();

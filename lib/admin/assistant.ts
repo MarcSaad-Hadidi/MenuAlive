@@ -11,6 +11,7 @@ import {
 } from "@/lib/admin/recommendations";
 import {
   getDemoRestaurantId,
+  getPublicDemoRestaurantInsights,
   getRestaurantInsights
 } from "@/lib/analytics/insights";
 import type { AdminRecommendation } from "@/lib/demoAdminInsights";
@@ -86,9 +87,12 @@ export async function getAdminAssistantAnswer(args: {
   mode: AdminAssistantMode;
   question?: string;
   allowMistral?: boolean;
+  publicDemoOnly?: boolean;
 }): Promise<AdminAssistantResult> {
   const restaurantId = safeRestaurantId(args.restaurantId);
-  const result = await getRestaurantInsights(restaurantId);
+  const result = args.publicDemoOnly
+    ? getPublicDemoRestaurantInsights()
+    : await getRestaurantInsights(restaurantId);
   const insights = result.insights;
   const recommendations = buildRuleBasedAdminRecommendations(insights);
   const question = normalizeQuestion(args.question);

@@ -7,7 +7,7 @@ import { AdminTopDishes } from "@/components/admin/AdminTopDishes";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import {
   getDemoRestaurantId,
-  getRestaurantInsights
+  getPublicDemoRestaurantInsights
 } from "@/lib/analytics/insights";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export default async function AdminPage({
   const demoRestaurantId = getDemoRestaurantId();
   const restaurantId =
     params?.restaurantId === demoRestaurantId ? params.restaurantId : demoRestaurantId;
-  const result = await getRestaurantInsights(restaurantId);
+  const result = getPublicDemoRestaurantInsights();
   const insights = result.insights;
   const popularDish = insights.topDishes[0]?.dish;
   const summaryMetrics = insights.summary.filter((metric) =>
@@ -49,13 +49,13 @@ export default async function AdminPage({
           />
           <div className="relative max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne/85">
-              Aperçu de démonstration · {insights.serviceLabel}
+              Aperçu restaurateur démo · {insights.serviceLabel}
             </p>
             <h1 className="mt-4 font-display text-4xl font-normal leading-[1] text-cream [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
               Lecture restaurateur — {insights.generatedFor}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-[#cdbfa9] sm:text-lg">
-              Cet aperçu de démonstration met en évidence les signaux anonymes
+              Cet aperçu restaurateur de démonstration met en évidence les signaux anonymes
               autour de la carte convive : plats consultés, recherches, vues immersives et
               tendances d’attention.
             </p>

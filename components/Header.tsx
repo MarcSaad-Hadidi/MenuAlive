@@ -41,7 +41,7 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
               {isOwnerRoute
                 ? "Pilotage Vistaire"
                 : isAdminRoute
-                  ? "Aperçu démo"
+                  ? "Lecture restaurateur démo"
                   : "Démo Maison Élyse"}
             </span>
           ) : null}
@@ -80,8 +80,10 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
                 className="inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/35 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:px-4"
                 aria-label="Ouvrir l'aperçu restaurateur de démonstration"
               >
-                <span className="hidden min-[480px]:inline">Aperçu démo</span>
-                <span className="min-[480px]:hidden">Aperçu</span>
+                <span className="hidden min-[480px]:inline">
+                  Aperçu restaurateur démo
+                </span>
+                <span className="min-[480px]:hidden">Restaurateur</span>
               </Link>
               <Link
                 href="/"
@@ -111,7 +113,7 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
                 href="/admin"
                 className="hidden min-h-11 items-center text-xs font-medium text-champagne/90 transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne min-[480px]:inline-flex sm:text-sm"
               >
-                Aperçu démo
+                Aperçu restaurateur démo
               </Link>
               <Link
                 href="/demo"
@@ -132,7 +134,7 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
                 }
                 className="hidden min-h-11 items-center justify-center rounded-full border border-white/14 px-4 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne lg:inline-flex"
               >
-                Aperçu de démonstration
+                Aperçu restaurateur démo
               </Link>
               <PrimaryButton
                 href="/demo"

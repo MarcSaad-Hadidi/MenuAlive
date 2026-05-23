@@ -58,7 +58,8 @@ export async function POST(request: NextRequest) {
     restaurantId: validation.restaurantId,
     mode: validation.mode,
     question: validation.question,
-    allowMistral: true
+    allowMistral: false,
+    publicDemoOnly: true
   });
 
   return NextResponse.json({

@@ -43,8 +43,12 @@ export default async function OwnerPage() {
           <div className="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <h1 className="font-display text-[clamp(2.4rem,6vw,5.2rem)] font-normal leading-[0.98] text-cream">
-                Pilotage Vistaire
+                Pilotage interne Vistaire
               </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-[#a99a86]">
+                Espace interne Vistaire : ce n&apos;est pas un dashboard client,
+                un CMS menu ou un outil d&apos;upload complet.
+              </p>
               <p className="mt-5 max-w-2xl text-base leading-7 text-[#cdbfa9] sm:text-lg">
                 Suivez les restaurants, l&apos;activité des menus et les opportunités
                 à traiter.
@@ -53,7 +57,7 @@ export default async function OwnerPage() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-end">
               <PrimaryButton href="/admin" className="justify-center sm:w-auto">
-                Voir l’aperçu de démonstration
+                Voir l’aperçu restaurateur démo
               </PrimaryButton>
               <Link
                 href="/demo"
@@ -65,7 +69,7 @@ export default async function OwnerPage() {
                 href="#create-restaurant"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
               >
-                Créer un restaurant
+                Créer une fiche pilote
               </Link>
             </div>
           </div>
@@ -78,7 +82,7 @@ export default async function OwnerPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Restaurants total" value={data.stats.totalRestaurants} />
             <StatCard label="Restaurants actifs" value={data.stats.activeRestaurants} />
-            <StatCard label="Restaurants en présentation" value={data.stats.demoRestaurants} />
+            <StatCard label="Restaurants en démo" value={data.stats.demoRestaurants} />
             <StatCard
               label="Restaurants à configurer"
               value={data.stats.setupNeededRestaurants}
@@ -179,10 +183,11 @@ export default async function OwnerPage() {
               id="create-restaurant-heading"
               className="font-display text-2xl text-cream"
             >
-              Créer un restaurant
+              Créer une fiche restaurant pilote
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
-              Ajoutez un restaurant pilote sans créer un gros espace de gestion.
+              Ajoutez les métadonnées internes d&apos;un restaurant pilote sans
+              créer un CMS, un upload menu ou un dashboard client complet.
             </p>
           </div>
           <RestaurantCreateForm />
@@ -239,13 +244,13 @@ function RestaurantCard({ restaurant }: { restaurant: OwnerRestaurant }) {
           href={restaurant.clientMenuHref}
           className="inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/40 bg-champagne/[0.1] px-5 text-sm font-semibold text-cream transition hover:border-champagne/55 hover:bg-champagne/[0.16] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
         >
-          Voir la carte démo
+          Voir le modèle démo
         </Link>
         <Link
           href={restaurant.dashboardHref}
           className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/14 px-5 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
         >
-          Voir l’aperçu de démonstration
+          Aperçu restaurateur démo
         </Link>
         <Link
           href={`/owner?restaurant=${encodeURIComponent(restaurant.slug)}`}

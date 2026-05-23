@@ -22,7 +22,7 @@ export const videoChapters: VideoChapter[] = [
     body: "Vistaire transforme le scan à table en carte digitale premium : rapide, visuelle, pensée pour le mobile et sans application.",
     cta: "Voir la carte démo",
     ctaHref: "/demo",
-    secondaryCta: "Voir l’aperçu de démonstration",
+    secondaryCta: "Voir l’aperçu restaurateur démo",
     secondaryCtaHref: "/admin"
   },
   {
@@ -34,7 +34,7 @@ export const videoChapters: VideoChapter[] = [
     body: "Maison Élyse est un restaurant fictif de démonstration : elle montre comment un convive parcourt les plats, photos et détails utiles à table.",
     cta: "Voir la carte démo",
     ctaHref: "/demo",
-    secondaryCta: "Voir l’aperçu de démonstration",
+    secondaryCta: "Voir l’aperçu restaurateur démo",
     secondaryCtaHref: "/admin"
   },
   {
@@ -56,7 +56,7 @@ export const videoChapters: VideoChapter[] = [
     eyebrow: "Lecture restaurateur",
     title: "Lisez ce qui retient l’attention.",
     body: "Côté restaurant, Vistaire met en évidence les plats consultés, les recherches et les vues immersives autour de votre carte.",
-    cta: "Voir l’aperçu de démonstration",
+    cta: "Voir l’aperçu restaurateur démo",
     ctaHref: "/admin",
     secondaryCta: "Voir la carte démo",
     secondaryCtaHref: "/demo"

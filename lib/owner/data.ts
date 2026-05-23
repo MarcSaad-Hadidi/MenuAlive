@@ -24,7 +24,7 @@ import type {
 } from "@/lib/owner/types";
 
 const STATUS_LABELS: Record<OwnerRestaurantStatus, string> = {
-  demo: "Présentation",
+  demo: "Démo interne",
   active: "Actif",
   setup_needed: "À configurer",
   paused: "Pausé",

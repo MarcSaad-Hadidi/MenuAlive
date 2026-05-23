@@ -38,7 +38,7 @@ export function buildRuleBasedOwnerRecommendations(args: {
     recommendations.push({
       id: `setup-${setupRestaurant.id}`,
       title: `${setupRestaurant.name} reste à configurer.`,
-      body: "Priorisez les plats, les photos et les liens de menu avant de l'envoyer à un client.",
+      body: "Priorisez les plats, les photos et les liens de menu avant de l'envoyer au restaurant.",
       restaurantName: setupRestaurant.name,
       type: "setup",
       source: "rules"

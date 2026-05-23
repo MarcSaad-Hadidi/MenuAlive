@@ -20,7 +20,7 @@ export function MenuHero({ restaurant }: MenuHeroProps) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(217,184,121,0.1),transparent_50%)]" />
       <div className="relative mx-auto max-w-4xl text-center">
         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-champagne/85 sm:text-xs">
-          Démo logicielle Vistaire
+          Carte démo Vistaire
         </p>
         <div className="mx-auto mt-3 flex h-12 w-12 items-center justify-center rounded-full border border-champagne/30 bg-espresso/80 font-display text-lg text-cream shadow-champagne sm:mt-4 sm:h-14 sm:w-14 sm:text-xl">
           {restaurant.logoMonogram}

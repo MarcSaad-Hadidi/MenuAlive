@@ -13,6 +13,7 @@ export type DishAssetManifest = {
   dishSlug?: unknown;
   activeVersion?: unknown;
   status?: unknown;
+  approvedAt?: unknown;
   variants?: {
     web?: DishAssetVariant;
     mobile?: DishAssetVariant;
@@ -125,6 +126,19 @@ function resolveQuickLookStatus(
   return "needs-review";
 }
 
+function isApprovedRestaurantQuickLookVariant(
+  manifest: DishAssetManifest
+): boolean {
+  const status = manifest.status;
+  const approvedAt = manifest.approvedAt;
+  return (
+    (status === "approved" || status === "published") &&
+    typeof approvedAt === "string" &&
+    Boolean(approvedAt.trim()) &&
+    manifest.variants?.iosUsdz?.validationStatus === "approved"
+  );
+}
+
 export function resolveDishModelAssets(
   dish: ResolvableDish,
   manifest?: DishAssetManifest | null
@@ -141,9 +155,10 @@ export function resolveDishModelAssets(
   const arModel3dUrl =
     stableRestaurantVariantUrl(manifest.variants.arLite, ".glb") ||
     legacy.arModel3dUrl;
-  const arUsdzUrl =
-    stableRestaurantVariantUrl(manifest.variants.iosUsdz, ".usdz") ||
-    legacy.arUsdzUrl;
+  const manifestArUsdzUrl = isApprovedRestaurantQuickLookVariant(manifest)
+    ? stableRestaurantVariantUrl(manifest.variants.iosUsdz, ".usdz")
+    : "";
+  const arUsdzUrl = manifestArUsdzUrl || legacy.arUsdzUrl;
 
   return {
     ...legacy,
@@ -153,7 +168,9 @@ export function resolveDishModelAssets(
     mobileModel3dUrl,
     arModel3dUrl,
     arUsdzUrl,
-    arVisualStatus: resolveQuickLookStatus(dish, arUsdzUrl ?? "", manifest)
+    arVisualStatus: manifestArUsdzUrl
+      ? resolveQuickLookStatus(dish, manifestArUsdzUrl, manifest)
+      : legacy.arVisualStatus
   };
 }
 

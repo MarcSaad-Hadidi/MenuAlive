@@ -19,7 +19,8 @@ const productionManifest = {
   menuSlug: "main",
   dishSlug: "homard-bisque",
   activeVersion: "v1",
-  status: "review",
+  status: "approved",
+  approvedAt: "2026-05-22T00:00:00.000Z",
   variants: {
     web: {
       url: "/models/restaurants/maison-elyse/main/homard-bisque/v1/web/homard-bisque-web.glb"
@@ -153,9 +154,22 @@ test("resolver only upgrades iOS Quick Look when the manifest iOS variant is app
   });
 
   assert.equal(resolved.source, "manifest");
+  assert.equal(resolved.arUsdzUrl, legacyHomardAssets.arUsdzUrl);
+  assert.equal(resolved.arVisualStatus, "approved");
+});
+
+test("resolver does not expose restaurant Quick Look assets from review manifests", () => {
+  const resolved = resolveDishModelAssets(legacyHomardAssets, {
+    ...productionManifest,
+    status: "review",
+    approvedAt: null
+  });
+
+  assert.equal(resolved.source, "manifest");
   assert.equal(
-    resolved.arUsdzUrl,
-    "/models/restaurants/maison-elyse/main/homard-bisque/v1/ios/homard-bisque-ios-quicklook-ultra.usdz"
+    resolved.webModel3dUrl,
+    "/models/restaurants/maison-elyse/main/homard-bisque/v1/web/homard-bisque-web.glb"
   );
-  assert.equal(resolved.arVisualStatus, "needs-review");
+  assert.equal(resolved.arUsdzUrl, legacyHomardAssets.arUsdzUrl);
+  assert.equal(resolved.arVisualStatus, "approved");
 });

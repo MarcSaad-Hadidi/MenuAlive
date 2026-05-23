@@ -723,6 +723,15 @@ export async function getRestaurantInsights(
   };
 }
 
+export function getPublicDemoRestaurantInsights(): RestaurantInsightsResult {
+  return {
+    insights: getDemoAdminInsights(),
+    source: "fallback",
+    note:
+      "Aperçu public de démonstration Maison Élyse avec données fictives. Les données client réelles restent réservées aux surfaces protégées."
+  };
+}
+
 export function getDemoRestaurantId(): string {
   return DEMO_RESTAURANT_ID;
 }

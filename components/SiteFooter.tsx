@@ -20,12 +20,6 @@ export function SiteFooter() {
           <p className="mt-2 max-w-sm leading-6">
             Menu digital premium pour restaurants.
           </p>
-          <Link
-            href="/owner"
-            className="mt-4 inline-flex rounded-sm text-[10px] text-[#cdbd9f] transition hover:text-cream focus:outline-none focus-visible:text-cream focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#050403]"
-          >
-            Accès interne
-          </Link>
         </div>
 
         <nav aria-label="Guides Vistaire" className="md:text-right">

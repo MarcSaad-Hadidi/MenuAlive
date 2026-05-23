@@ -9,7 +9,7 @@ type SubmitState =
   | { status: "error"; message: string };
 
 const statusOptions = [
-  { value: "demo", label: "Présentation" },
+  { value: "demo", label: "Démo interne" },
   { value: "active", label: "Actif" },
   { value: "setup_needed", label: "À configurer" }
 ];

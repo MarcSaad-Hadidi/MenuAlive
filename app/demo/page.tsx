@@ -41,7 +41,7 @@ function PresentationPathway() {
             href="/admin"
             className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/14 px-4 text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
           >
-            Aperçu de démonstration
+            Aperçu restaurateur démo
           </Link>
         </div>
       </div>
