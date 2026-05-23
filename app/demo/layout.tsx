@@ -6,9 +6,9 @@ import { Header } from "@/components/Header";
 import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Menu client exemple — Maison Élyse",
+  title: "Démo Vistaire — Maison Élyse, restaurant fictif",
   description:
-    "Maison Élyse est un restaurant exemple de présentation Vistaire : menu client, fiches plats, allergènes, accords et vues immersives.",
+    "Maison Élyse est un restaurant fictif de démonstration Vistaire : carte côté convive, fiches plats, allergènes, accords et vues immersives.",
   alternates: {
     canonical: "/demo"
   },
@@ -18,16 +18,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     url: absoluteUrl("/demo"),
-    title: "Menu client exemple — Maison Élyse | Vistaire",
+    title: "Démo Vistaire — Maison Élyse, restaurant fictif",
     description:
-      "Restaurant exemple de présentation Vistaire avec menu client, fiches plats et vues immersives.",
+      "Restaurant fictif de démonstration Vistaire avec carte côté convive, fiches plats et vues immersives.",
     type: "website"
   },
   twitter: {
     card: "summary",
-    title: "Menu client exemple — Maison Élyse | Vistaire",
+    title: "Démo Vistaire — Maison Élyse, restaurant fictif",
     description:
-      "Restaurant exemple de présentation Vistaire avec menu client, fiches plats et vues immersives."
+      "Restaurant fictif de démonstration Vistaire avec carte côté convive, fiches plats et vues immersives."
   }
 };
 

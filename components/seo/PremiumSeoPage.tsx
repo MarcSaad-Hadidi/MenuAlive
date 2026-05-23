@@ -424,7 +424,7 @@ function FinalCta({ page }: { page: SeoPageData }) {
               Montrez Vistaire à un vrai restaurateur.
             </h2>
             <p className="mt-6 max-w-2xl text-base leading-7 text-[#d8c9b2] sm:text-lg">
-              La meilleure vérification reste concrète: ouvrir le menu client,
+              La meilleure vérification reste concrète: ouvrir la carte démo,
               consulter une fiche plat, puis regarder ce que l&apos;aperçu
               restaurateur raconte de l&apos;attention client.
             </p>

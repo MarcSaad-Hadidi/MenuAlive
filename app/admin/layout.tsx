@@ -5,7 +5,7 @@ import { absoluteUrl } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "Aperçu restaurateur de démonstration",
   description:
-    "Aperçu restaurateur de démonstration Vistaire pour lire les comportements anonymes autour d'un menu client exemple.",
+    "Aperçu restaurateur de démonstration Vistaire pour lire les signaux anonymes autour d'une carte convive fictive.",
   alternates: {
     canonical: "/admin"
   },
@@ -18,14 +18,14 @@ export const metadata: Metadata = {
     url: absoluteUrl("/admin"),
     title: "Aperçu restaurateur de démonstration | Vistaire",
     description:
-      "Découvrez comment Vistaire présente les comportements anonymes autour d'un menu client exemple.",
+      "Découvrez comment Vistaire présente les signaux anonymes autour d'une carte convive fictive.",
     type: "website"
   },
   twitter: {
     card: "summary",
     title: "Aperçu restaurateur de démonstration | Vistaire",
     description:
-      "Découvrez comment Vistaire présente les comportements anonymes autour d'un menu client exemple."
+      "Découvrez comment Vistaire présente les signaux anonymes autour d'une carte convive fictive."
   }
 };
 

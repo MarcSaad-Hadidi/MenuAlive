@@ -81,11 +81,11 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
     path: "/menu-digital-restaurant",
     metadataTitle: "Menu digital restaurant premium | Vistaire",
     metadataDescription:
-      "Vistaire transforme le menu digital restaurant en expérience premium: fiches plats, photos, badges, allergènes, 3D/AR disponible et aperçu restaurateur.",
+      "Vistaire transforme le menu digital restaurant en carte immersive haut de gamme: fiches plats, photos, allergènes, 3D/AR sélective et lecture restaurateur.",
     h1: "Menu digital restaurant premium",
     answer: [
-      "Vistaire est un menu digital pour restaurant qui s'ouvre après un scan QR à table, sans application à installer.",
-      "Le client ne tombe pas sur un PDF: il parcourt une carte mobile rapide, visuelle, avec fiches plats, photos, allergènes, badges et vues 3D/AR quand elles sont disponibles."
+      "Vistaire est un menu digital premium pour restaurants haut de gamme qui s'ouvre après un scan QR à table, sans application à installer.",
+      "Le client ne tombe pas sur un PDF: il parcourt une carte immersive, rapide et visuelle, avec fiches plats, photos, allergènes, badges et vues 3D/AR quand elles sont disponibles."
     ],
     heroVariant: "digital",
     heroImage: {
@@ -94,12 +94,12 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
     },
     primaryCta: {
       href: "/demo",
-      label: "Voir le menu client",
-      description: "Explorer la démonstration client Vistaire."
+      label: "Voir la carte démo",
+      description: "Explorer la démonstration Vistaire côté convive."
     },
     secondaryCta: {
       href: "/admin",
-      label: "Voir l'aperçu restaurateur",
+      label: "Voir l'aperçu de démonstration",
       description: "Observer les signaux anonymes autour du menu."
     },
     sections: [
@@ -113,7 +113,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
           "Ouverture directe depuis le QR code à table.",
           "Lecture mobile sans zoom ni pincement.",
           "Fiches plats plus riches qu'une ligne de menu.",
-          "Accès naturel à la démo client et à l'aperçu restaurateur."
+          "Accès naturel à la carte démo et à l'aperçu de démonstration."
         ]
       },
       {
@@ -126,7 +126,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       {
         heading: "Comment le restaurateur garde une lecture claire ?",
         body: [
-          "Vistaire inclut un aperçu restaurateur pour lire l'attention portee à la carte: plats consultes, recherches, moments de service et vues immersives.",
+          "Vistaire inclut une lecture restaurateur pour observer l'attention portee à la carte: plats consultes, recherches, moments de service et vues immersives.",
           "L'objectif n'est pas de noyer l'équipe dans des graphiques. Il s'agit de voir ce qui attire vraiment les clients pendant le choix: une signature, un dessert, une recherche allergène ou une fiche qui mérite une meilleure photo."
         ]
       },
@@ -164,7 +164,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
             "Les plats sélectionnés peuvent gagner une dimension immersive, sans rendre le reste de la carte dépendante de la 3D."
         },
         {
-          title: "Aperçu restaurateur",
+          title: "Lecture restaurateur",
           body:
             "L'équipe peut lire les signaux anonymes qui ressortent pendant le service."
         }
@@ -180,7 +180,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
         {
           label: "Ouverture",
           before: "Un fichier à charger, parfois lourd, souvent à zoomer.",
-          after: "Une page mobile-first, structuree pour le scan à table."
+          after: "Une carte pensée pour le mobile, structurée pour le scan à table."
         },
         {
           label: "Choix du plat",
@@ -223,7 +223,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       {
         question: "Le restaurateur voit-il ce qui intéresse les clients ?",
         answer:
-          "L'aperçu restaurateur montre des signaux anonymes comme les plats consultes, les recherches et les vues immersives."
+          "La lecture restaurateur montre des signaux anonymes comme les plats consultes, les recherches et les vues immersives."
       }
     ],
     relatedLinks: [
@@ -245,14 +245,14 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       {
         href: "/demo",
         label: "Démo client Vistaire",
-        description: "Parcourir Maison Élyse comme un client à table."
+        description: "Parcourir Maison Élyse, restaurant fictif de démonstration."
       }
     ],
     service: {
       name: "Menu digital premium Vistaire",
       serviceType: "Menu digital premium pour restaurants",
       description:
-        "Menu digital premium pour restaurants avec fiches plats, photos, allergènes, 3D/AR quand disponibles et aperçu restaurateur."
+        "Menu digital premium pour restaurants haut de gamme avec fiches plats, photos, allergènes, 3D/AR quand disponibles et lecture restaurateur."
     }
   },
   "menu-qr-code-restaurant": {
@@ -260,7 +260,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
     path: "/menu-qr-code-restaurant",
     metadataTitle: "Menu QR code restaurant premium | Vistaire",
     metadataDescription:
-      "Avec Vistaire, le QR code ouvre un menu restaurant rapide et visuel: photos, fiches plats, allergènes, badges, 3D/AR disponible et aperçu restaurateur.",
+      "Avec Vistaire, le QR code ouvre une carte restaurant rapide et visuelle: photos, fiches plats, allergènes, 3D/AR disponible et lecture restaurateur.",
     h1: "Menu QR code restaurant premium",
     answer: [
       "Un QR code de restaurant ne devrait pas etre la fin de l'expérience. Il devrait etre le debut d'une carte claire, rapide et adaptée au téléphone du client.",
@@ -274,11 +274,11 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
     primaryCta: {
       href: "/demo",
       label: "Scanner l'expérience exemple",
-      description: "Ouvrir le menu client Vistaire."
+      description: "Ouvrir la carte démo Vistaire."
     },
     secondaryCta: {
       href: "/admin",
-      label: "Lire l'aperçu restaurateur",
+      label: "Lire l'aperçu de démonstration",
       description: "Voir ce que le restaurant peut observer."
     },
     sections: [
@@ -359,7 +359,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
         {
           label: "Navigation",
           before: "Zoom, defilement de page, recherche difficile.",
-          after: "Catégories, recherche, filtres et fiches accessibles."
+          after: "Catégories, recherche, préférences et fiches accessibles."
         },
         {
           label: "Questions client",
@@ -421,7 +421,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       name: "Menu QR code Vistaire",
       serviceType: "Menu QR code premium pour restaurants",
       description:
-        "Expérience de menu QR code pour restaurants avec parcours mobile, fiches plats, photos, allergènes et aperçu restaurateur."
+        "Expérience de menu QR code pour restaurants haut de gamme avec parcours mobile, fiches plats, photos, allergènes et lecture restaurateur."
     }
   },
   "menu-3d-ar-restaurant": {
@@ -432,7 +432,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       "Vistaire enrichit les fiches plats avec des vues 3D/AR quand disponibles, tout en gardant photos, allergènes, badges et parcours mobile rapide.",
     h1: "Menu 3D et AR pour restaurant",
     answer: [
-      "Un menu 3D/AR permet de montrer certains plats sous forme immersive depuis leur fiche, quand les assets et l'appareil du client le permettent.",
+      "Un menu 3D/AR permet de montrer certains plats sous forme immersive depuis leur fiche, quand les contenus 3D et l'appareil du client le permettent.",
       "Vistaire garde une base solide même sans AR: photo, description, prix, allergènes et détails utiles restent toujours lisibles."
     ],
     heroVariant: "ar",
@@ -447,7 +447,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
     },
     secondaryCta: {
       href: "/demo",
-      label: "Explorer le menu client",
+      label: "Explorer la carte démo",
       description: "Voir la carte complète de démonstration."
     },
     sections: [
@@ -459,7 +459,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
         ],
         points: [
           "3D sélective sur les plats qui méritent une mise en scène.",
-          "AR seulement lorsque le support technique est prêt.",
+          "AR seulement lorsque le modèle visuel et l'appareil sont prêts.",
           "Fallback premium si la vue immersive n'est pas disponible.",
           "Pas de promesse que tout fonctionne partout."
         ]
@@ -509,7 +509,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
         {
           title: "AR compatible",
           body:
-            "L'affichage dans l'espace reste conditionne par l'appareil, le navigateur et les assets valides."
+            "L'affichage dans l'espace reste conditionne par l'appareil, le navigateur et les contenus 3D valides."
         },
         {
           title: "Fallback premium",
@@ -527,7 +527,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       rows: [
         {
           label: "Portee",
-          before: "Tous les plats deviennent dépendants d'assets lourds.",
+          before: "Tous les plats deviennent dépendants de contenus 3D lourds.",
           after: "Seuls les plats qui gagnent en présence passent en 3D."
         },
         {
@@ -587,7 +587,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       },
       {
         href: "/demo",
-        label: "Menu client Vistaire",
+        label: "Carte démo Vistaire",
         description: "Parcourir la carte exemple avant la fiche immersive."
       }
     ],
@@ -595,7 +595,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       name: "Menu 3D/AR Vistaire",
       serviceType: "Présentation 3D/AR sélective pour menus de restaurants",
       description:
-        "Enrichissement de fiches plats avec vues 3D/AR quand les assets et appareils le permettent, avec fallback premium."
+        "Enrichissement de fiches plats avec vues 3D/AR quand les contenus 3D et appareils le permettent, avec fallback premium."
     }
   },
   "menu-pdf-vs-menu-digital": {
@@ -621,7 +621,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
     },
     secondaryCta: {
       href: "/admin",
-      label: "Voir l'aperçu restaurateur",
+      label: "Voir l'aperçu de démonstration",
       description: "Comprendre ce que le PDF ne montre pas."
     },
     sections: [
@@ -648,7 +648,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       {
         heading: "Ce qu'un menu digital change à table",
         body: [
-          "Le menu digital transforme la carte en parcours: catégories, vignettes, badges, recherche, filtres, fiches plats et CTA clairs.",
+          "Le menu digital transforme la carte en parcours: catégories, vignettes, badges, recherche, préférences, fiches plats et actions discrètes et lisibles.",
           "La valeur n'est pas seulement technique. Un plat signature peut être photographié, décrit, complété par ses allergènes et, quand disponible, présenté en 3D/AR."
         ]
       },
@@ -656,7 +656,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
         heading: "Comment migrer sans perdre la simplicite ?",
         body: [
           "Le bon compromis n'est pas d'ajouter un logiciel lourd à la salle. C'est de conserver le geste simple du QR code et de remplacer la destination par une expérience lisible.",
-          "Vistaire garde le parcours court: scan, carte, fiche plat, démo immersive si pertinente, puis aperçu restaurateur pour lire les signaux."
+          "Vistaire garde le parcours court: scan, carte, fiche plat, démo immersive si pertinente, puis lecture restaurateur pour lire les signaux."
         ]
       }
     ],
@@ -717,10 +717,10 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
         {
           label: "3D / AR",
           before: "Aucune expérience immersive native.",
-          after: "Possible sur certains plats quand les assets sont disponibles."
+          after: "Possible sur certains plats quand les contenus 3D sont disponibles."
         },
         {
-          label: "Aperçu restaurateur",
+          label: "Lecture restaurateur",
           before: "Aucune lecture des consultations.",
           after: "Signaux anonymes sur plats ouverts, recherches et vues."
         }
@@ -774,7 +774,7 @@ export const SEO_PAGES: Record<SeoPageKey, SeoPageData> = {
       name: "Alternative premium au menu PDF",
       serviceType: "Menu digital premium pour remplacer un PDF QR",
       description:
-        "Alternative au menu PDF restaurant avec lecture mobile, fiches plats, photos, allergènes, 3D/AR quand disponibles et aperçu restaurateur."
+        "Alternative au menu PDF restaurant avec lecture mobile, fiches plats, photos, allergènes, 3D/AR quand disponibles et lecture restaurateur."
     }
   }
 };

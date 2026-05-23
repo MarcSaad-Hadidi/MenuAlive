@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  AI_SEARCH_ROBOTS_USER_AGENTS,
   INTERNAL_ROBOTS_DISALLOW,
   PUBLIC_SEO_SITEMAP_ENTRIES,
   SITE_URL_FALLBACK,
@@ -85,7 +86,9 @@ test("keeps public admin demo visible but out of search indexes", () => {
 
 test("allows useful crawlers while keeping internal surfaces out of robots crawl", () => {
   const rules = buildRobotsRules();
-  const searchBotRule = rules.find((rule) => rule.userAgent === "OAI-SearchBot");
+  const aiCrawlerRules = rules.filter((rule) =>
+    AI_SEARCH_ROBOTS_USER_AGENTS.includes(rule.userAgent)
+  );
   const defaultRule = rules.find((rule) => rule.userAgent === "*");
   const expectedInternalDisallow = [
     "/api/",
@@ -97,15 +100,20 @@ test("allows useful crawlers while keeping internal surfaces out of robots crawl
     "/todos/"
   ];
 
-  assert.ok(searchBotRule);
+  assert.deepEqual(
+    aiCrawlerRules.map((rule) => rule.userAgent),
+    [...AI_SEARCH_ROBOTS_USER_AGENTS]
+  );
   assert.ok(defaultRule);
-  assert.deepEqual(searchBotRule.allow, "/");
+  for (const rule of aiCrawlerRules) {
+    assert.deepEqual(rule.allow, "/");
+    assert.deepEqual(rule.disallow, INTERNAL_ROBOTS_DISALLOW);
+  }
   assert.deepEqual(defaultRule.allow, "/");
   assert.deepEqual(INTERNAL_ROBOTS_DISALLOW, expectedInternalDisallow);
   for (const internalPath of expectedInternalDisallow) {
     assert.equal(INTERNAL_ROBOTS_DISALLOW.includes(internalPath), true);
   }
-  assert.deepEqual(searchBotRule.disallow, INTERNAL_ROBOTS_DISALLOW);
   assert.deepEqual(defaultRule.disallow, INTERNAL_ROBOTS_DISALLOW);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/_next/"), false);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/images/"), false);
@@ -157,7 +165,7 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   const breadcrumb = buildBreadcrumbJsonLd(
     [
       { name: "Accueil", path: "/" },
-      { name: "Menu client exemple", path: "/demo" }
+      { name: "Démo Vistaire Maison Élyse", path: "/demo" }
     ],
     siteEnv
   );
@@ -170,7 +178,10 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   assert.equal(faq["@type"], "FAQPage");
   assert.equal(breadcrumb["@type"], "BreadcrumbList");
   assert.equal(service.provider["@id"], organization["@id"]);
+  assert.equal(service.name, "Carte digitale immersive Vistaire");
   assert.equal(service.url, "https://www.vistaire.ca/");
+  assert.equal("areaServed" in service, false);
+  assert.equal("areaServed" in servicePage, false);
   assert.deepEqual(service.mainEntityOfPage, {
     "@id": "https://www.vistaire.ca/#webpage"
   });

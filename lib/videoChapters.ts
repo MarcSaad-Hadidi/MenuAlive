@@ -19,22 +19,22 @@ export const videoChapters: VideoChapter[] = [
     end: 0.24,
     eyebrow: "QR code à table",
     title: "Le QR code devient une vraie carte.",
-    body: "Vistaire transforme le scan à table en menu digital premium : rapide, visuel, mobile-first et sans application.",
-    cta: "Voir le menu client",
+    body: "Vistaire transforme le scan à table en carte digitale premium : rapide, visuelle, pensée pour le mobile et sans application.",
+    cta: "Voir la carte démo",
     ctaHref: "/demo",
-    secondaryCta: "Voir l’aperçu restaurateur",
+    secondaryCta: "Voir l’aperçu de démonstration",
     secondaryCtaHref: "/admin"
   },
   {
     id: "menu",
     start: 0.24,
     end: 0.48,
-    eyebrow: "Menu client",
+    eyebrow: "Carte côté convive",
     title: "Une carte faite pour le mobile.",
-    body: "Maison Élyse est une démonstration : elle montre comment un convive parcourt les plats, photos et détails utiles à table.",
-    cta: "Voir le menu client",
+    body: "Maison Élyse est un restaurant fictif de démonstration : elle montre comment un convive parcourt les plats, photos et détails utiles à table.",
+    cta: "Voir la carte démo",
     ctaHref: "/demo",
-    secondaryCta: "Voir l’aperçu restaurateur",
+    secondaryCta: "Voir l’aperçu de démonstration",
     secondaryCtaHref: "/admin"
   },
   {
@@ -46,7 +46,7 @@ export const videoChapters: VideoChapter[] = [
     body: "Certains plats peuvent être explorés en 3D ou placés devant le convive quand l’appareil le permet.",
     cta: "Explorer une fiche 3D",
     ctaHref: "/demo/dishes/homard-bisque",
-    secondaryCta: "Voir le menu client",
+    secondaryCta: "Voir la carte démo",
     secondaryCtaHref: "/demo"
   },
   {
@@ -55,10 +55,10 @@ export const videoChapters: VideoChapter[] = [
     end: 1.01,
     eyebrow: "Lecture restaurateur",
     title: "Lisez ce qui retient l’attention.",
-    body: "Côté restaurant, Vistaire révèle les plats consultés, les recherches et les vues immersives autour de votre carte.",
-    cta: "Voir l’aperçu restaurateur",
+    body: "Côté restaurant, Vistaire met en évidence les plats consultés, les recherches et les vues immersives autour de votre carte.",
+    cta: "Voir l’aperçu de démonstration",
     ctaHref: "/admin",
-    secondaryCta: "Voir le menu client",
+    secondaryCta: "Voir la carte démo",
     secondaryCtaHref: "/demo"
   }
 ];

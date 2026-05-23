@@ -40,7 +40,7 @@ function DishCardHeroImage({
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={dish.image}
-              alt={`Photo du plat : ${dish.name}`}
+              alt={`Photo de plat dans la démo Vistaire : ${dish.name}`}
               fill
               priority={priorityImage}
               loading={priorityImage ? "eager" : undefined}

@@ -53,7 +53,7 @@ export default async function OwnerPage() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-end">
               <PrimaryButton href="/admin" className="justify-center sm:w-auto">
-                Voir l’aperçu restaurateur
+                Voir l’aperçu de démonstration
               </PrimaryButton>
               <Link
                 href="/demo"
@@ -239,13 +239,13 @@ function RestaurantCard({ restaurant }: { restaurant: OwnerRestaurant }) {
           href={restaurant.clientMenuHref}
           className="inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/40 bg-champagne/[0.1] px-5 text-sm font-semibold text-cream transition hover:border-champagne/55 hover:bg-champagne/[0.16] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
         >
-          Voir menu client
+          Voir la carte démo
         </Link>
         <Link
           href={restaurant.dashboardHref}
           className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/14 px-5 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
         >
-          Voir l’aperçu restaurateur
+          Voir l’aperçu de démonstration
         </Link>
         <Link
           href={`/owner?restaurant=${encodeURIComponent(restaurant.slug)}`}

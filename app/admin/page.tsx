@@ -49,21 +49,21 @@ export default async function AdminPage({
           />
           <div className="relative max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne/85">
-              Aperçu restaurateur · {insights.serviceLabel}
+              Aperçu de démonstration · {insights.serviceLabel}
             </p>
             <h1 className="mt-4 font-display text-4xl font-normal leading-[1] text-cream [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
               Lecture restaurateur — {insights.generatedFor}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-[#cdbfa9] sm:text-lg">
-              Cet aperçu de présentation révèle les comportements anonymes autour
-              du menu client : plats consultés, recherches, vues immersives et
+              Cet aperçu de démonstration met en évidence les signaux anonymes
+              autour de la carte convive : plats consultés, recherches, vues immersives et
               tendances d’attention.
             </p>
           </div>
 
           <div className="relative mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <PrimaryButton href="/demo" className="justify-center sm:w-auto">
-              Explorer le menu client
+              Explorer la carte démo
             </PrimaryButton>
             {popularDish ? (
               <Link

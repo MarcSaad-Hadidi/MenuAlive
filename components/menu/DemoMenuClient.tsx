@@ -166,7 +166,7 @@ export function DemoMenuClient({
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(217,184,121,0.085),transparent_55%)]" />
             <div className="relative text-center">
               <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-champagne/80">
-                Menu client
+                Carte démo
               </p>
               <div className="mx-auto mt-3 flex h-10 w-10 items-center justify-center rounded-full border border-champagne/35 bg-espresso/90 font-display text-base text-cream shadow-[0_6px_28px_rgba(0,0,0,0.35)]">
                 {restaurant.logoMonogram}
@@ -178,7 +178,7 @@ export function DemoMenuClient({
                 {restaurant.tagline}
               </p>
               <p className="mt-2.5 text-[11px] leading-relaxed text-[#8f806e]">
-                {restaurant.location}
+                Restaurant fictif de démonstration · {restaurant.location}
               </p>
             </div>
           </header>

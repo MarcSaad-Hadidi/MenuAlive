@@ -22,11 +22,11 @@ function PresentationPathway() {
             id="presentation-pathway-heading"
             className="text-[10px] font-semibold uppercase tracking-[0.22em] text-champagne/80"
           >
-            Parcours de présentation
+            Parcours de démonstration
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#b9aa94]">
-            Maison Élyse est un restaurant exemple de présentation : il montre
-            le menu client Vistaire et l’aperçu restaurateur associé.
+            Maison Élyse est un restaurant fictif de démonstration : il montre
+            la carte côté convive Vistaire et l’aperçu de démonstration associé.
           </p>
         </div>
         <div className="flex flex-col gap-2 min-[420px]:flex-row sm:shrink-0">
@@ -35,13 +35,13 @@ function PresentationPathway() {
             aria-current="page"
             className="inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/40 bg-champagne/10 px-4 text-sm font-semibold text-champagne focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
           >
-            Menu client
+            Carte convive
           </Link>
           <Link
             href="/admin"
             className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/14 px-4 text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
           >
-            Aperçu restaurateur
+            Aperçu de démonstration
           </Link>
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function DemoPage() {
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: "Accueil", path: "/" },
-          { name: "Menu client exemple", path: "/demo" }
+          { name: "Démo Vistaire Maison Élyse", path: "/demo" }
         ])}
       />
       <MenuHero restaurant={restaurant} />

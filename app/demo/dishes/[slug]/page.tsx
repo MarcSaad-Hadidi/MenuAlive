@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const restaurant = getRestaurant();
   if (!dish) {
     return {
-      title: "Plat introuvable — Menu client exemple",
+      title: "Plat introuvable — démo Vistaire",
       robots: {
         index: false,
         follow: false
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalPath = `/demo/dishes/${dish.slug}`;
   const title = `${dish.name} — fiche plat de démonstration`;
   const pageTitle = `${title} | Vistaire`;
-  const description = `Fiche plat exemple Vistaire pour ${restaurant.name}, restaurant de présentation : ${dish.shortDescription}`;
+  const description = `Fiche plat noindex de démonstration Vistaire pour ${restaurant.name}, restaurant fictif de présentation : ${dish.shortDescription}`;
   const imageUrl = dish.image ? absoluteUrl(dish.image) : undefined;
 
   return {
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ? [
             {
               url: imageUrl,
-              alt: `${dish.name} — fiche plat exemple Vistaire`
+              alt: `${dish.name} — fiche plat de démonstration Vistaire`
             }
           ]
         : undefined
@@ -86,7 +86,7 @@ export default async function DishPage({ params }: PageProps) {
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: "Accueil", path: "/" },
-          { name: "Menu client exemple", path: "/demo" },
+          { name: "Démo Vistaire Maison Élyse", path: "/demo" },
           { name: dish.name, path: `/demo/dishes/${dish.slug}` }
         ])}
       />

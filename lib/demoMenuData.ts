@@ -70,14 +70,14 @@ const RESTAURANT: Restaurant = {
   slug: "maison-elyse",
   tagline: "Cuisine française contemporaine au cœur du Vieux-Montréal.",
   description:
-    "Une cuisine de produits d’ici et d’ailleurs, précise et saisonnière, dans un cadre intimiste du Vieux-Montréal — une carte pensée pour un menu digital à la hauteur de votre table.",
-  location: "Vieux-Montréal · Montréal, Québec",
-  cuisineType: "Française contemporaine montréalaise",
+    "Restaurant fictif de démonstration Vistaire : une cuisine de produits d’ici et d’ailleurs, précise et saisonnière, dans un cadre inspiré du Vieux-Montréal.",
+  location: "Lieu fictif inspiré du Vieux-Montréal · Montréal, Québec",
+  cuisineType: "Cuisine française contemporaine de démonstration",
   coverImage: null,
   logoMonogram: "MÉ",
   currency: "CAD",
   contextLine:
-    "Saisonnalité, produits du marché et créations de la maison."
+    "Démonstration fictive : saisonnalité, produits du marché et créations de la maison."
 };
 
 const CATEGORIES: Category[] = [

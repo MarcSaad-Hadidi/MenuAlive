@@ -1,7 +1,7 @@
 export const SITE_NAME = "Vistaire";
 export const SITE_URL_FALLBACK = "https://www.vistaire.ca";
 export const DEFAULT_SITE_DESCRIPTION =
-  "Vistaire transforme le QR code à table en menu digital premium pour restaurants : fiches plats, photos, allergènes, 3D/AR sélective et aperçu restaurateur.";
+  "Vistaire transforme le QR code à table en carte digitale immersive pour restaurants haut de gamme : fiches plats, photos, allergènes, 3D/AR sélective et lecture restaurateur.";
 
 const SITE_URL_ENV_KEYS = [
   "NEXT_PUBLIC_SITE_URL",
@@ -19,6 +19,15 @@ export const INTERNAL_ROBOTS_DISALLOW = [
   "/sign-in/",
   "/todos",
   "/todos/"
+] as const;
+
+export const AI_SEARCH_ROBOTS_USER_AGENTS = [
+  "OAI-SearchBot",
+  "ChatGPT-User",
+  "Claude-SearchBot",
+  "Claude-User",
+  "PerplexityBot",
+  "Perplexity-User"
 ] as const;
 
 type SiteUrlEnv = {
@@ -133,18 +142,18 @@ export function buildSitemapEntries(
       url: absoluteUrl("/demo", env),
       lastModified,
       changeFrequency: "weekly",
-      priority: 0.9
+      priority: 0.62
     }
   ];
 }
 
 export function buildRobotsRules(): RobotsRule[] {
   return [
-    {
-      userAgent: "OAI-SearchBot",
+    ...AI_SEARCH_ROBOTS_USER_AGENTS.map((userAgent) => ({
+      userAgent,
       allow: "/",
       disallow: [...INTERNAL_ROBOTS_DISALLOW]
-    },
+    })),
     {
       userAgent: "*",
       allow: "/",
@@ -161,7 +170,7 @@ export function buildOrganizationJsonLd(env?: SiteUrlEnv): JsonLdObject {
     name: SITE_NAME,
     url: absoluteUrl("/", env),
     description:
-      "Vistaire conçoit des expériences de menu digital premium pour restaurants."
+      "Vistaire conçoit des cartes digitales immersives pour restaurants haut de gamme."
   };
 }
 
@@ -184,8 +193,8 @@ export function buildVistaireServiceJsonLd(env?: SiteUrlEnv): JsonLdObject {
     "@context": "https://schema.org",
     "@type": "Service",
     "@id": `${absoluteUrl("/", env)}#service`,
-    name: "Menu digital premium Vistaire",
-    serviceType: "Menu digital QR premium pour restaurants",
+    name: "Carte digitale immersive Vistaire",
+    serviceType: "Menu digital QR premium pour restaurants haut de gamme",
     url: absoluteUrl("/", env),
     description: DEFAULT_SITE_DESCRIPTION,
     mainEntityOfPage: {
@@ -194,23 +203,19 @@ export function buildVistaireServiceJsonLd(env?: SiteUrlEnv): JsonLdObject {
     provider: {
       "@id": `${absoluteUrl("/", env)}#organization`
     },
-    areaServed: {
-      "@type": "Country",
-      name: "Canada"
-    },
     audience: {
       "@type": "BusinessAudience",
       audienceType: "Restaurants"
     },
     hasOfferCatalog: {
       "@type": "OfferCatalog",
-      name: "Fonctionnalités Vistaire",
+      name: "Expérience Vistaire",
       itemListElement: [
         {
           "@type": "Offer",
           itemOffered: {
             "@type": "Service",
-            name: "Menu QR mobile"
+            name: "Carte QR mobile"
           }
         },
         {
@@ -231,7 +236,7 @@ export function buildVistaireServiceJsonLd(env?: SiteUrlEnv): JsonLdObject {
           "@type": "Offer",
           itemOffered: {
             "@type": "Service",
-            name: "Aperçu restaurateur des signaux d’attention"
+            name: "Lecture restaurateur des signaux d’attention"
           }
         }
       ]
@@ -313,7 +318,6 @@ export function buildPageServiceJsonLd(
     provider: {
       "@id": `${absoluteUrl("/", env)}#organization`
     },
-    areaServed: "Canada",
     audience: {
       "@type": "BusinessAudience",
       audienceType: "Restaurants"

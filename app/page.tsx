@@ -12,18 +12,18 @@ import {
 } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Menu digital QR premium pour restaurants",
+  title: "Menu digital QR premium pour restaurants haut de gamme",
   alternates: {
     canonical: "/"
   },
   openGraph: {
     url: absoluteUrl("/"),
-    title: "Vistaire — Menu digital QR premium pour restaurants",
+    title: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
     description: DEFAULT_SITE_DESCRIPTION
   },
   twitter: {
     card: "summary",
-    title: "Vistaire — Menu digital QR premium pour restaurants",
+    title: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
     description: DEFAULT_SITE_DESCRIPTION
   }
 };
@@ -34,16 +34,16 @@ const claritySteps = [
     body: "Les QR menus classiques ressemblent trop souvent à des PDF froids : la carte existe, mais l’image de la maison disparaît."
   },
   {
-    title: "La solution Vistaire",
-    body: "Le scan ouvre une carte digitale rapide, visuelle et pensée mobile-first, avec les détails utiles dès la première lecture."
+    title: "La carte Vistaire",
+    body: "Le scan ouvre une carte digitale immersive, rapide et pensée pour le mobile, avec les détails utiles dès la première lecture."
   },
   {
     title: "Les signatures",
     body: "La 3D/AR reste sélective : elle accompagne les plats qui gagnent à être vus en volume, sans alourdir toute la carte."
   },
   {
-    title: "La lecture restaurant",
-    body: "L’aperçu restaurateur montre les plats consultés, les recherches, les vues immersives et les moments d’activité."
+    title: "La lecture restaurateur",
+    body: "Vistaire met en évidence les plats consultés, les recherches, les vues immersives et les moments d’activité autour de la carte."
   }
 ];
 
@@ -73,12 +73,16 @@ function ClaritySection() {
           Du PDF froid à la carte digitale
         </p>
         <h2 className="mt-5 max-w-5xl font-display text-[clamp(2.25rem,5.2vw,5.1rem)] font-normal leading-[1] text-cream">
-          Remplacez le QR menu classique par une carte mobile digne de votre salle.
+          Remplacez le QR menu classique par une carte mobile à la hauteur de votre salle.
         </h2>
         <p className="mt-6 max-w-3xl text-base leading-7 text-[#d1c2aa] sm:text-lg sm:leading-8">
-          Vistaire garde la simplicité du QR code, puis ajoute ce qu’un PDF ne
-          porte pas : des fiches plats claires, une présentation visuelle, une
-          3D/AR utile pour certaines signatures et une lecture côté restaurant.
+          Vistaire est une carte digitale immersive pour restaurants haut de
+          gamme. Le convive scanne le QR code à table, puis consulte une
+          expérience mobile claire : fiches plats, photos, allergènes, détails
+          utiles et 3D/AR sélective lorsque le plat le mérite. Côté restaurant,
+          Vistaire donne une lecture sobre des signaux d’attention autour de la
+          carte, sans promettre de ventes, de commandes ou de comportements que
+          le menu ne mesure pas.
         </p>
 
         <div className="mt-12 grid gap-8 border-t border-white/12 pt-9 md:grid-cols-2 lg:grid-cols-4">
@@ -150,7 +154,7 @@ export default function Home() {
         data={[
           buildWebPageJsonLd({
             path: "/",
-            name: "Vistaire — Menu digital QR premium pour restaurants",
+            name: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
             description: DEFAULT_SITE_DESCRIPTION
           }),
           buildVistaireServiceJsonLd()
