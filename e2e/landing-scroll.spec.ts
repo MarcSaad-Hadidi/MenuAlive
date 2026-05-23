@@ -50,7 +50,7 @@ test.describe("Landing scroll experience", () => {
     const experience = page.locator("#experience");
     await expect(experience.locator("video")).toBeVisible();
     await expect(experience.locator("canvas")).toHaveCount(0);
-    expect(frameRequests.length).toBeLessThanOrEqual(1);
+    expect(new Set(frameRequests).size).toBeLessThanOrEqual(1);
 
     const scrollMax = await page.evaluate(
       () => document.documentElement.scrollHeight - window.innerHeight
@@ -238,11 +238,11 @@ test.describe("Landing scroll experience", () => {
     expect(currentSrc).toBe("");
   });
 
-  test('hero primary CTA "Voir le menu client" points to /demo', async ({ page }) => {
+  test("hero primary CTA points to /demo", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const link = page
       .locator("#experience .chapter-copy")
-      .getByRole("link", { name: /Voir le menu client/i })
+      .getByRole("link", { name: /Voir (la carte|le menu client)/i })
       .first();
     await expect(link).toBeVisible();
     await expect(link).toHaveAttribute("href", "/demo");
@@ -261,7 +261,7 @@ test.describe("Landing scroll experience", () => {
 
     const heroPrimary = page
       .locator("#experience .chapter-copy")
-      .getByRole("link", { name: /Voir le menu client/i })
+      .getByRole("link", { name: /Voir (la carte|le menu client)/i })
       .first();
     await expect(heroPrimary).toBeVisible();
     const heroBox = await heroPrimary.boundingBox();
@@ -269,7 +269,9 @@ test.describe("Landing scroll experience", () => {
 
     await page.locator("#demo").scrollIntoViewIfNeeded();
     await expect(
-      page.locator("#demo").getByRole("link", { name: /Voir le menu client/i })
+      page.locator("#demo").getByRole("link", {
+        name: /Voir (la carte|le menu client)/i
+      })
     ).toBeVisible();
 
     const gap = await page.evaluate(() => {

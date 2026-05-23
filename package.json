@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "test:unit": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
+    "test:smoke": "playwright test e2e/mvp-smoke.spec.ts e2e/seo-smoke.spec.ts",
     "test:e2e:ui": "playwright test --ui",
     "frames:update-config": "node scripts/update-frame-config.mjs",
     "optimize:videos": "node scripts/optimize-videos.mjs",
