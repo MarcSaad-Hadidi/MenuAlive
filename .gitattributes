@@ -2,5 +2,4 @@
 # Do not add broad *.glb, *.usdz, *.mp4, or generated-asset patterns.
 # New heavy source/review assets belong in storage/CDN or ignored local folders,
 # with an explicit asset-policy review before any Git exception is added.
-public/models/demo/ravioles-chevre-miel.usdz filter=lfs diff=lfs merge=lfs -text
 public/model-viewer/meshopt-decoder-74188840.js text eol=lf

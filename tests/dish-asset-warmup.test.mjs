@@ -82,7 +82,7 @@ test("menu-card asset intent does not fetch large demo GLB or USDZ files", async
 
   prepareDishAssetIntent({
     model3dUrl: "/models/demo/ravioles-chevre-miel.glb",
-    usdzUrl: "/models/demo/ravioles-chevre-miel.usdz"
+    usdzUrl: ""
   });
   await env.settleWarmupQueue();
 
@@ -265,7 +265,7 @@ test("iPhone Quick Look prefetch ignores source-only USDZ fields", async () => {
     {
       model3dUrl: "/models/demo/ravioles-chevre-miel.glb",
       webModel3dUrl: "/models/demo/ravioles-chevre-miel-meshopt-6b812a04.glb",
-      usdzUrl: "/models/demo/ravioles-chevre-miel.usdz"
+      usdzUrl: ""
     },
     (state) => states.push(state)
   );

@@ -239,16 +239,6 @@ const ALLOWLIST = new Map(
       }
     ],
     [
-      "public/models/demo/ravioles-chevre-miel.usdz",
-      {
-        maxBytes: 70375208,
-        sha256: [
-          "b22994f9ce416d9342bcbea0d9d0ba71a4005c258ecd33cca7210a844ec11d53"
-        ],
-        reason: "Existing file-specific LFS demo USDZ runtime asset."
-      }
-    ],
-    [
       "public/models/demo/souffle-chocolat-meshopt-76eb0faa.glb",
       {
         maxBytes: 17011872,

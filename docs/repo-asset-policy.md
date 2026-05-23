@@ -37,9 +37,11 @@ client-specific 3D, source models, review renders, or raw video exports.
 LFS is file-specific only in this repo. Do not add broad rules such as
 `*.glb filter=lfs`, `*.usdz filter=lfs`, or `*.mp4 filter=lfs`.
 
-The existing `public/models/demo/ravioles-chevre-miel.usdz` LFS rule is
-grandfathered. Future LFS use must be explicitly reviewed because runtime
-assets can break if a deployment receives an unresolved pointer.
+No public runtime asset should be required through Git LFS. The former heavy
+ravioles source USDZ was removed from the public deploy tree because Vercel
+clones can fail before build when GitHub LFS bandwidth is exhausted. Future
+heavy USDZ/GLB files must go to storage/CDN, or through an explicit reviewed
+non-public asset workflow, so LFS cannot block Vercel clone or checkout.
 
 ## Thresholds
 

@@ -2,7 +2,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
-const ALLOWED_LFS_RULES = new Set(["public/models/demo/ravioles-chevre-miel.usdz"]);
+const ALLOWED_LFS_RULES = new Set();
 const DANGEROUS_LFS_EXTENSIONS = [
   ".glb",
   ".gltf",
@@ -37,6 +37,14 @@ function runGit(args) {
   });
 }
 
+function runGitBuffer(args, options = {}) {
+  return execFileSync("git", ["-c", "core.quotepath=false", ...args], {
+    encoding: "buffer",
+    stdio: ["ignore", "pipe", "pipe"],
+    ...options
+  });
+}
+
 function readLines(filePath) {
   if (!existsSync(filePath)) return [];
   return readFileSync(filePath, "utf8").split(/\r?\n/);
@@ -51,10 +59,24 @@ function hasDangerousExtension(pattern) {
   return DANGEROUS_LFS_EXTENSIONS.some((extension) => lower.endsWith(extension));
 }
 
-function isLfsPointer(filePath) {
-  if (!existsSync(filePath)) return false;
-  const sample = readFileSync(filePath, "utf8").slice(0, 120);
-  return sample.startsWith("version https://git-lfs.github.com/spec/v1");
+function isLfsPointerBytes(bytes) {
+  return bytes
+    .subarray(0, 120)
+    .toString("utf8")
+    .startsWith("version https://git-lfs.github.com/spec/v1");
+}
+
+function readTrackedEntries() {
+  const output = runGitBuffer(["ls-files", "-s", "-z"]).toString("utf8");
+  return output
+    .split("\0")
+    .filter(Boolean)
+    .map((entry) => {
+      const match = entry.match(/^\d+\s+([0-9a-f]{40,64})\s+\d+\t(.+)$/);
+      if (!match) return null;
+      return { oid: match[1], path: match[2] };
+    })
+    .filter(Boolean);
 }
 
 const violations = [];
@@ -109,35 +131,30 @@ for (const pattern of REQUIRED_IGNORE_PATTERNS) {
 }
 
 try {
-  const lfsOutput = runGit(["lfs", "ls-files", "-l"]);
-  for (const line of lfsOutput.split(/\r?\n/).filter(Boolean)) {
-    const match = line.match(/^[0-9a-f]+\s+[-*]\s+(.+)$/i);
-    if (!match) continue;
-    const filePath = match[1].trim();
-    if (filePath.startsWith("public/")) {
-      if (isLfsPointer(filePath)) {
-        violations.push({
-          path: filePath,
-          reason: "public runtime asset is an unresolved Git LFS pointer",
-          recommendation:
-            "Hydrate LFS before build/deploy or move the runtime asset out of LFS."
-        });
-      } else {
-        warnings.push({
-          path: filePath,
-          reason: "public runtime asset is LFS-tracked and currently hydrated",
-          recommendation:
-            "Verify Vercel Git LFS is enabled; prefer external storage for future large runtime assets."
-        });
-      }
-    }
+  let activeLfsPointers = 0;
+  for (const entry of readTrackedEntries()) {
+    const size = Number(runGit(["cat-file", "-s", entry.oid]).trim());
+    if (!Number.isFinite(size) || size > 512) continue;
+    const bytes = runGitBuffer(["cat-file", "-p", entry.oid]);
+    if (!isLfsPointerBytes(bytes)) continue;
+
+    activeLfsPointers += 1;
+    violations.push({
+      path: entry.path,
+      reason: "current index contains a Git LFS pointer blob",
+      recommendation:
+        "Remove the LFS dependency from the deploy tree; Vercel must not need Git LFS to clone this branch."
+    });
+  }
+  if (activeLfsPointers === 0) {
+    console.log("No Git LFS pointer blobs are active in the current index.");
   }
 } catch {
   warnings.push({
-    path: "git lfs",
-    reason: "git lfs ls-files could not be executed",
+    path: "git index",
+    reason: "tracked blob inspection could not be executed",
     recommendation:
-      "Install Git LFS locally and keep CI checkout configured with lfs: true."
+      "Run this check in a full Git checkout so Vercel-facing LFS pointers can be detected."
   });
 }
 
