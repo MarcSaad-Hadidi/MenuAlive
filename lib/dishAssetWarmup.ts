@@ -32,6 +32,16 @@ type AssetWarmupRequest = {
   kind: AssetKind;
 };
 
+type NavigatorWithNetworkHints = Navigator & {
+  connection?: {
+    saveData?: boolean;
+    effectiveType?: string;
+    downlink?: number;
+    rtt?: number;
+  };
+  deviceMemory?: number;
+};
+
 export type QuickLookPrefetchState = "idle" | "preparing" | "ready" | "failed";
 
 type QuickLookPrefetchListener = (state: QuickLookPrefetchState) => void;
@@ -66,14 +76,19 @@ export function prepareDemoAssetOrigin(): void {
 
 export function shouldWarmHeavyAsset(): boolean {
   if (typeof navigator === "undefined") return false;
-  const connection = (
-    navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }
-  ).connection;
+  const navigatorValue = navigator as NavigatorWithNetworkHints;
+  const connection = navigatorValue.connection;
 
   if (connection?.saveData) return false;
-  if (/^(slow-2g|2g)$/i.test(connection?.effectiveType ?? "")) return false;
+  if (/^(slow-2g|2g|3g)$/i.test(connection?.effectiveType ?? "")) return false;
+  if (typeof connection?.downlink === "number" && connection.downlink <= 1.5) {
+    return false;
+  }
+  if (typeof connection?.rtt === "number" && connection.rtt >= 600) {
+    return false;
+  }
+  if ((navigatorValue.deviceMemory ?? 8) <= 2) return false;
+  if ((navigator.hardwareConcurrency ?? 8) <= 4) return false;
   return true;
 }
 

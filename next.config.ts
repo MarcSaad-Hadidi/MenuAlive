@@ -11,6 +11,14 @@ const DEMO_STATIC_ASSET_HEADERS = [
   { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
 ] as const;
 
+const OPTIMIZED_VIDEO_HEADERS = [
+  { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+] as const;
+
+const FRAME_POSTER_HEADERS = [
+  { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=604800" },
+] as const;
+
 const GLB_DEMO_HEADERS = [
   { key: "Content-Type", value: "model/gltf-binary" },
   ...DEMO_STATIC_ASSET_HEADERS,
@@ -36,7 +44,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   devIndicators: false,
   images: {
-    qualities: [75, 90, 92],
+    qualities: [75, 82, 90],
   },
   async headers() {
     return [
@@ -87,6 +95,14 @@ const nextConfig: NextConfig = {
       {
         source: "/images/demo/:path*",
         headers: [...DEMO_STATIC_ASSET_HEADERS],
+      },
+      {
+        source: "/videos/optimized/:path*",
+        headers: [...OPTIMIZED_VIDEO_HEADERS],
+      },
+      {
+        source: "/frames/:path*",
+        headers: [...FRAME_POSTER_HEADERS],
       },
       {
         source: "/model-viewer/:path*.js",

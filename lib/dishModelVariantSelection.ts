@@ -13,6 +13,7 @@ function cleanSource(value: string): string {
 
 export function resolveDishModelViewerSrc({
   arModelSrc,
+  isAndroid,
   mobileModelSrc,
   originalModelSrc,
   prefersMobileModel,
@@ -23,8 +24,8 @@ export function resolveDishModelViewerSrc({
   const original = cleanSource(originalModelSrc);
   const arLite = cleanSource(arModelSrc);
 
-  if (prefersMobileModel) {
-    return mobile || web || arLite;
+  if (isAndroid || prefersMobileModel) {
+    return mobile || arLite || web || original;
   }
 
   return web || original || arLite;

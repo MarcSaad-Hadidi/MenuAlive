@@ -9,6 +9,7 @@ import { trackMenuEvent } from "@/lib/analytics/client";
 import { dishHasImmersiveAsset } from "@/lib/menuQuery";
 import {
   prefetchUsdzForQuickLook,
+  shouldWarmHeavyAsset,
   type QuickLookPrefetchState
 } from "@/lib/dishAssetWarmup";
 import { hasActiveQuickLookUsdzUrl } from "@/lib/quickLookAssets";
@@ -24,21 +25,8 @@ type DishDetailProps = {
 
 let modelViewerWarmupPromise: Promise<unknown> | null = null;
 
-function canWarmModelViewer(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const connection = (
-    navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }
-  ).connection;
-
-  if (connection?.saveData) return false;
-  if (/^(slow-2g|2g)$/i.test(connection?.effectiveType ?? "")) return false;
-  return true;
-}
-
 function warmModelViewerOnIntent() {
-  if (!canWarmModelViewer()) return;
+  if (!shouldWarmHeavyAsset()) return;
   modelViewerWarmupPromise ??= import("@/components/dish/DishModelViewer").then(
     (mod) => {
       mod.configureModelViewerAssetDecoders();
@@ -357,6 +345,8 @@ export function DishDetail({ dish }: DishDetailProps) {
                 type="button"
                 className={VIEW_3D_BUTTON_CLASS}
                 onPointerEnter={handleModelModuleWarmup}
+                onPointerDown={handleModelModuleWarmup}
+                onTouchStart={handleModelModuleWarmup}
                 onFocus={handleModelModuleWarmup}
                 onClick={handleVoir3dClick}
               >

@@ -43,9 +43,11 @@ export function ScrollScrubVideoHero() {
   const modeSourceDurationSeconds = modeSource?.durationSeconds ?? 0;
   const modeSourceScrubReady = modeSource?.scrubReady ?? false;
   const modeVariant = mode?.variant ?? null;
+  const modePreload = mode?.preload ?? "metadata";
   const modeMinSeekDelta = mode?.minSeekDelta ?? 1 / 30;
   const isReducedMotion = mode?.isReducedMotion ?? false;
   const isSaveData = mode?.isSaveData ?? false;
+  const isLowEndDevice = mode?.isLowEndDevice ?? true;
   const [chapter, setChapter] = useState(videoChapters[0]);
   const [loadRequest, setLoadRequest] = useState<VideoLoadRequest | null>(
     null
@@ -58,6 +60,7 @@ export function ScrollScrubVideoHero() {
     Boolean(modeSourceSrc) &&
     !isReducedMotion &&
     !isSaveData &&
+    !isLowEndDevice &&
     modeSourceScrubReady &&
     failedVideoSource !== modeSourceSrc;
   const shouldLoadVideo =
@@ -173,6 +176,49 @@ export function ScrollScrubVideoHero() {
   }, [canUseScrubVideo, modeSourceSrc, shouldLoadVideo]);
 
   useEffect(() => {
+    if (canUseScrubVideo) return undefined;
+
+    const section = sectionRef.current;
+    if (!section) return undefined;
+
+    const updateFromScroll = () => {
+      rafRef.current = null;
+      const rect = section.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || 1;
+      const scrollableDistance = Math.max(1, rect.height - viewportHeight);
+      const progress = clamp01(-rect.top / scrollableDistance);
+      progressRef.current = progress;
+
+      const nextChapter = getActiveChapter(progress);
+      if (nextChapter.id !== chapterIdRef.current) {
+        chapterIdRef.current = nextChapter.id;
+        setChapter(nextChapter);
+      }
+    };
+
+    const schedule = () => {
+      if (rafRef.current !== null) return;
+      rafRef.current = window.requestAnimationFrame(updateFromScroll);
+    };
+
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule, { passive: true });
+    window.addEventListener("orientationchange", schedule);
+
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("orientationchange", schedule);
+
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [canUseScrubVideo]);
+
+  useEffect(() => {
     const activeLoadRequest = loadRequest;
     if (
       !modeSourceSrc ||
@@ -192,7 +238,7 @@ export function ScrollScrubVideoHero() {
     let cancelled = false;
     durationRef.current = 0;
     lastAssignedTimeRef.current = -1;
-    video.preload = modeVariant === "desktopHigh" ? "auto" : "metadata";
+    video.preload = modePreload;
     video.src = modeSourceSrc;
 
     const writeDebugState = () => {
@@ -343,6 +389,7 @@ export function ScrollScrubVideoHero() {
     canUseScrubVideo,
     loadRequest,
     modeMinSeekDelta,
+    modePreload,
     modeSourceDurationSeconds,
     modeSourceSrc,
     modeVariant,
@@ -363,6 +410,7 @@ export function ScrollScrubVideoHero() {
       }
       data-reduced-motion={isReducedMotion ? "true" : "false"}
       data-save-data={isSaveData ? "true" : "false"}
+      data-low-end-device={isLowEndDevice ? "true" : "false"}
       className="scroll-video-section relative overflow-clip bg-[#080706]"
       aria-label="Expérience Vistaire"
     >

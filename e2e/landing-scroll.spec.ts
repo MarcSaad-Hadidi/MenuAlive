@@ -146,7 +146,7 @@ test.describe("Landing scroll experience", () => {
       .toBeGreaterThan(videoBefore + 0.1);
   });
 
-  test("mobile viewport uses the upscaled mobile scrub video", async ({
+  test("low-end mobile defers scrub video and never requests desktop video", async ({
     page
   }) => {
     const desktopVideoRequests: string[] = [];
@@ -186,20 +186,19 @@ test.describe("Landing scroll experience", () => {
       "data-video-source",
       "/videos/optimized/upscaled-video-mobile-scrub.mp4"
     );
+    await expect(experience).toHaveAttribute("data-low-end-device", "true");
+    await expect(experience).toHaveAttribute("data-video-deferred", "true");
 
-    await expect
-      .poll(() =>
-        experience
-          .locator("video")
-          .evaluate((video) => (video as HTMLVideoElement).currentSrc)
-      )
-      .toContain("/videos/optimized/upscaled-video-mobile-scrub.mp4");
+    const currentSrc = await experience
+      .locator("video")
+      .evaluate((video) => (video as HTMLVideoElement).currentSrc);
+    expect(currentSrc).toBe("");
 
     await page.waitForTimeout(2_000);
     expect(desktopVideoRequests).toEqual([]);
   });
 
-  test("low-end desktop still uses the upscaled desktop scrub video", async ({
+  test("low-end desktop keeps the desktop scrub source deferred", async ({
     page
   }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -230,6 +229,13 @@ test.describe("Landing scroll experience", () => {
       "data-video-source",
       "/videos/optimized/upscaled-video-desktop-scrub.mp4"
     );
+    await expect(experience).toHaveAttribute("data-low-end-device", "true");
+    await expect(experience).toHaveAttribute("data-video-deferred", "true");
+
+    const currentSrc = await experience
+      .locator("video")
+      .evaluate((video) => (video as HTMLVideoElement).currentSrc);
+    expect(currentSrc).toBe("");
   });
 
   test('hero primary CTA "Voir le menu client" points to /demo', async ({ page }) => {

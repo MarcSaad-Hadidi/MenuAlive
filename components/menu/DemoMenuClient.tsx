@@ -138,14 +138,14 @@ export function DemoMenuClient({
         <p
           className={
             isPhoneSimulation
-              ? "text-[10px] leading-relaxed text-[#6a5c4e]"
-              : "text-[10px] text-[#6a5c4e] sm:text-[11px]"
+              ? "text-[10px] leading-relaxed text-[#9a8b78]"
+              : "text-[10px] text-[#9a8b78] sm:text-[11px]"
           }
           aria-live="polite"
         >
           {filteredDishes.length} résultat
           {filteredDishes.length === 1 ? "" : "s"} ·{" "}
-          <span className="text-[#8f806e]">{activeCategoryLabel}</span>
+          <span className="text-[#b0a08c]">{activeCategoryLabel}</span>
         </p>
       )}
     </>
@@ -226,7 +226,7 @@ export function DemoMenuClient({
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/14 px-5 text-sm font-medium text-cream transition hover:border-champagne/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/14 px-5 text-sm font-medium text-cream transition hover:border-champagne/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
               >
                 Effacer la recherche
               </button>
@@ -237,7 +237,7 @@ export function DemoMenuClient({
                 onClick={() =>
                   handleFiltersChange(defaultMenuFilterState(), "reset_filters")
                 }
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/30 bg-champagne/8 px-5 text-sm font-medium text-champagne transition hover:bg-champagne/12 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/30 bg-champagne/8 px-5 text-sm font-medium text-champagne transition hover:bg-champagne/12 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
               >
                 Réinitialiser
               </button>

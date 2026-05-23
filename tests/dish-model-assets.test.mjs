@@ -77,7 +77,19 @@ test("resolver falls back to legacy assets when manifest is absent or invalid", 
   assert.equal(resolved.arUsdzUrl, legacyHomardAssets.arUsdzUrl);
 });
 
-test("viewer source keeps premium web GLB ahead of AR-lite when both exist", () => {
+test("viewer source keeps premium web GLB on desktop and lighter variants on mobile", () => {
+  assert.equal(
+    resolveDishModelViewerSrc({
+      arModelSrc: "/models/restaurants/maison-elyse/main/homard-bisque/v1/ar-lite/homard-bisque-ar-lite.glb",
+      isAndroid: false,
+      mobileModelSrc: "",
+      originalModelSrc: "/models/demo/homard-bisque.glb",
+      prefersMobileModel: false,
+      webModelSrc: "/models/restaurants/maison-elyse/main/homard-bisque/v1/web/homard-bisque-web.glb"
+    }),
+    "/models/restaurants/maison-elyse/main/homard-bisque/v1/web/homard-bisque-web.glb"
+  );
+
   assert.equal(
     resolveDishModelViewerSrc({
       arModelSrc: "/models/restaurants/maison-elyse/main/homard-bisque/v1/ar-lite/homard-bisque-ar-lite.glb",
@@ -87,7 +99,7 @@ test("viewer source keeps premium web GLB ahead of AR-lite when both exist", () 
       prefersMobileModel: false,
       webModelSrc: "/models/restaurants/maison-elyse/main/homard-bisque/v1/web/homard-bisque-web.glb"
     }),
-    "/models/restaurants/maison-elyse/main/homard-bisque/v1/web/homard-bisque-web.glb"
+    "/models/restaurants/maison-elyse/main/homard-bisque/v1/ar-lite/homard-bisque-ar-lite.glb"
   );
 
   assert.equal(
@@ -123,7 +135,7 @@ test("viewer source keeps premium web GLB ahead of AR-lite when both exist", () 
       prefersMobileModel: true,
       webModelSrc: ""
     }),
-    ""
+    "/models/demo/ravioles-chevre-miel.glb"
   );
 });
 

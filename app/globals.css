@@ -284,6 +284,7 @@ button[aria-label="Keyless prompt"] {
 
   .scroll-video-section[data-reduced-motion="true"],
   .scroll-video-section[data-save-data="true"],
+  .scroll-video-section[data-low-end-device="true"],
   .scroll-video-section[data-video-failed="true"] {
     height: 160svh;
   }
@@ -337,6 +338,13 @@ button[aria-label="Keyless prompt"] {
 
   .video-transition-veil {
     will-change: opacity;
+  }
+
+  .scroll-video-section[data-reduced-motion="true"],
+  .scroll-video-section[data-save-data="true"],
+  .scroll-video-section[data-low-end-device="true"],
+  .scroll-video-section[data-video-failed="true"] {
+    height: 240vh;
   }
 }
 

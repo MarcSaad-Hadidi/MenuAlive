@@ -32,7 +32,7 @@ export function MenuHero({ restaurant }: MenuHeroProps) {
           {restaurant.tagline}
         </p>
         <p className="mt-2 text-xs text-[#8f806e]">{restaurant.location}</p>
-        <p className="mx-auto mt-4 max-w-lg text-xs leading-relaxed text-[#7a6b5b] sm:text-sm">
+        <p className="mx-auto mt-4 max-w-lg text-xs leading-relaxed text-[#9a8b78] sm:text-sm">
           {isRealMobile
             ? "Vous consultez le parcours client tel qu’il s’ouvre après un scan QR à table."
             : "Cette page reproduit le parcours client après scan du QR à table : navigation tactile, fiches plats et expérience immersive."}

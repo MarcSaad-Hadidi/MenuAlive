@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { CurrencyCode, Dish } from "@/lib/demoMenuData";
 import { getDishCardImageObjectPosition } from "@/lib/demoMenuData";
 import { trackMenuEvent } from "@/lib/analytics/client";
-import { prepareDishAssetIntent } from "@/lib/dishAssetWarmup";
 import { dishHasImmersiveAsset } from "@/lib/menuQuery";
 import { formatPrice } from "@/lib/formatPrice";
 import { AllergenBadge } from "@/components/dish/AllergenBadge";
@@ -52,7 +51,7 @@ function DishCardHeroImage({
               }
               className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
               style={{ objectPosition }}
-              quality={90}
+              quality={82}
             />
           </div>
           <div
@@ -104,9 +103,6 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
   const { isPhoneSimulation } = useDemoSimulation();
   const unavailable = !dish.isAvailable;
   const has3d = dishHasImmersiveAsset(dish);
-  const handleDishIntentWarmup = () => {
-    if (has3d) prepareDishAssetIntent(dish);
-  };
 
   if (isPhoneSimulation) {
     return (
@@ -176,10 +172,6 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
               <Link
                 href={`/demo/dishes/${dish.slug}`}
                 prefetch={false}
-                onPointerEnter={handleDishIntentWarmup}
-                onPointerDown={handleDishIntentWarmup}
-                onTouchStart={handleDishIntentWarmup}
-                onFocus={handleDishIntentWarmup}
                 onClick={() => {
                   trackMenuEvent({
                     eventName: "cta_clicked",
@@ -187,7 +179,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
                     ctaName: "dish_card_open"
                   });
                 }}
-                className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-champagne/[0.12] text-[11px] font-semibold text-cream ring-1 ring-inset ring-champagne/35 transition active:bg-champagne/[0.18] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#080706]"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-champagne/[0.12] text-[11px] font-semibold text-cream ring-1 ring-inset ring-champagne/35 transition active:bg-champagne/[0.18] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#080706]"
                 aria-label={`Voir le plat — ${dish.name}`}
               >
                 Voir le plat
@@ -258,7 +250,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
         <div className="mt-4">
           {unavailable ? (
             <span
-              className="inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-lg border border-white/8 bg-white/[0.04] text-center text-xs font-semibold text-white/35"
+              className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-lg border border-white/8 bg-white/[0.04] text-center text-xs font-semibold text-white/35"
               aria-label={`${dish.name} indisponible`}
             >
               Indisponible
@@ -267,10 +259,6 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
             <Link
               href={`/demo/dishes/${dish.slug}`}
               prefetch={false}
-              onPointerEnter={handleDishIntentWarmup}
-              onPointerDown={handleDishIntentWarmup}
-              onTouchStart={handleDishIntentWarmup}
-              onFocus={handleDishIntentWarmup}
               onClick={() => {
                 trackMenuEvent({
                   eventName: "cta_clicked",
@@ -278,7 +266,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
                   ctaName: "dish_card_open"
                 });
               }}
-              className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-champagne/40 bg-champagne/[0.1] text-center text-xs font-semibold text-cream transition hover:border-champagne/55 hover:bg-champagne/[0.16] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0806]"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-champagne/40 bg-champagne/[0.1] text-center text-xs font-semibold text-cream transition hover:border-champagne/55 hover:bg-champagne/[0.16] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0806]"
               aria-label={`Voir le plat — ${dish.name}`}
             >
               Voir le plat

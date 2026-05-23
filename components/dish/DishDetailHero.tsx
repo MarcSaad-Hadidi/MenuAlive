@@ -32,7 +32,7 @@ export function DishDetailHero({
     : "relative isolate aspect-[4/3] w-full max-h-[min(76vh,720px)] overflow-hidden rounded-2xl border border-white/10 bg-[#14100c] shadow-[0_28px_92px_rgba(0,0,0,0.38)] lg:rounded-[1.35rem] lg:shadow-[0_36px_100px_rgba(0,0,0,0.42)]";
 
   const sizes = immersive
-    ? "(max-width: 428px) 100vw, 420px"
+    ? "(max-width: 768px) 100vw, 420px"
     : "(max-width: 980px) 92vw, 920px";
 
   return (
@@ -48,7 +48,7 @@ export function DishDetailHero({
               sizes={sizes}
               className="object-cover"
               style={{ objectPosition }}
-              quality={92}
+              quality={immersive ? 82 : 90}
             />
             <div
               className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-black/12"

@@ -33,13 +33,13 @@ function PresentationPathway() {
           <Link
             href="/demo"
             aria-current="page"
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/40 bg-champagne/10 px-4 text-sm font-semibold text-champagne focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/40 bg-champagne/10 px-4 text-sm font-semibold text-champagne focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
           >
             Menu client
           </Link>
           <Link
             href="/admin"
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/14 px-4 text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/14 px-4 text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
           >
             Aperçu restaurateur
           </Link>

@@ -20,10 +20,11 @@ import {
 } from "@/lib/arEnvironment";
 import { resolveDishModelViewerSrc } from "@/lib/dishModelVariantSelection";
 import { resolveActiveQuickLookUsdzUrl } from "@/lib/quickLookAssets";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const MV_INIT_TIMEOUT_MS = 12_000;
 const MODEL_LOAD_TIMEOUT_MS = 15_000;
-const LOADER_REVEAL_DELAY_MS = 700;
+const LOADER_REVEAL_DELAY_MS = 200;
 const AR_HELP_TEXT =
   "Faites tourner le plat en 3D. Sur téléphone compatible, le plat peut aussi s'afficher devant vous en réalité augmentée.";
 const IOS_USDZ_MISSING_TEXT =
@@ -180,7 +181,7 @@ function PremiumDishBackdrop({
           sizes="(max-width: 768px) 100vw, 672px"
           className="object-cover opacity-80"
           style={{ objectPosition: getPosterPosition(dish) }}
-          quality={90}
+          quality={75}
           aria-hidden
         />
       ) : (
@@ -299,12 +300,12 @@ function PremiumFailureState({
             <IosQuickLookArLink
               href={quickLookHref!}
               onClick={onQuickLookClick!}
-              className="relative inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-4 text-xs font-semibold text-[#17100a] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+              className="relative inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-4 text-xs font-semibold text-[#17100a] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
             />
           ) : null}
           <button
             type="button"
-            className={`inline-flex min-h-10 items-center justify-center rounded-full px-4 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${
+            className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${
               hasDirectAr
                 ? "border border-white/18 bg-black/35 text-cream hover:bg-white/10"
                 : "border border-champagne/45 bg-champagne text-[#17100a] hover:bg-[#e3c785]"
@@ -315,7 +316,7 @@ function PremiumFailureState({
           </button>
           <button
             type="button"
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/18 bg-black/35 px-4 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/18 bg-black/35 px-4 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
             onClick={onReturnToDish}
           >
             Revenir à la fiche du plat
@@ -347,6 +348,7 @@ export function DishModelViewer({
   const [prefersMobileModel, setPrefersMobileModel] = useState(
     readPrefersMobileModel
   );
+  const prefersReducedMotion = usePrefersReducedMotion();
   const loadWatchRef = useRef<ModelViewerElement | null>(null);
   const listenerCleanupRef = useRef<(() => void) | null>(null);
 
@@ -639,7 +641,7 @@ export function DishModelViewer({
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <button
                   type="button"
-                  className="min-h-10 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  className="min-h-11 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                   onClick={() => {
                     void copyPageLink().then((ok) => {
                       setCopyConfirmed(ok);
@@ -653,7 +655,7 @@ export function DishModelViewer({
                 </button>
                 <button
                   type="button"
-                  className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  className="min-h-11 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                   onClick={() => {
                     void sharePageLink(dish.name);
                   }}
@@ -692,7 +694,7 @@ export function DishModelViewer({
           />
         ) : (
           <div className="relative">
-            <div className="relative touch-none overscroll-contain [contain:layout_paint]">
+            <div className="relative touch-pan-y overscroll-contain [contain:layout_paint]">
               {mvReady ? (
                 /* GLB en mètres réalistes ; ar-scale fixed évite l’auto-scale agressif sur Android */
                 <model-viewer
@@ -703,7 +705,7 @@ export function DishModelViewer({
                   alt={`Vue du plat : ${dish.name}`}
                   aria-describedby={helpId}
                   camera-controls
-                  auto-rotate
+                  {...(prefersReducedMotion ? {} : { "auto-rotate": true })}
                   {...(androidNativeArEnabled ? { ar: true } : {})}
                   ar-modes="webxr scene-viewer quick-look"
                   ar-placement="floor"
@@ -712,13 +714,13 @@ export function DishModelViewer({
                   exposure="1.05"
                   loading="auto"
                   reveal="auto"
-                  touch-action="none"
+                  touch-action="pan-y"
                   camera-orbit="0deg 68deg 145%"
                   camera-target="0m 0.015m 0m"
                   field-of-view="34deg"
                   min-camera-orbit="auto auto 65%"
                   max-camera-orbit="auto auto 175%"
-                  className={`mx-auto block touch-none ${MODEL_FRAME_CLASS}`}
+                  className={`mx-auto block touch-pan-y ${MODEL_FRAME_CLASS}`}
                 >
                   {showAndroidSceneViewerButton ? (
                     <button
@@ -751,7 +753,7 @@ export function DishModelViewer({
               {onReturnToDish ? (
                 <button
                   type="button"
-                  className="mt-2 inline-flex min-h-10 items-center justify-center rounded-full border border-white/18 bg-black/35 px-4 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  className="mt-2 inline-flex min-h-11 items-center justify-center rounded-full border border-white/18 bg-black/35 px-4 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                   onClick={onReturnToDish}
                 >
                   Revenir a la fiche du plat
@@ -772,7 +774,7 @@ export function DishModelViewer({
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="min-h-11 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                       onClick={() => {
                         void copyPageLink().then((ok) => {
                           setCopyConfirmed(ok);
@@ -786,7 +788,7 @@ export function DishModelViewer({
                     </button>
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="min-h-11 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                       onClick={() => {
                         void sharePageLink(dish.name);
                       }}
@@ -795,7 +797,7 @@ export function DishModelViewer({
                     </button>
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="min-h-11 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                       onClick={() => {
                         setHandoffDismissed(true);
                       }}
@@ -820,14 +822,14 @@ export function DishModelViewer({
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="min-h-11 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                       onClick={() => setHandoffDismissed(true)}
                     >
                       Continuer en 3D
                     </button>
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="min-h-11 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                       onClick={() => {
                         void copyPageLink().then((ok) => {
                           setCopyConfirmed(ok);
@@ -841,7 +843,7 @@ export function DishModelViewer({
                     </button>
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="min-h-11 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
                       onClick={() => {
                         void sharePageLink(dish.name);
                       }}
