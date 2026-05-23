@@ -3,36 +3,8 @@ name: Asset Policy
 on:
   pull_request:
     branches: ["main"]
-    paths:
-      - ".gitattributes"
-      - ".gitignore"
-      - ".github/workflows/asset-policy.yml"
-      - "docs/repo-asset-policy.md"
-      - "package-lock.json"
-      - "package.json"
-      - "scripts/check-large-files.mjs"
-      - "scripts/check-lfs-policy.mjs"
-      - "public/models/**"
-      - "public/videos/**"
-      - "3D Plat/**"
-      - "3D photo/**"
-      - "assets/3d/**"
   push:
     branches: ["main"]
-    paths:
-      - ".gitattributes"
-      - ".gitignore"
-      - ".github/workflows/asset-policy.yml"
-      - "docs/repo-asset-policy.md"
-      - "package-lock.json"
-      - "package.json"
-      - "scripts/check-large-files.mjs"
-      - "scripts/check-lfs-policy.mjs"
-      - "public/models/**"
-      - "public/videos/**"
-      - "3D Plat/**"
-      - "3D photo/**"
-      - "assets/3d/**"
 
 permissions:
   contents: read
@@ -46,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: false
 
       - name: Setup Node
         uses: actions/setup-node@v4

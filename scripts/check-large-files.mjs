@@ -82,7 +82,10 @@ const ALLOWLIST = new Map(
       "3D Plat/ScriptAssiette.txt",
       {
         maxBytes: 6897,
+        // Git stores this text file with LF endings, while Windows checkouts use CRLF.
+        // Keep both digests so the baseline asset check is stable across platforms.
         sha256: [
+          "73714cd1874037f9871d11d1667290778f5b448bcccff1ab2c4892fee8779bae",
           "b0d551f61daf6c0300c8941730c1182411d0890b4fd548ed6ba1e3c59cdddc25"
         ],
         reason: "Existing main source-drop note; future source-drop notes should live in docs or storage review."

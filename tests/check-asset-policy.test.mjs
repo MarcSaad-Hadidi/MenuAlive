@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 const ROOT = process.cwd();
+const ASSET_POLICY_WORKFLOW = join(ROOT, ".github", "workflows", "asset-policy.yml");
 const LARGE_FILE_CHECK = join(ROOT, "scripts", "check-large-files.mjs");
 const LFS_POLICY_CHECK = join(ROOT, "scripts", "check-lfs-policy.mjs");
 
@@ -51,6 +52,15 @@ test("large-file guard blocks an unallowlisted dangerous GLB", () => {
   assert.match(result.stdout, /3D Plat\/export\.glb/);
   assert.match(result.stdout, /\.glb/);
   assert.match(result.stdout, /recommendation/i);
+});
+
+test("asset policy workflow runs for all repository changes", () => {
+  const workflow = readFileSync(ASSET_POLICY_WORKFLOW, "utf8");
+
+  assert.match(workflow, /run: npm run assets:check/);
+  assert.match(workflow, /run: npm run lfs:check/);
+  assert.doesNotMatch(workflow, /^\s+paths(?:-ignore)?:/m);
+  assert.doesNotMatch(workflow, /^\s+lfs:\s+true\s*$/m);
 });
 
 test("large-file guard ignores ignored local output directories", () => {
