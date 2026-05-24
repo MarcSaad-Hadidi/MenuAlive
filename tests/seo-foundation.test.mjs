@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import {
   INTERNAL_ROBOTS_DISALLOW,
@@ -40,16 +42,59 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
 
   assert.deepEqual(urls, [
     "https://www.vistaire.ca/",
+    "https://www.vistaire.ca/menu-digital-restaurant",
+    "https://www.vistaire.ca/menu-qr-code-restaurant",
+    "https://www.vistaire.ca/menu-3d-ar-restaurant",
+    "https://www.vistaire.ca/menu-pdf-vs-menu-digital",
     "https://www.vistaire.ca/demo",
-    "https://www.vistaire.ca/demo/dishes/homard-bisque",
-    "https://www.vistaire.ca/demo/dishes/ravioles-romarin",
-    "https://www.vistaire.ca/admin"
   ]);
-  for (const internalPath of ["/owner", "/sign-in", "/todos", "/api/"]) {
+  for (const internalPath of ["/admin", "/owner", "/sign-in", "/todos", "/api/"]) {
     assert.equal(urls.some((url) => url.includes(internalPath)), false);
   }
+  assert.equal(urls.some((url) => url.includes("/demo/dishes/")), false);
   assert.equal(entries.every((entry) => entry.lastModified === lastModified), true);
   assert.equal(entries.every((entry) => entry.priority > 0 && entry.priority <= 1), true);
+});
+
+test("keeps demo admin and dish detail pages out of search indexes", () => {
+  const adminLayout = readFileSync(
+    join(process.cwd(), "app", "admin", "layout.tsx"),
+    "utf8"
+  );
+  const dishPage = readFileSync(
+    join(process.cwd(), "app", "demo", "dishes", "[slug]", "page.tsx"),
+    "utf8"
+  );
+
+  assert.match(adminLayout, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true/s);
+  assert.match(dishPage, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true/s);
+});
+
+test("declares the focused SEO page inventory without generic scale pages", async () => {
+  assert.equal(existsSync(join(process.cwd(), "lib", "seoPages.ts")), true);
+
+  const { SEO_PAGES, getSeoPage } = await import("../lib/seoPages.ts");
+  const paths = SEO_PAGES.map((page) => page.path);
+
+  assert.deepEqual(paths, [
+    "/menu-digital-restaurant",
+    "/menu-qr-code-restaurant",
+    "/menu-3d-ar-restaurant",
+    "/menu-pdf-vs-menu-digital"
+  ]);
+  assert.equal(new Set(paths).size, paths.length);
+  assert.equal(paths.some((path) => path.includes("pos")), false);
+  assert.equal(paths.some((path) => path.includes("commande")), false);
+
+  for (const page of SEO_PAGES) {
+    assert.equal(typeof page.metadataTitle, "string");
+    assert.equal(page.metadataTitle.length > 20, true);
+    assert.equal(page.metadataDescription.length > 80, true);
+    assert.equal(page.metadataDescription.length < 170, true);
+    assert.equal(page.sections.length >= 2, true);
+    assert.equal(page.faq.length >= 2, true);
+    assert.equal(getSeoPage(page.slug).path, page.path);
+  }
 });
 
 test("allows useful crawlers while keeping internal surfaces out of robots crawl", () => {
@@ -100,6 +145,10 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   assert.equal(service["@type"], "Service");
   assert.equal(breadcrumb["@type"], "BreadcrumbList");
   assert.equal(service.provider["@id"], organization["@id"]);
+  assert.equal(service.url, "https://www.vistaire.ca/");
+  assert.equal("areaServed" in service, false);
+  assert.equal(service.mainEntityOfPage["@id"], "https://www.vistaire.ca/#webpage");
+  assert.equal(service.hasOfferCatalog["@type"], "OfferCatalog");
   assert.deepEqual(
     breadcrumb.itemListElement.map((item) => item.item),
     ["https://www.vistaire.ca/", "https://www.vistaire.ca/demo"]
@@ -116,4 +165,45 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   assert.equal(serialized.includes('"@type":"MenuItem"'), false);
   assert.equal(serialized.includes("AggregateRating"), false);
   assert.equal(serialized.includes("Review"), false);
+  assert.equal(serialized.includes("FAQPage"), false);
+});
+
+test("builds WebPage and per-page Service JSON-LD with absolute URLs", async () => {
+  const seo = await import("../lib/seo.ts");
+
+  assert.equal(typeof seo.buildWebPageJsonLd, "function");
+  assert.equal(typeof seo.buildPageServiceJsonLd, "function");
+  assert.equal("buildFaqPageJsonLd" in seo, false);
+
+  const webPage = seo.buildWebPageJsonLd(
+    {
+      path: "/menu-digital-restaurant",
+      name: "Menu digital restaurant premium | Vistaire",
+      description:
+        "Vistaire transforme le menu digital restaurant en experience premium.",
+      dateModified: new Date("2026-05-19T00:00:00.000Z")
+    },
+    siteEnv
+  );
+  const servicePage = seo.buildPageServiceJsonLd(
+    {
+      path: "/menu-3d-ar-restaurant",
+      name: "Menu 3D/AR Vistaire",
+      serviceType: "Presentation 3D/AR selective pour menus de restaurants",
+      description:
+        "Vues 3D/AR quand les assets et appareils le permettent, avec fallback premium."
+    },
+    siteEnv
+  );
+
+  assert.equal(webPage["@type"], "WebPage");
+  assert.equal(webPage.url, "https://www.vistaire.ca/menu-digital-restaurant");
+  assert.equal(webPage.isPartOf["@id"], "https://www.vistaire.ca/#website");
+  assert.equal(webPage.publisher["@id"], "https://www.vistaire.ca/#organization");
+  assert.equal(webPage.inLanguage, "fr-CA");
+  assert.equal(webPage.dateModified, "2026-05-19T00:00:00.000Z");
+  assert.equal(servicePage["@type"], "Service");
+  assert.equal(servicePage.url, "https://www.vistaire.ca/menu-3d-ar-restaurant");
+  assert.equal(servicePage.provider["@id"], "https://www.vistaire.ca/#organization");
+  assert.equal("areaServed" in servicePage, false);
 });

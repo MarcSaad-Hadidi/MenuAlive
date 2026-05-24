@@ -1,7 +1,7 @@
 export const SITE_NAME = "Vistaire";
 export const SITE_URL_FALLBACK = "https://www.vistaire.ca";
 export const DEFAULT_SITE_DESCRIPTION =
-  "Vistaire transforme le QR code restaurant en menu digital premium, rapide, visuel et immersif avec fiches plats, vues 3D/AR quand disponibles et aperçu restaurateur.";
+  "Vistaire transforme le QR code restaurant en carte digitale immersive pour restaurants haut de gamme : fiches plats, visuels, allergènes, 3D/AR sélective et aperçu restaurateur.";
 
 const SITE_URL_ENV_KEYS = [
   "NEXT_PUBLIC_SITE_URL",
@@ -29,6 +29,29 @@ type SitemapDish = {
   slug: string;
   isAvailable?: boolean;
 };
+
+export const PUBLIC_SEO_SITEMAP_ENTRIES = [
+  {
+    path: "/menu-digital-restaurant",
+    changeFrequency: "monthly",
+    priority: 0.88
+  },
+  {
+    path: "/menu-qr-code-restaurant",
+    changeFrequency: "monthly",
+    priority: 0.82
+  },
+  {
+    path: "/menu-3d-ar-restaurant",
+    changeFrequency: "monthly",
+    priority: 0.78
+  },
+  {
+    path: "/menu-pdf-vs-menu-digital",
+    changeFrequency: "monthly",
+    priority: 0.84
+  }
+] as const;
 
 export type SitemapEntry = {
   url: string;
@@ -87,18 +110,18 @@ export function absoluteUrl(path = "/", env?: SiteUrlEnv): string {
 }
 
 export function buildSitemapEntries(
-  dishes: SitemapDish[],
+  dishes: SitemapDish[] = [],
   lastModified = new Date(),
   env?: SiteUrlEnv
 ): SitemapEntry[] {
-  const availableDishEntries = dishes
-    .filter((dish) => dish.isAvailable !== false)
-    .map((dish) => ({
-      url: absoluteUrl(`/demo/dishes/${dish.slug}`, env),
-      lastModified,
-      changeFrequency: "monthly" as const,
-      priority: 0.7
-    }));
+  void dishes;
+
+  const seoPageEntries = PUBLIC_SEO_SITEMAP_ENTRIES.map((entry) => ({
+    url: absoluteUrl(entry.path, env),
+    lastModified,
+    changeFrequency: entry.changeFrequency,
+    priority: entry.priority
+  }));
 
   return [
     {
@@ -107,18 +130,12 @@ export function buildSitemapEntries(
       changeFrequency: "monthly",
       priority: 1
     },
+    ...seoPageEntries,
     {
       url: absoluteUrl("/demo", env),
       lastModified,
       changeFrequency: "weekly",
-      priority: 0.9
-    },
-    ...availableDishEntries,
-    {
-      url: absoluteUrl("/admin", env),
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.75
+      priority: 0.62
     }
   ];
 }
@@ -169,13 +186,109 @@ export function buildVistaireServiceJsonLd(env?: SiteUrlEnv): JsonLdObject {
     "@context": "https://schema.org",
     "@type": "Service",
     "@id": `${absoluteUrl("/", env)}#service`,
-    name: "Menu digital premium Vistaire",
-    serviceType: "Menu digital premium pour restaurants",
+    name: "Carte digitale immersive Vistaire",
+    serviceType: "Menu digital QR premium pour restaurants haut de gamme",
+    url: absoluteUrl("/", env),
     description: DEFAULT_SITE_DESCRIPTION,
+    mainEntityOfPage: {
+      "@id": `${absoluteUrl("/", env)}#webpage`
+    },
     provider: {
       "@id": `${absoluteUrl("/", env)}#organization`
     },
-    areaServed: "Canada",
+    audience: {
+      "@type": "BusinessAudience",
+      audienceType: "Restaurants"
+    },
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Expérience Vistaire",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Carte QR mobile"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Fiches plats visuelles"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "3D/AR sélective pour plats signatures"
+          }
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Aperçu restaurateur des signaux d'attention"
+          }
+        }
+      ]
+    }
+  };
+}
+
+export function buildWebPageJsonLd(
+  page: {
+    path: string;
+    name: string;
+    description: string;
+    dateModified?: Date | string;
+  },
+  env?: SiteUrlEnv
+): JsonLdObject {
+  const dateModified =
+    page.dateModified instanceof Date
+      ? page.dateModified.toISOString()
+      : page.dateModified;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${absoluteUrl(page.path, env)}#webpage`,
+    url: absoluteUrl(page.path, env),
+    name: page.name,
+    description: page.description,
+    inLanguage: "fr-CA",
+    isPartOf: {
+      "@id": `${absoluteUrl("/", env)}#website`
+    },
+    publisher: {
+      "@id": `${absoluteUrl("/", env)}#organization`
+    },
+    ...(dateModified ? { dateModified } : {})
+  };
+}
+
+export function buildPageServiceJsonLd(
+  service: {
+    path: string;
+    name: string;
+    serviceType: string;
+    description: string;
+  },
+  env?: SiteUrlEnv
+): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${absoluteUrl(service.path, env)}#service`,
+    name: service.name,
+    serviceType: service.serviceType,
+    description: service.description,
+    url: absoluteUrl(service.path, env),
+    provider: {
+      "@id": `${absoluteUrl("/", env)}#organization`
+    },
     audience: {
       "@type": "BusinessAudience",
       audienceType: "Restaurants"
@@ -187,9 +300,12 @@ export function buildBreadcrumbJsonLd(
   items: Array<{ name: string; path: string }>,
   env?: SiteUrlEnv
 ): JsonLdObject {
+  const currentPath = items.at(-1)?.path ?? "/";
+
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
+    "@id": `${absoluteUrl(currentPath, env)}#breadcrumb`,
     itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
       position: index + 1,
