@@ -7,21 +7,23 @@ import { ResponsiveLandingHero } from "@/components/landing/ResponsiveLandingHer
 import {
   DEFAULT_SITE_DESCRIPTION,
   absoluteUrl,
-  buildVistaireServiceJsonLd
+  buildVistaireServiceJsonLd,
+  buildWebPageJsonLd
 } from "@/lib/seo";
 
 export const metadata: Metadata = {
+  title: "Menu digital QR premium pour restaurants haut de gamme",
   alternates: {
     canonical: "/"
   },
   openGraph: {
     url: absoluteUrl("/"),
-    title: "Vistaire — Menu digital premium pour restaurants",
+    title: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
     description: DEFAULT_SITE_DESCRIPTION
   },
   twitter: {
     card: "summary",
-    title: "Vistaire — Menu digital premium pour restaurants",
+    title: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
     description: DEFAULT_SITE_DESCRIPTION
   }
 };
@@ -105,7 +107,16 @@ export default function Home() {
   return (
     <>
       <Header />
-      <JsonLd data={buildVistaireServiceJsonLd()} />
+      <JsonLd
+        data={[
+          buildWebPageJsonLd({
+            path: "/",
+            name: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
+            description: DEFAULT_SITE_DESCRIPTION
+          }),
+          buildVistaireServiceJsonLd()
+        ]}
+      />
       <main>
         <ResponsiveLandingHero />
         <BenefitsSection />
