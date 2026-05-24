@@ -8,6 +8,7 @@ import {
   SITE_URL_FALLBACK,
   absoluteUrl,
   buildBreadcrumbJsonLd,
+  buildFaqPageJsonLd,
   buildOrganizationJsonLd,
   buildRobotsRules,
   buildSitemapEntries,
@@ -173,7 +174,7 @@ test("builds WebPage and per-page Service JSON-LD with absolute URLs", async () 
 
   assert.equal(typeof seo.buildWebPageJsonLd, "function");
   assert.equal(typeof seo.buildPageServiceJsonLd, "function");
-  assert.equal("buildFaqPageJsonLd" in seo, false);
+  assert.equal(typeof seo.buildFaqPageJsonLd, "function");
 
   const webPage = seo.buildWebPageJsonLd(
     {
@@ -206,4 +207,18 @@ test("builds WebPage and per-page Service JSON-LD with absolute URLs", async () 
   assert.equal(servicePage.url, "https://www.vistaire.ca/menu-3d-ar-restaurant");
   assert.equal(servicePage.provider["@id"], "https://www.vistaire.ca/#organization");
   assert.equal("areaServed" in servicePage, false);
+
+  const faqPage = buildFaqPageJsonLd(
+    [
+      {
+        question: "Un PDF est-il un menu digital ?",
+        answer: "Non. Un PDF reste un fichier statique difficile à lire sur mobile."
+      }
+    ],
+    "/menu-pdf-vs-menu-digital",
+    siteEnv
+  );
+  assert.equal(faqPage["@type"], "FAQPage");
+  assert.equal(faqPage.mainEntity.length, 1);
+  assert.equal(faqPage.mainEntity[0].name, "Un PDF est-il un menu digital ?");
 });

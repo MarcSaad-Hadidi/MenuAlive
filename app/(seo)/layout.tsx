@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { SeoFooter } from "@/components/seo/SeoFooter";
 
 export default function SeoLayout({
   children
@@ -9,6 +10,7 @@ export default function SeoLayout({
     <>
       <Header />
       {children}
+      <SeoFooter />
     </>
   );
 }

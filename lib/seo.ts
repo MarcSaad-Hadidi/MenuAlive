@@ -314,3 +314,23 @@ export function buildBreadcrumbJsonLd(
     }))
   };
 }
+
+export function buildFaqPageJsonLd(
+  faqs: Array<{ question: string; answer: string }>,
+  pagePath: string,
+  env?: SiteUrlEnv
+): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${absoluteUrl(pagePath, env)}#faq`,
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer
+      }
+    }))
+  };
+}

@@ -61,6 +61,12 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
             >
               Bénéfices
             </Link>
+            <Link
+              className="transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+              href={isHome ? "#guides" : "/#guides"}
+            >
+              Guides
+            </Link>
           </div>
         ) : (
           <div className="hidden flex-1 justify-center sm:flex" aria-hidden />

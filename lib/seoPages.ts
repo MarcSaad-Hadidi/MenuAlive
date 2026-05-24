@@ -22,6 +22,8 @@ export type SeoPageData = {
   metadataTitle: string;
   metadataDescription: string;
   eyebrow: string;
+  footerLabel?: string;
+  linkTitle?: string;
   h1: string;
   answer: string[];
   visualImage: {
@@ -62,7 +64,9 @@ export const SEO_PAGES: SeoPageData[] = [
     metadataDescription:
       "Vistaire transforme le menu digital restaurant en expérience premium : QR code, fiches plats, allergènes, visuels et 3D/AR sélective.",
     eyebrow: "Menu digital premium",
-    h1: "Menu digital restaurant premium",
+    footerLabel: "Menu digital restaurant",
+    linkTitle: "Anatomie d'un menu digital haut de gamme",
+    h1: "Le menu digital premium transforme la carte en expérience.",
     answer: [
       "Un menu digital pour restaurant est une carte consultable sur le téléphone du client, souvent après scan d'un QR code à table. Vistaire en fait une expérience premium : photos, fiches plats, allergènes, prix, accords et vues 3D/AR lorsque le plat le permet, sans téléchargement d'application.",
       "L'objectif n'est pas de transformer la salle en logiciel froid. Vistaire garde la carte, le plat et l'image du restaurant au centre, avec une lecture mobile claire pour le convive et un aperçu restaurateur des signaux anonymes autour du menu."
@@ -148,7 +152,9 @@ export const SEO_PAGES: SeoPageData[] = [
     metadataDescription:
       "Un menu QR code Vistaire ouvre une carte mobile premium : fiches plats, visuels, allergènes et expérience fidèle au restaurant.",
     eyebrow: "QR code restaurant",
-    h1: "Menu QR code restaurant premium",
+    footerLabel: "Menu QR code restaurant",
+    linkTitle: "QR code → carte mobile sans application",
+    h1: "Le QR code doit ouvrir une expérience, pas un fichier.",
     answer: [
       "Un menu QR code pour restaurant ne devrait pas se limiter à ouvrir un fichier à zoomer. Avec Vistaire, le QR code devient l'entrée vers une carte mobile, visuelle et fluide : le client parcourt les catégories, ouvre une fiche plat et découvre les contenus immersifs disponibles.",
       "La valeur du QR code dépend de ce qui se passe après le scan. Vistaire transforme cet accès en expérience de carte, avec une présentation soignée et adaptée au rythme du service."
@@ -234,7 +240,9 @@ export const SEO_PAGES: SeoPageData[] = [
     metadataDescription:
       "Vistaire ajoute la 3D/AR sélective aux menus de restaurants premium quand un plat compatible gagne à être vu en volume.",
     eyebrow: "3D/AR restaurant",
-    h1: "Menu 3D et AR pour restaurant",
+    footerLabel: "Menu 3D / AR restaurant",
+    linkTitle: "3D utile vs gadget — quand l'activer",
+    h1: "La 3D n'impressionne que si elle rend le plat plus désirable.",
     answer: [
       "La 3D/AR dans un menu de restaurant aide le client à mieux comprendre un plat avant de choisir, surtout pour les signatures, desserts et cocktails visuels. Vistaire l'intègre comme option de présentation : les plats compatibles peuvent être explorés en 3D, et l'AR s'ouvre sur mobile compatible après action du client.",
       "Cette immersion doit rester sélective. Une fiche plat Vistaire reste claire avec ou sans AR, afin que l'expérience principale du menu ne dépende jamais d'un appareil ou d'un asset particulier."
@@ -320,7 +328,9 @@ export const SEO_PAGES: SeoPageData[] = [
     metadataDescription:
       "Comparez menu PDF et menu digital pour restaurant premium : lisibilité mobile, fiches plats, allergènes et expérience à table.",
     eyebrow: "PDF ou digital",
-    h1: "Menu PDF ou menu digital : que choisir pour un restaurant ?",
+    footerLabel: "PDF vs menu digital",
+    linkTitle: "Un PDF n'est pas un menu digital",
+    h1: "Un PDF n'est pas un menu digital.",
     answer: [
       "Un PDF reste simple à produire et pratique pour l'impression, mais il est souvent moins confortable à lire sur mobile à table. Un menu digital comme Vistaire structure la carte, met les plats en scène, rend les allergènes plus lisibles et peut ajouter des fiches visuelles ou 3D/AR.",
       "Le bon choix dépend du niveau d'expérience attendu. Pour une carte courte et rarement modifiée, un PDF peut suffire. Pour un restaurant qui veut valoriser ses plats et guider le client avec élégance, une carte digitale dédiée devient plus cohérente."
