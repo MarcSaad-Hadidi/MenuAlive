@@ -151,7 +151,7 @@ function validateLifecycleDates(result, manifest, context) {
   }
 }
 
-function validateValidationBlock(result, manifest) {
+function validateValidationBlock(result, manifest, context) {
   if (!isObject(manifest.validation)) {
     addFail(result, pathMessage("validation", "must be an object"));
     return;
@@ -165,20 +165,19 @@ function validateValidationBlock(result, manifest) {
   }
   if (!Array.isArray(manifest.validation.fails)) {
     addFail(result, pathMessage("validation.fails", "must be an array"));
-  } else if (manifest.validation.fails.length > 0) {
-    addFail(result, pathMessage("validation.fails", "must be empty before publication"));
+  } else if (
+    context === "production" &&
+    manifest.status === "published" &&
+    manifest.validation.fails.length > 0
+  ) {
+    addFail(result, pathMessage("validation.fails", "must be empty when production status is published"));
   }
-}
-
-function deriveValidationStatus(result) {
-  if (result.fails.length > 0) return "failed";
-  if (result.warnings.length > 0) return "warning";
-  return "passed";
 }
 
 function expectedValidationStatusFor(manifest) {
   if (manifest.validation?.fails?.length > 0) return "failed";
   if (manifest.validation?.warnings?.length > 0) return "warning";
+  if (manifest.validationStatus === "unvalidated") return "unvalidated";
   return "passed";
 }
 
@@ -252,7 +251,7 @@ export function validateDishManifestSchema(manifest, options = {}) {
     addFail(result, pathMessage("bytes.total", "must be a positive byte size"));
   }
 
-  validateValidationBlock(result, manifest);
+  validateValidationBlock(result, manifest, context);
   validateLifecycleDates(result, manifest, context);
 
   const declaredQualityStatus = manifest.validationStatus;
@@ -283,7 +282,7 @@ export function validateDishManifestSchema(manifest, options = {}) {
   result.evidence.push(...budgets.evidence);
   result.metrics.budgetChecks = budgets.metrics.budgetChecks;
   result.metrics.publicTotalBytes = budgets.metrics.publicTotalBytes;
-  result.metrics.validationStatus = deriveValidationStatus(result);
+  result.metrics.validationStatus = result.fails.length > 0 ? "failed" : expectedQualityStatus;
 
   result.evidence.push({
     restaurantSlug: manifest.restaurantSlug,

@@ -20,4 +20,4 @@ const result = await validateNetworkHeaders({
 });
 
 setExitCodeForResult(result, Boolean(args.strict));
-writeStdout(result, Boolean(args.json));
+writeStdout(result, true);

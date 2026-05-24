@@ -121,6 +121,36 @@ test("production dish manifest rejects a declared passed status when validation 
   assert.match(result.fails.join("\n"), /validationStatus.*passed.*warning/i);
 });
 
+test("draft dish manifest may remain unvalidated before validation has run", () => {
+  const result = validateDishManifest(
+    validDishManifest({
+      status: "draft",
+      validationStatus: "unvalidated",
+      validation: { warnings: [], fails: [] }
+    }),
+    { context: "production" }
+  );
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.fails, []);
+  assert.equal(result.metrics.validationStatus, "unvalidated");
+});
+
+test("review dish manifest may record known validation failures before publication", () => {
+  const result = validateDishManifest(
+    validDishManifest({
+      status: "review",
+      validationStatus: "failed",
+      validation: { warnings: [], fails: ["USDZ geometry requires re-export"] }
+    }),
+    { context: "production" }
+  );
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.fails, []);
+  assert.equal(result.metrics.validationStatus, "failed");
+});
+
 test("published dish manifest requires lifecycle dates and passed validation", () => {
   const result = validateDishManifest(
     validDishManifest({

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -89,6 +90,49 @@ function makeUsdz(entries = {}) {
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function runNode(args, options = {}) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, args, {
+      cwd: process.cwd(),
+      ...options
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("close", (code) => {
+      resolve({ code, stdout, stderr });
+    });
+  });
+}
+
+function headerFixtureServer() {
+  const server = createServer((request, response) => {
+    const url = request.url ?? "";
+    const headers = {
+      "cache-control": "public, max-age=31536000, immutable",
+      "content-length": "208984",
+      "content-type": "application/octet-stream"
+    };
+    if (url.endsWith(".glb")) headers["content-type"] = "model/gltf-binary";
+    if (url.endsWith(".usdz")) {
+      headers["content-disposition"] = "inline";
+      headers["content-type"] = "model/vnd.usdz+zip";
+    }
+    response.writeHead(200, headers);
+    response.end();
+  });
+
+  return new Promise((resolve, reject) => {
+    server.on("error", reject);
+    server.listen(0, "127.0.0.1", () => resolve(server));
+  });
 }
 
 function baseManifest(overrides = {}) {
@@ -500,6 +544,27 @@ test("network header validator uses Range fallback when HEAD omits Quick Look co
       ["GET", "bytes=0-0"]
     ]
   );
+});
+
+test("validate-network CLI serializes diagnostic JSON by default", async () => {
+  const server = await headerFixtureServer();
+  try {
+    const { port } = server.address();
+    const result = await runNode([
+      "scripts/3d/validate-network.mjs",
+      "--base-url",
+      `http://127.0.0.1:${port}`
+    ]);
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.doesNotMatch(result.stdout, /^\[object Object\]\s*$/);
+    const parsed = JSON.parse(result.stdout);
+    assert.equal(parsed.name, "network-headers");
+    assert.equal(parsed.ok, true);
+    assert.ok(parsed.metrics.assets.length >= 5);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
 test("3D pipeline branch does not add public media binaries or wildcard LFS rules", () => {
