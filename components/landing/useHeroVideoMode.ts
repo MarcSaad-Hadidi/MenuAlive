@@ -10,6 +10,8 @@ import {
 type NavigatorConnection = {
   saveData?: boolean;
   effectiveType?: string;
+  downlink?: number;
+  rtt?: number;
 };
 
 type NavigatorWithCapabilities = Navigator & {
@@ -45,17 +47,20 @@ function selectHeroVideoMode(): HeroVideoMode {
     "(prefers-reduced-motion: reduce)"
   ).matches;
   const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
-  const isTouchDevice =
-    "ontouchstart" in window || navigator.maxTouchPoints > 0;
   const deviceMemory = navigatorValue.deviceMemory ?? 8;
-  const hardwareConcurrency = navigator.hardwareConcurrency ?? 4;
+  const hardwareConcurrency = navigator.hardwareConcurrency ?? 8;
   const effectiveType = connection.effectiveType ?? "4g";
   const isSaveData = connection.saveData === true;
-  const isSlowConnection = effectiveType === "2g" || effectiveType === "3g";
+  const isSlowConnection =
+    /^(slow-2g|2g|3g)$/i.test(effectiveType) ||
+    (typeof connection.downlink === "number" && connection.downlink <= 1.5) ||
+    (typeof connection.rtt === "number" && connection.rtt >= 600);
   const isLowEndDevice =
     deviceMemory <= 2 || hardwareConcurrency <= 4 || isSlowConnection;
+  const useConservativeScrub =
+    isReducedMotion || isSaveData || isLowEndDevice;
 
-  if (isMobileViewport || isTouchDevice) {
+  if (isMobileViewport) {
     return {
       source: HERO_VIDEO_SOURCES.mobile,
       variant: "mobile",
@@ -63,7 +68,7 @@ function selectHeroVideoMode(): HeroVideoMode {
       isSaveData,
       isLowEndDevice,
       preload: "metadata",
-      minSeekDelta: isReducedMotion || isLowEndDevice ? 1 / 12 : 1 / 24
+      minSeekDelta: useConservativeScrub ? 1 / 10 : 1 / 24
     };
   }
 
@@ -74,7 +79,7 @@ function selectHeroVideoMode(): HeroVideoMode {
     isSaveData,
     isLowEndDevice,
     preload: "metadata",
-    minSeekDelta: isReducedMotion || isLowEndDevice ? 1 / 10 : 1 / 30
+    minSeekDelta: useConservativeScrub ? 1 / 8 : 1 / 30
   };
 }
 

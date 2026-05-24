@@ -43,9 +43,11 @@ export function ScrollScrubVideoHero() {
   const modeSourceDurationSeconds = modeSource?.durationSeconds ?? 0;
   const modeSourceScrubReady = modeSource?.scrubReady ?? false;
   const modeVariant = mode?.variant ?? null;
+  const modePreload = mode?.preload ?? "metadata";
   const modeMinSeekDelta = mode?.minSeekDelta ?? 1 / 30;
   const isReducedMotion = mode?.isReducedMotion ?? false;
   const isSaveData = mode?.isSaveData ?? false;
+  const isLowEndDevice = mode?.isLowEndDevice ?? false;
   const [chapter, setChapter] = useState(videoChapters[0]);
   const [loadRequest, setLoadRequest] = useState<VideoLoadRequest | null>(
     null
@@ -56,8 +58,6 @@ export function ScrollScrubVideoHero() {
   );
   const canUseScrubVideo =
     Boolean(modeSourceSrc) &&
-    !isReducedMotion &&
-    !isSaveData &&
     modeSourceScrubReady &&
     failedVideoSource !== modeSourceSrc;
   const shouldLoadVideo =
@@ -192,7 +192,7 @@ export function ScrollScrubVideoHero() {
     let cancelled = false;
     durationRef.current = 0;
     lastAssignedTimeRef.current = -1;
-    video.preload = modeVariant === "desktopHigh" ? "auto" : "metadata";
+    video.preload = modePreload;
     video.src = modeSourceSrc;
 
     const writeDebugState = () => {
@@ -347,6 +347,7 @@ export function ScrollScrubVideoHero() {
     canUseScrubVideo,
     loadRequest,
     modeMinSeekDelta,
+    modePreload,
     modeSourceDurationSeconds,
     modeSourceSrc,
     modeVariant,
@@ -363,10 +364,11 @@ export function ScrollScrubVideoHero() {
       data-video-ready={isReady ? "true" : "false"}
       data-video-deferred={shouldLoadVideo ? "false" : "true"}
       data-video-failed={
-        failedVideoSource === modeSourceSrc ? "true" : "false"
+        modeSourceSrc && failedVideoSource === modeSourceSrc ? "true" : "false"
       }
       data-reduced-motion={isReducedMotion ? "true" : "false"}
       data-save-data={isSaveData ? "true" : "false"}
+      data-low-end-device={isLowEndDevice ? "true" : "false"}
       className="scroll-video-section relative overflow-clip bg-[#080706]"
       aria-label="Expérience Vistaire"
     >
