@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit --incremental false",
     "assets:check": "node scripts/check-large-files.mjs",
     "lfs:check": "node scripts/check-lfs-policy.mjs",
+    "test:smoke": "playwright test e2e/mvp-smoke.spec.ts",
+    "test:qa": "playwright test e2e/mvp-smoke.spec.ts e2e/landing-scroll.spec.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "frames:update-config": "node scripts/update-frame-config.mjs",
