@@ -5,6 +5,7 @@ import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SeoComparisonTable } from "@/components/seo/SeoComparisonTable";
 import { SeoFaq } from "@/components/seo/SeoFaq";
+import { SeoTakeaway } from "@/components/seo/SeoTakeaway";
 import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import type { SeoPageData } from "@/lib/seoPages";
 
@@ -43,6 +44,13 @@ export function MenuQrCodeRestaurantPage({ page }: { page: SeoPageData }) {
               {page.answer.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
+            </div>
+            <div className="mt-8 max-w-2xl">
+              <SeoTakeaway
+                heading={page.takeaway.heading}
+                text={page.takeaway.text}
+                variant="speed"
+              />
             </div>
           </div>
         </section>

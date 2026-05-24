@@ -92,8 +92,19 @@ test("declares the focused SEO page inventory without generic scale pages", asyn
     assert.equal(page.metadataTitle.length > 20, true);
     assert.equal(page.metadataDescription.length > 80, true);
     assert.equal(page.metadataDescription.length < 170, true);
+    assert.equal(typeof page.cardDescription, "string");
+    assert.equal(page.cardDescription.length >= 40, true);
+    assert.equal(page.cardDescription.length <= 160, true);
+    assert.equal(page.cardDescription.endsWith("…"), false);
+    assert.equal(typeof page.relatedDescription, "string");
+    assert.equal(page.relatedDescription.length >= 30, true);
+    assert.equal(page.relatedDescription.length <= 140, true);
+    assert.equal(page.relatedDescription.endsWith("…"), false);
+    assert.equal(typeof page.takeaway?.heading, "string");
+    assert.equal(typeof page.takeaway?.text, "string");
+    assert.equal(page.takeaway.text.length >= 80, true);
     assert.equal(page.sections.length >= 2, true);
-    assert.equal(page.faq.length >= 2, true);
+    assert.equal(page.faq.length >= 5, true);
     assert.equal(getSeoPage(page.slug).path, page.path);
   }
 });
@@ -167,6 +178,37 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   assert.equal(serialized.includes("AggregateRating"), false);
   assert.equal(serialized.includes("Review"), false);
   assert.equal(serialized.includes("FAQPage"), false);
+});
+
+test("guide cards use hand-written descriptions without truncation", () => {
+  const guidesSection = readFileSync(
+    join(process.cwd(), "components", "landing", "GuidesVistaireSection.tsx"),
+    "utf8"
+  );
+  const internalLinks = readFileSync(
+    join(process.cwd(), "components", "seo", "InternalSeoLinks.tsx"),
+    "utf8"
+  );
+
+  assert.equal(guidesSection.includes(".slice("), false);
+  assert.equal(internalLinks.includes(".slice("), false);
+  assert.match(guidesSection, /page\.cardDescription/);
+  assert.match(internalLinks, /page\.relatedDescription/);
+});
+
+test("FAQPage JSON-LD mirrors visible FAQ inventory", async () => {
+  const { SEO_PAGES } = await import("../lib/seoPages.ts");
+  const { buildFaqPageJsonLd } = await import("../lib/seo.ts");
+
+  for (const page of SEO_PAGES) {
+    const faqJsonLd = buildFaqPageJsonLd(page.faq, page.path, siteEnv);
+    assert.equal(faqJsonLd.mainEntity.length, page.faq.length);
+    assert.equal(faqJsonLd.mainEntity.length >= 5, true);
+    assert.deepEqual(
+      faqJsonLd.mainEntity.map((item) => item.name),
+      page.faq.map((item) => item.question)
+    );
+  }
 });
 
 test("builds WebPage and per-page Service JSON-LD with absolute URLs", async () => {

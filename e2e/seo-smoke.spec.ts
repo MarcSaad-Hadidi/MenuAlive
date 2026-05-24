@@ -174,6 +174,8 @@ test.describe("Vistaire SEO smoke", () => {
           for (const forbiddenType of forbiddenJsonLdTypes) {
             expect(jsonLdTypes).not.toContain(forbiddenType);
           }
+          const visibleFaqCount = await page.locator("article h3").count();
+          expect(visibleFaqCount).toBeGreaterThanOrEqual(5);
           await expect(page.getByRole("link", { name: "Menu digital restaurant", exact: true }).first()).toBeVisible();
           await expect(page.getByRole("link", { name: "Accès interne" })).toBeVisible();
         }

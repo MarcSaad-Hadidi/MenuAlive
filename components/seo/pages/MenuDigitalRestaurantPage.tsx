@@ -5,6 +5,7 @@ import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SeoComparisonTable } from "@/components/seo/SeoComparisonTable";
 import { SeoFaq } from "@/components/seo/SeoFaq";
+import { SeoTakeaway } from "@/components/seo/SeoTakeaway";
 import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import type { SeoPageData } from "@/lib/seoPages";
 
@@ -48,6 +49,13 @@ export function MenuDigitalRestaurantPage({ page }: { page: SeoPageData }) {
                     {page.secondaryCta.label}
                   </SecondaryButton>
                 ) : null}
+              </div>
+              <div className="mt-10 max-w-2xl">
+                <SeoTakeaway
+                  heading={page.takeaway.heading}
+                  text={page.takeaway.text}
+                  variant="calm"
+                />
               </div>
             </div>
             <div className="relative aspect-[5/6] overflow-hidden rounded-sm border border-white/8">

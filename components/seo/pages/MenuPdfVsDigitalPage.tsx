@@ -5,6 +5,7 @@ import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SeoComparisonTable } from "@/components/seo/SeoComparisonTable";
 import { SeoFaq } from "@/components/seo/SeoFaq";
+import { SeoTakeaway } from "@/components/seo/SeoTakeaway";
 import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import type { SeoPageData } from "@/lib/seoPages";
 
@@ -41,6 +42,13 @@ export function MenuPdfVsDigitalPage({ page }: { page: SeoPageData }) {
                 {page.answer.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
+              </div>
+              <div className="mt-8 max-w-2xl">
+                <SeoTakeaway
+                  heading={page.takeaway.heading}
+                  text={page.takeaway.text}
+                  variant="confrontation"
+                />
               </div>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <PrimaryButton href={page.primaryCta.href}>

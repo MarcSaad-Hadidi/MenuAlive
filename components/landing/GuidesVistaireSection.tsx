@@ -33,7 +33,7 @@ export function GuidesVistaireSection() {
                 {page.linkTitle ?? page.h1}
               </h3>
               <p className="mt-3 text-sm leading-6 text-[#a99984]">
-                {page.metadataDescription.slice(0, 140)}…
+                {page.cardDescription}
               </p>
             </Link>
           ))}
