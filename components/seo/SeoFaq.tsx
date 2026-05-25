@@ -30,7 +30,7 @@ export function SeoFaq({ faqs, className = "", layout = "split" }: SeoFaqProps) 
             Questions fréquentes
           </h2>
           <p className="mt-5 max-w-xl text-base leading-7 text-[#cdbfa9]">
-            Réponses concrètes pour restaurateurs — sans chiffres inventés ni
+            Réponses concrètes pour restaurateurs, sans chiffres inventés ni
             promesses non prouvées.
           </p>
         </div>

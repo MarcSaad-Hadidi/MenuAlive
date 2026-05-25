@@ -307,6 +307,18 @@ button[aria-label="Keyless prompt"] {
   .video-transition-veil {
     will-change: opacity;
   }
+
+  .chapter-copy {
+    max-width: min(60rem, 92vw);
+  }
+
+  .chapter-copy h1 {
+    max-width: 16ch;
+  }
+
+  .chapter-copy[data-chapter="hero"] h1 {
+    max-width: 18ch;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

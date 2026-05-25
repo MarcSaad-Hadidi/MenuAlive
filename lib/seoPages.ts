@@ -157,7 +157,7 @@ export const SEO_PAGES: SeoPageData[] = [
       {
         question: "Vistaire convient-il aux restaurants haut de gamme ?",
         answer:
-          "Oui, si l'objectif est une présentation sobre, visuelle et fidèle à la salle — pas une interface utilitaire froide."
+          "Oui, si l'objectif est une présentation sobre, visuelle et fidèle à la salle, pas une interface utilitaire froide."
       },
       {
         question: "Comment le restaurateur met-il à jour la carte ?",
@@ -187,7 +187,7 @@ export const SEO_PAGES: SeoPageData[] = [
     metadataDescription:
       "Un menu QR code Vistaire ouvre une carte mobile premium : fiches plats, visuels, allergènes et expérience fidèle au restaurant.",
     cardDescription:
-      "Après le scan, une carte mobile structurée — pas un fichier à zoomer. L'entrée QR, l'expérience Vistaire.",
+      "Après le scan, une carte mobile structurée, pas un fichier à zoomer. L'entrée QR, l'expérience Vistaire.",
     relatedDescription:
       "Du scan à la fiche plat : ce que le client voit vraiment après un QR code.",
     eyebrow: "QR code restaurant",
@@ -309,7 +309,7 @@ export const SEO_PAGES: SeoPageData[] = [
       "Immersion sélective : plats compatibles, fallback clair, pas de 3D systématique.",
     eyebrow: "3D/AR restaurant",
     footerLabel: "Menu 3D / AR restaurant",
-    linkTitle: "3D utile vs gadget — quand l'activer",
+    linkTitle: "3D utile vs gadget : quand l'activer",
     h1: "La 3D n'impressionne que si elle rend le plat plus désirable.",
     answer: [
       "La 3D/AR dans un menu de restaurant aide le client à mieux comprendre un plat avant de choisir, surtout pour les signatures, desserts et cocktails visuels. Vistaire l'intègre comme option de présentation : les plats compatibles peuvent être explorés en 3D, et l'AR s'ouvre sur mobile compatible après action du client.",

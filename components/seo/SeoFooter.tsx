@@ -53,7 +53,7 @@ export function SeoFooter({ compact = false }: SeoFooterProps) {
               Vistaire
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-6 text-[#a99984]">
-              Carte digitale premium pour restaurants haut de gamme — QR code,
+              Carte digitale premium pour restaurants haut de gamme : QR code,
               fiches plats et immersion sélective.
             </p>
           </div>

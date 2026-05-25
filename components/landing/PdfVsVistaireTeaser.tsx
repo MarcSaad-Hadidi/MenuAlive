@@ -35,7 +35,7 @@ export function PdfVsVistaireTeaser() {
         </h2>
         <p className="mt-6 max-w-2xl text-base leading-7 text-[#d1c2aa] sm:text-lg">
           Beaucoup de restaurants mettent un PDF derrière le QR code. Le client
-          subit une lecture difficile — Vistaire transforme ce moment en
+          subit une lecture difficile. Vistaire transforme ce moment en
           expérience premium.
         </p>
 

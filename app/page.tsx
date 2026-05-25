@@ -23,12 +23,12 @@ export const metadata: Metadata = {
   },
   openGraph: {
     url: absoluteUrl("/"),
-    title: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
+    title: "Vistaire | Menu digital QR premium pour restaurants haut de gamme",
     description: DEFAULT_SITE_DESCRIPTION
   },
   twitter: {
     card: "summary",
-    title: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
+    title: "Vistaire | Menu digital QR premium pour restaurants haut de gamme",
     description: DEFAULT_SITE_DESCRIPTION
   }
 };
@@ -44,7 +44,7 @@ const benefits = [
   },
   {
     title: "Image premium",
-    body: "Une carte cohérente avec un restaurant haut de gamme — pas un PDF utilitaire."
+    body: "Une carte cohérente avec un restaurant haut de gamme, pas un PDF utilitaire."
   }
 ];
 
@@ -66,7 +66,7 @@ function RestaurantValueSection() {
         <p className="mt-6 max-w-3xl text-base leading-7 text-[#d1c2aa] sm:text-lg sm:leading-8">
           Vistaire transforme le QR code en carte digitale premium : le client
           parcourt le menu mobile, ouvre des fiches plats visuelles, découvre la
-          3D ou l&apos;AR quand elle est pertinente — et vous gardez un aperçu
+          3D ou l&apos;AR quand elle est pertinente, et vous gardez un aperçu
           restaurateur de l&apos;attention portée à votre carte.
         </p>
 
@@ -123,7 +123,7 @@ export default function Home() {
         data={[
           buildWebPageJsonLd({
             path: "/",
-            name: "Vistaire — Menu digital QR premium pour restaurants haut de gamme",
+            name: "Vistaire | Menu digital QR premium pour restaurants haut de gamme",
             description: DEFAULT_SITE_DESCRIPTION
           }),
           buildVistaireServiceJsonLd()

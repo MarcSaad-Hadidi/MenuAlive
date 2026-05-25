@@ -84,7 +84,7 @@ export function MenuPdfVsDigitalPage({ page }: { page: SeoPageData }) {
               {page.comparison.heading}
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-7 text-[#cdbfa9]">
-              Ce que le client subit avec un PDF — et ce que Vistaire transforme
+              Ce que le client subit avec un PDF, et ce que Vistaire transforme
               à table.
             </p>
             <div className="mt-10">

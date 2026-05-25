@@ -11,7 +11,7 @@ test.describe("Premium public auth boundaries", () => {
     await expect(
       page.getByRole("link", {
         exact: true,
-        name: "Vistaire — accueil de la page"
+        name: "Vistaire, accueil de la page"
       })
     ).toBeVisible();
     await expect(page.getByText("Connexion")).toHaveCount(0);

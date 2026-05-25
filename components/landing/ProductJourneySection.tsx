@@ -35,7 +35,7 @@ export function ProductJourneySection() {
           Preuve produit
         </p>
         <h2 className="mt-5 max-w-4xl font-display text-[clamp(2.2rem,5vw,4.8rem)] font-normal leading-[1.02] text-cream">
-          Du QR code à la décision — le parcours client Vistaire.
+          Du QR code à la décision : le parcours client Vistaire.
         </h2>
         <p className="mt-6 max-w-2xl text-base leading-7 text-[#d1c2aa] sm:text-lg">
           Vistaire ne remplace pas votre salle. Il structure ce que le client vit

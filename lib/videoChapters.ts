@@ -19,7 +19,7 @@ export const videoChapters: VideoChapter[] = [
     end: 0.24,
     eyebrow: "Vistaire",
     title: "La carte digitale qui rend vos plats plus désirables.",
-    body: "Transformez un QR code à table en expérience premium — sans application, dès le premier scan.",
+    body: "Transformez un QR code à table en expérience premium, sans application, dès le premier scan.",
     cta: "Explorer l'expérience",
     ctaHref: "/demo",
     secondaryCta: "Aperçu restaurateur",

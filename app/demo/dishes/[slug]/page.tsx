@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const restaurant = getRestaurant();
   if (!dish) {
     return {
-      title: "Plat introuvable — Menu client exemple",
+      title: "Plat introuvable | Menu client exemple",
       robots: {
         index: false,
         follow: false
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
   const canonicalPath = `/demo/dishes/${dish.slug}`;
-  const title = `${dish.name} — fiche plat de démonstration`;
+  const title = `${dish.name} | fiche plat de démonstration`;
   const pageTitle = `${title} | Vistaire`;
   const description = `Fiche plat exemple Vistaire pour ${restaurant.name}, restaurant de présentation : ${dish.shortDescription}`;
   const imageUrl = dish.image ? absoluteUrl(dish.image) : undefined;
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ? [
             {
               url: imageUrl,
-              alt: `${dish.name} — fiche plat exemple Vistaire`
+              alt: `${dish.name} | fiche plat exemple Vistaire`
             }
           ]
         : undefined

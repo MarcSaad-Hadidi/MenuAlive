@@ -52,7 +52,7 @@ export default async function AdminPage({
               Aperçu restaurateur · {insights.serviceLabel}
             </p>
             <h1 className="mt-4 font-display text-4xl font-normal leading-[1] text-cream [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
-              Lecture restaurateur — {insights.generatedFor}
+              Lecture restaurateur : {insights.generatedFor}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-[#cdbfa9] sm:text-lg">
               Cet aperçu de présentation révèle les comportements anonymes autour

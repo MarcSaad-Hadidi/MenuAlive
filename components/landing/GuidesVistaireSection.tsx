@@ -15,7 +15,7 @@ export function GuidesVistaireSection() {
           Comprendre le menu digital premium, le QR code et la 3D utile.
         </h2>
         <p className="mt-6 max-w-2xl text-base leading-7 text-[#d1c2aa]">
-          Des guides concrets pour restaurateurs — lisibles par Google et par les
+          Des guides concrets pour restaurateurs, lisibles par Google et par les
           moteurs de réponse, sans jargon SaaS.
         </p>
 

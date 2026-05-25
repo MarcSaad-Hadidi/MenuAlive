@@ -188,7 +188,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
                   });
                 }}
                 className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-champagne/[0.12] text-[11px] font-semibold text-cream ring-1 ring-inset ring-champagne/35 transition active:bg-champagne/[0.18] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#080706]"
-                aria-label={`Voir le plat — ${dish.name}`}
+                aria-label={`Voir le plat : ${dish.name}`}
               >
                 Voir le plat
               </Link>
@@ -279,7 +279,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
                 });
               }}
               className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-champagne/40 bg-champagne/[0.1] text-center text-xs font-semibold text-cream transition hover:border-champagne/55 hover:bg-champagne/[0.16] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0806]"
-              aria-label={`Voir le plat — ${dish.name}`}
+              aria-label={`Voir le plat : ${dish.name}`}
             >
               Voir le plat
             </Link>
