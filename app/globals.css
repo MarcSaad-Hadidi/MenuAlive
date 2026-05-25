@@ -238,6 +238,8 @@ button[aria-label="Keyless prompt"] {
 
   .hero-copy-layer {
     align-items: flex-end;
+    padding-left: clamp(1.25rem, 4vw, 2.5rem);
+    padding-right: clamp(1.25rem, 4vw, 2.5rem);
     padding-bottom: max(2.25rem, env(safe-area-inset-bottom, 0px));
     padding-top: 48svh;
   }
@@ -308,12 +310,24 @@ button[aria-label="Keyless prompt"] {
     will-change: opacity;
   }
 
+  .hero-copy-layer {
+    padding-left: clamp(2rem, 5vw, 6rem);
+    padding-right: clamp(2rem, 5vw, 6rem);
+  }
+
+  .hero-copy-container {
+    margin-left: 0;
+    margin-right: auto;
+    max-width: 100rem;
+    width: 100%;
+  }
+
   .chapter-copy {
-    max-width: min(60rem, 92vw);
+    max-width: min(58rem, 58vw);
   }
 
   .chapter-copy h1 {
-    max-width: 16ch;
+    max-width: 17ch;
   }
 
   .chapter-copy[data-chapter="hero"] h1 {

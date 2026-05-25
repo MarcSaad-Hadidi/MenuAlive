@@ -405,8 +405,8 @@ export function ScrollScrubVideoHero() {
           aria-hidden="true"
           className="pointer-events-none absolute bottom-0 right-0 z-20 h-28 w-44 bg-gradient-to-br from-[#080706]/0 via-[#080706]/88 to-[#080706] md:h-24 md:w-44"
         />
-        <div className="hero-copy-layer relative z-30 flex h-full w-full items-end px-5 pb-14 pt-28 sm:px-10 sm:pb-20 md:items-center md:pb-0 lg:px-16">
-          <div className="mx-auto w-full max-w-7xl">
+        <div className="hero-copy-layer relative z-30 flex h-full w-full items-end pb-14 pt-28 sm:pb-20 md:items-center md:pb-0">
+          <div className="hero-copy-container mx-auto w-full max-w-7xl md:mx-0">
             <DynamicVideoText chapter={chapter} />
           </div>
         </div>
