@@ -61,6 +61,11 @@ const PDF_SECTION_SLUGS = [
 const VISTAIRE_PREVIEW_CATEGORY = "desserts";
 const VISTAIRE_PREVIEW_DISH_SLUGS = ["tarte-citron-basilic", "souffle-chocolat"] as const;
 
+export type PdfComparePreviewOptions = {
+  activeCategorySlug?: string;
+  vistaireDishSlugs?: readonly string[];
+};
+
 function formatPdfMenuPrice(amount: number): string {
   return `${amount} $`;
 }
@@ -90,7 +95,11 @@ function toCompareDishPreview(dish: Dish, currency: string): CompareDishPreview 
 }
 
 /** Source de vérité partagée avec `/demo` pour le slider PDF vs Vistaire. */
-export function buildPdfComparePreviewData(): PdfComparePreviewData {
+export function buildPdfComparePreviewData(
+  options: PdfComparePreviewOptions = {}
+): PdfComparePreviewData {
+  const activeCategorySlug = options.activeCategorySlug ?? VISTAIRE_PREVIEW_CATEGORY;
+  const vistaireDishSlugs = options.vistaireDishSlugs ?? VISTAIRE_PREVIEW_DISH_SLUGS;
   const restaurant = getRestaurant();
   const categories = getCategories();
 
@@ -112,7 +121,7 @@ export function buildPdfComparePreviewData(): PdfComparePreviewData {
     }))
   ];
 
-  const vistaireDishes = VISTAIRE_PREVIEW_DISH_SLUGS.map((slug) => {
+  const vistaireDishes = vistaireDishSlugs.map((slug) => {
     const dish = getDishBySlug(slug);
     if (!dish) {
       throw new Error(`Missing demo dish for PDF compare preview: ${slug}`);
@@ -130,7 +139,7 @@ export function buildPdfComparePreviewData(): PdfComparePreviewData {
     },
     pdfSections,
     categoryTabs,
-    activeCategorySlug: VISTAIRE_PREVIEW_CATEGORY,
+    activeCategorySlug,
     vistaireDishes
   };
 }
