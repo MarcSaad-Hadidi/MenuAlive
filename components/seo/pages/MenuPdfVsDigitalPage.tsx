@@ -1,11 +1,12 @@
-import Image from "next/image";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { PdfVistaireCompareSlider } from "@/components/seo/PdfVistaireCompareSlider";
 import { SeoComparisonTable } from "@/components/seo/SeoComparisonTable";
 import { SeoFaq } from "@/components/seo/SeoFaq";
 import { SeoTakeaway } from "@/components/seo/SeoTakeaway";
+import { buildPdfComparePreviewData } from "@/lib/pdfComparePreviewData";
 import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import type { SeoPageData } from "@/lib/seoPages";
 
@@ -21,6 +22,8 @@ function SecondaryButton({ href, children }: { href: string; children: string })
 }
 
 export function MenuPdfVsDigitalPage({ page }: { page: SeoPageData }) {
+  const comparePreview = buildPdfComparePreviewData();
+
   return (
     <>
       <JsonLd data={buildSeoPillarJsonLd(page)} />
@@ -30,8 +33,8 @@ export function MenuPdfVsDigitalPage({ page }: { page: SeoPageData }) {
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_0%,rgba(120,45,30,0.22),transparent_60%)]"
             aria-hidden
           />
-          <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-            <div>
+          <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,520px)] lg:items-center lg:gap-14 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,520px)]">
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#d4846a]">
                 {page.eyebrow}
               </p>
@@ -61,19 +64,14 @@ export function MenuPdfVsDigitalPage({ page }: { page: SeoPageData }) {
                 ) : null}
               </div>
             </div>
-            <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-[#5c2a1f]/30 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-              <Image
-                src={page.visualImage.src}
-                alt={page.visualImage.alt}
-                fill
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover"
-                priority
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-[#0a0605] via-transparent to-transparent"
-                aria-hidden
-              />
+            <div className="relative flex justify-center lg:sticky lg:top-28 lg:justify-end lg:self-start">
+              <div className="w-full max-w-[min(100%,430px)] sm:max-w-[460px] lg:max-w-[480px] xl:max-w-[520px]">
+                <PdfVistaireCompareSlider preview={comparePreview} className="w-full" />
+                <p className="mt-4 text-center text-xs leading-5 text-[#a99984] sm:text-left sm:text-sm lg:max-w-none">
+                  Même téléphone, même scan QR : à gauche un PDF pénible à lire,
+                  à droite la carte Vistaire pensée pour le service.
+                </p>
+              </div>
             </div>
           </div>
         </section>
