@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PremiumSeoPage } from "@/components/seo/PremiumSeoPage";
+import { MenuQrCodeRestaurantPage } from "@/components/seo/pages/MenuQrCodeRestaurantPage";
 import { absoluteUrl } from "@/lib/seo";
 import { getSeoPage } from "@/lib/seoPages";
 
@@ -33,6 +33,6 @@ export const metadata: Metadata = {
   }
 };
 
-export default function MenuQrCodeRestaurantPage() {
-  return <PremiumSeoPage page={page} />;
+export default function MenuQrCodeRestaurantRoute() {
+  return <MenuQrCodeRestaurantPage page={page} />;
 }

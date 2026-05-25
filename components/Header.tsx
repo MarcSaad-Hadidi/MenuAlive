@@ -30,8 +30,8 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
             className="shrink-0 font-display text-lg leading-none text-cream outline-none transition hover:text-champagne focus-visible:ring-2 focus-visible:ring-champagne sm:text-2xl"
             aria-label={
               isHome
-                ? "Vistaire — accueil de la page"
-                : "Vistaire — retour à la page d'accueil"
+                ? "Vistaire, accueil de la page"
+                : "Vistaire, retour à la page d'accueil"
             }
           >
             Vistaire
@@ -60,6 +60,12 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
               href={beneficesHref}
             >
               Bénéfices
+            </Link>
+            <Link
+              className="transition hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+              href={isHome ? "#guides" : "/#guides"}
+            >
+              Guides
             </Link>
           </div>
         ) : (

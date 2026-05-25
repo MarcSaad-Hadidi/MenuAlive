@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PremiumSeoPage } from "@/components/seo/PremiumSeoPage";
+import { MenuDigitalRestaurantPage } from "@/components/seo/pages/MenuDigitalRestaurantPage";
 import { absoluteUrl } from "@/lib/seo";
 import { getSeoPage } from "@/lib/seoPages";
 
@@ -33,6 +33,6 @@ export const metadata: Metadata = {
   }
 };
 
-export default function MenuDigitalRestaurantPage() {
-  return <PremiumSeoPage page={page} />;
+export default function MenuDigitalRestaurantRoute() {
+  return <MenuDigitalRestaurantPage page={page} />;
 }

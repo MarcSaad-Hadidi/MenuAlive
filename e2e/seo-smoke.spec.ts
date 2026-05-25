@@ -12,8 +12,7 @@ const forbiddenJsonLdTypes = [
   "LocalBusiness",
   "MenuItem",
   "AggregateRating",
-  "Review",
-  "FAQPage"
+  "Review"
 ];
 
 async function expectNoHorizontalOverflow(page: import("@playwright/test").Page) {
@@ -140,6 +139,12 @@ test.describe("Vistaire SEO smoke", () => {
       await expectNoHorizontalOverflow(page);
       await expectNoEarlyModelAssets(page);
 
+      await expect(
+        page.getByRole("link", { name: "Comparer PDF vs menu digital" })
+      ).toBeVisible();
+      await expect(page.getByRole("link", { name: "Menu digital restaurant", exact: true }).first()).toBeVisible();
+      await expect(page.locator("#guides")).toBeVisible();
+
       const hero = page.locator("#experience");
       const heroVideo = hero.locator("video.hero-video-media");
       await expect(hero).toHaveAttribute("data-video-deferred", "false");
@@ -160,14 +165,19 @@ test.describe("Vistaire SEO smoke", () => {
         );
         if (seoPages.includes(path)) {
           await expect(page).toHaveTitle(/Vistaire/);
+          await expect(page.locator("h1")).toHaveCount(1);
           await expect(page.locator('script[type="application/ld+json"]')).not.toHaveCount(0);
           const jsonLdTypes = await collectJsonLdTypes(page);
           expect(jsonLdTypes).toEqual(
-            expect.arrayContaining(["WebPage", "BreadcrumbList", "Service"])
+            expect.arrayContaining(["WebPage", "BreadcrumbList", "Service", "FAQPage"])
           );
           for (const forbiddenType of forbiddenJsonLdTypes) {
             expect(jsonLdTypes).not.toContain(forbiddenType);
           }
+          const visibleFaqCount = await page.locator("article h3").count();
+          expect(visibleFaqCount).toBeGreaterThanOrEqual(5);
+          await expect(page.getByRole("link", { name: "Menu digital restaurant", exact: true }).first()).toBeVisible();
+          await expect(page.getByRole("link", { name: "Accès interne" })).toBeVisible();
         }
         await expectNoHorizontalOverflow(page);
         await expectNoEarlyModelAssets(page);

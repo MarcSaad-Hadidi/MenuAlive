@@ -68,7 +68,7 @@ const RESTAURANT: Restaurant = {
   slug: "maison-elyse",
   tagline: "Cuisine française contemporaine au cœur du Vieux-Montréal.",
   description:
-    "Une cuisine de produits d’ici et d’ailleurs, précise et saisonnière, dans un cadre intimiste du Vieux-Montréal — une carte pensée pour un menu digital à la hauteur de votre table.",
+    "Une cuisine de produits d’ici et d’ailleurs, précise et saisonnière, dans un cadre intimiste du Vieux-Montréal : une carte pensée pour un menu digital à la hauteur de votre table.",
   location: "Vieux-Montréal · Montréal, Québec",
   cuisineType: "Française contemporaine montréalaise",
   coverImage: null,
@@ -194,7 +194,7 @@ const DISHES: Dish[] = [
     options: ["Sans agrumes sur demande (remplacement citron confit)"],
     sides: [],
     chefRecommendation:
-      "Servi légèrement frais — idéal avant une assise plus corsée.",
+      "Servi légèrement frais, idéal avant une assise plus corsée.",
     isSignature: false,
     isRecommended: false,
     isAvailable: true,
@@ -226,7 +226,7 @@ const DISHES: Dish[] = [
     options: ["Remplacement possible : lotte rôtie (supplément selon marché)"],
     sides: ["Pain brioché toasté au beurre salé (supplément 6 $)"],
     chefRecommendation:
-      "Notre signature marine — à associer à un Meursault ou à un blanc du Rhône sur tension minérale.",
+      "Notre signature marine, à associer à un Meursault ou à un blanc du Rhône sur tension minérale.",
     isSignature: true,
     isRecommended: true,
     isAvailable: true,
@@ -261,7 +261,7 @@ const DISHES: Dish[] = [
     options: ["Cuisson rosée possible sous 48 h"],
     sides: ["Suggestion pour deux convives (format sur réservation)"],
     chefRecommendation:
-      "Le plat de la maison pour un dîner à deux — à partager ou en solo gourmand.",
+      "Le plat de la maison pour un dîner à deux, à partager ou en solo gourmand.",
     isSignature: true,
     isRecommended: true,
     isAvailable: false,
@@ -402,7 +402,7 @@ const DISHES: Dish[] = [
     categorySlug: "desserts",
     shortDescription: "Meringue italienne, shortbread sablé, infusion citron vert.",
     description:
-      "Citron confit maison, crémeux basilic pourpre, meringue italienne légère. Shortbread sablé au beurre salé pour la base — acidité maîtrisée, finition herbacée.",
+      "Citron confit maison, crémeux basilic pourpre, meringue italienne légère. Shortbread sablé au beurre salé pour la base : acidité maîtrisée, finition herbacée.",
     price: 24,
     image: "/images/demo/dishes/tarte-citron-basilic-pourpre.png",
     imageObjectPosition: "center 46%",
@@ -479,7 +479,7 @@ const DISHES: Dish[] = [
     options: [],
     sides: [],
     chefRecommendation:
-      "À savourer en ouverture — équilibre amer / sucré maîtrisé.",
+      "À savourer en ouverture : équilibre amer / sucré maîtrisé.",
     isSignature: false,
     isRecommended: false,
     isAvailable: true,
@@ -510,7 +510,7 @@ const DISHES: Dish[] = [
     options: [],
     sides: [],
     chefRecommendation:
-      "Rafraîchissant et fin — parfait sans alcool lorsque vous préférez un dîner léger.",
+      "Rafraîchissant et fin, parfait sans alcool lorsque vous préférez un dîner léger.",
     isSignature: false,
     isRecommended: false,
     isAvailable: true,
