@@ -125,6 +125,26 @@ test("Comparison slider component declares a client boundary and pillar marker",
   assert.match(file, /aria-valuemax=\{100\}/);
   assert.match(
     file,
+    /aria-valuetext=\{`\$\{pdfPercent\} pour cent PDF, \$\{vistairePercent\} pour cent Vistaire`\}/,
+    "slider aria-valuetext must report PDF percentage first because --split drives the PDF clip"
+  );
+  assert.match(
+    file,
+    /touchAction: "pan-y"/,
+    "slider must preserve vertical page scrolling on touch devices"
+  );
+  assert.doesNotMatch(
+    file,
+    /touchAction: "none"/,
+    "slider must not disable all touch panning on the hero region"
+  );
+  assert.doesNotMatch(
+    file,
+    /\btouch-none\b/,
+    "slider must not apply tailwind touch-none on the full phone frame"
+  );
+  assert.match(
+    file,
     /onKeyDown=\{onKeyDown\}/,
     "slider must wire its keyboard handler"
   );

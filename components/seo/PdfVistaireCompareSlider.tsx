@@ -298,7 +298,12 @@ export function PdfVistaireCompareSlider({
   const [hasInteracted, setHasInteracted] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
+  const dragAxisRef = useRef<"pending" | "horizontal" | "vertical" | null>(null);
+  const pointerStartRef = useRef({ x: 0, y: 0 });
   const sliderId = useId();
+
+  const pdfPercent = Math.round(split);
+  const vistairePercent = 100 - pdfPercent;
 
   const updateFromClientX = (clientX: number) => {
     const wrapper = wrapperRef.current;
@@ -312,18 +317,36 @@ export function PdfVistaireCompareSlider({
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== undefined && event.button !== 0) return;
-    draggingRef.current = true;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    updateFromClientX(event.clientX);
+    pointerStartRef.current = { x: event.clientX, y: event.clientY };
+    dragAxisRef.current = "pending";
+    draggingRef.current = false;
   };
 
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragAxisRef.current === "pending") {
+      const dx = Math.abs(event.clientX - pointerStartRef.current.x);
+      const dy = Math.abs(event.clientY - pointerStartRef.current.y);
+      const threshold = 8;
+
+      if (dx >= threshold || dy >= threshold) {
+        if (dx > dy) {
+          dragAxisRef.current = "horizontal";
+          draggingRef.current = true;
+          event.currentTarget.setPointerCapture(event.pointerId);
+          updateFromClientX(event.clientX);
+        } else {
+          dragAxisRef.current = "vertical";
+        }
+      }
+    }
+
     if (!draggingRef.current) return;
     updateFromClientX(event.clientX);
   };
 
   const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
     draggingRef.current = false;
+    dragAxisRef.current = null;
     try {
       event.currentTarget.releasePointerCapture(event.pointerId);
     } catch {
@@ -362,7 +385,7 @@ export function PdfVistaireCompareSlider({
     if (!hasInteracted) setHasInteracted(true);
   };
 
-  const rounded = Math.round(split);
+  const rounded = pdfPercent;
 
   return (
     <figure
@@ -379,8 +402,8 @@ export function PdfVistaireCompareSlider({
           aria-orientation="horizontal"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={rounded}
-          aria-valuetext={`${rounded} pour cent Vistaire, ${100 - rounded} pour cent PDF`}
+          aria-valuenow={pdfPercent}
+          aria-valuetext={`${pdfPercent} pour cent PDF, ${vistairePercent} pour cent Vistaire`}
           aria-controls={`${sliderId}-pdf ${sliderId}-vistaire`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -390,10 +413,10 @@ export function PdfVistaireCompareSlider({
           style={
             {
               ["--split" as string]: `${split}%`,
-              touchAction: "none"
+              touchAction: "pan-y"
             } as React.CSSProperties
           }
-          className="group relative aspect-[9/16] w-full cursor-ew-resize touch-none select-none overflow-hidden bg-[#0a0706] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0605]"
+          className="group relative aspect-[9/16] w-full cursor-ew-resize select-none overflow-hidden bg-[#0a0706] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0605]"
         >
           <div
             id={`${sliderId}-vistaire`}
