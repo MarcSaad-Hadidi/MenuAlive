@@ -23,6 +23,11 @@ const FORBIDDEN_HEAVY_REFS = [
   "three"
 ];
 
+const SIGNATURE_ANIMATION_FILES = [
+  "components/seo/PdfVistaireCompareSlider.tsx",
+  "components/seo/animations/CinematicMenuBloom.tsx"
+];
+
 function readSeo(file) {
   return readFileSync(join(process.cwd(), file), "utf8");
 }
@@ -57,19 +62,26 @@ test("PDF vs digital page wires slider preview data from the demo menu source", 
 
 test("Comparison slider stays aligned with demo menu data helpers", () => {
   const sliderPath = "components/seo/PdfVistaireCompareSlider.tsx";
-  const file = readSeo(sliderPath);
+  const scenePath = "components/seo/VistaireDigitalMenuScene.tsx";
+  const sliderFile = readSeo(sliderPath);
+  const sceneFile = readSeo(scenePath);
   assert.match(
-    file,
+    sliderFile,
     /preview: PdfComparePreviewData/,
     "slider must accept PdfComparePreviewData from the shared helper"
   );
   assert.match(
-    file,
+    sceneFile,
     /CompareDishCardPreview/,
-    "slider must render demo-aligned dish card previews"
+    "shared Vistaire scene must render demo-aligned dish card previews"
+  );
+  assert.match(
+    sliderFile,
+    /VistaireDigitalMenuScene/,
+    "slider must render the shared Vistaire digital menu scene"
   );
   assert.doesNotMatch(
-    file,
+    sliderFile,
     /dishPrice = "16 \$"/,
     "slider must not keep stale hardcoded demo dish defaults"
   );
@@ -77,16 +89,18 @@ test("Comparison slider stays aligned with demo menu data helpers", () => {
 
 test("Comparison slider keeps PDF and Vistaire labels inside distinct clipped layers", () => {
   const sliderPath = "components/seo/PdfVistaireCompareSlider.tsx";
+  const scenePath = "components/seo/VistaireDigitalMenuScene.tsx";
   const file = readSeo(sliderPath);
+  const sceneFile = readSeo(scenePath);
   assert.match(
     file,
     /function PdfLayerLabel/,
     "slider must render the PDF label inside the PDF layer"
   );
   assert.match(
-    file,
+    sceneFile,
     /function VistaireLayerLabel/,
-    "slider must render the Vistaire label inside the Vistaire layer"
+    "shared Vistaire scene must render the Vistaire label inside the Vistaire layer"
   );
   assert.match(
     file,
@@ -172,13 +186,15 @@ test("Signature animations must not pull heavy media or runtime libraries", () =
       );
     }
   }
-  const sliderContent = readSeo("components/seo/PdfVistaireCompareSlider.tsx");
-  for (const ref of FORBIDDEN_HEAVY_REFS) {
-    assert.equal(
-      sliderContent.includes(ref),
-      false,
-      `slider must not reference '${ref}'`
-    );
+  for (const animationPath of SIGNATURE_ANIMATION_FILES) {
+    const content = readSeo(animationPath);
+    for (const ref of FORBIDDEN_HEAVY_REFS) {
+      assert.equal(
+        content.includes(ref),
+        false,
+        `${animationPath} must not reference '${ref}'`
+      );
+    }
   }
 });
 
@@ -217,10 +233,10 @@ test("Pillar pages keep JsonLd, FAQ, comparison and internal links wired", () =>
   }
 });
 
-test("No public copy in pillar pages or slider uses forbidden em-dash punctuation", () => {
+test("No public copy in pillar pages or signature animations uses forbidden em-dash punctuation", () => {
   const files = [
     ...Object.values(SEO_PAGE_FILES),
-    "components/seo/PdfVistaireCompareSlider.tsx"
+    ...SIGNATURE_ANIMATION_FILES
   ];
   for (const file of files) {
     const content = readSeo(file);
@@ -230,4 +246,121 @@ test("No public copy in pillar pages or slider uses forbidden em-dash punctuatio
       `${file} must not contain an em-dash ("\u2014")`
     );
   }
+});
+
+test("Menu digital restaurant page hosts the Cinematic Menu Bloom animation", () => {
+  const file = readSeo(SEO_PAGE_FILES["menu-digital-restaurant"]);
+  assert.match(
+    file,
+    /from "@\/components\/seo\/animations\/CinematicMenuBloom"/,
+    "MenuDigitalRestaurantPage must import CinematicMenuBloom"
+  );
+  assert.match(
+    file,
+    /<CinematicMenuBloom\b/,
+    "MenuDigitalRestaurantPage must render <CinematicMenuBloom />"
+  );
+  assert.match(
+    file,
+    /data-pillar-animation="menu-digital-bloom"/,
+    "MenuDigitalRestaurantPage must mark the bloom section for QA"
+  );
+});
+
+test("Menu digital restaurant page wires bloom preview data from the demo menu source", () => {
+  const file = readSeo(SEO_PAGE_FILES["menu-digital-restaurant"]);
+  assert.match(
+    file,
+    /buildCinematicMenuBloomData/,
+    "MenuDigitalRestaurantPage must build bloom preview data from the demo menu source"
+  );
+  assert.match(
+    file,
+    /preview=\{bloomPreview\}/,
+    "MenuDigitalRestaurantPage must pass bloomPreview to <CinematicMenuBloom />"
+  );
+});
+
+test("Cinematic Menu Bloom stays aligned with demo menu data helpers", () => {
+  const animationPath = "components/seo/animations/CinematicMenuBloom.tsx";
+  const file = readSeo(animationPath);
+  assert.match(
+    file,
+    /^"use client";/,
+    "CinematicMenuBloom must opt into a client boundary"
+  );
+  assert.match(
+    file,
+    /preview: CinematicMenuBloomData/,
+    "CinematicMenuBloom must accept CinematicMenuBloomData from the shared helper"
+  );
+  assert.match(
+    file,
+    /from "@\/components\/seo\/VistaireDigitalMenuScene"/,
+    "CinematicMenuBloom must reuse the shared Vistaire digital menu scene"
+  );
+  assert.match(
+    file,
+    /<VistaireDigitalMenuScene\b/,
+    "CinematicMenuBloom must render the shared Vistaire digital menu scene"
+  );
+  assert.match(
+    file,
+    /data-pillar-animation="menu-digital-bloom"/,
+    "CinematicMenuBloom must expose the data-pillar-animation marker for QA"
+  );
+  assert.match(
+    file,
+    /data-force-cinematic-motion="true"/,
+    "CinematicMenuBloom must opt into forced cinematic motion for the bloom sequence"
+  );
+  assert.match(
+    file,
+    /--cmb-scrub-ms/,
+    "CinematicMenuBloom must scrub the timeline from scroll progress"
+  );
+  assert.match(
+    file,
+    /data-bloom-progress=/,
+    "CinematicMenuBloom must expose scroll progress for QA"
+  );
+  assert.match(
+    file,
+    /usePrefersReducedMotion/,
+    "CinematicMenuBloom must respect the prefers-reduced-motion hook"
+  );
+  assert.match(
+    file,
+    /data-reduced-motion=/,
+    "CinematicMenuBloom must wire a data-reduced-motion attribute for QA"
+  );
+  assert.match(
+    file,
+    /reducedMotion \? "true"/,
+    "CinematicMenuBloom must set data-reduced-motion=\"true\" when reduced motion is preferred"
+  );
+  assert.match(
+    file,
+    /<noscript>/,
+    "CinematicMenuBloom must ship a noscript fallback that keeps the menu visible"
+  );
+});
+
+test("Cinematic Menu Bloom data source reads from the shared demo menu", () => {
+  const file = readSeo("lib/cinematicMenuBloomData.ts");
+  assert.match(
+    file,
+    /buildPdfComparePreviewData/,
+    "cinematicMenuBloomData must reuse the PDF compare preview data source"
+  );
+  assert.match(
+    file,
+    /buildCinematicMenuBloomData/,
+    "cinematicMenuBloomData must export buildCinematicMenuBloomData()"
+  );
+  assert.match(
+    file,
+    /plats-signatures/,
+    "cinematicMenuBloomData must focus the digital bloom on plats signatures"
+  );
 });
