@@ -2,23 +2,32 @@ import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { LiquidGlassShell } from "@/components/LiquidGlassShell";
 import { liquidGlassButtonClasses } from "@/lib/liquidGlassButton";
 
-type PrimaryButtonProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+type SecondaryButtonProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   children: ReactNode;
   size?: "default" | "small";
+  variant?: "secondary" | "ghost" | "accent";
   disabled?: boolean;
 };
 
-export function PrimaryButton({
+export function SecondaryButton({
   children,
   className = "",
   size = "default",
+  variant = "secondary",
   disabled = false,
   ...props
-}: PrimaryButtonProps) {
+}: SecondaryButtonProps) {
+  const sizeClass = size === "small" ? "small" : "default";
   const classes = liquidGlassButtonClasses({
-    variant: "primary",
-    size,
-    className: disabled ? `${className} liquid-glass-button-disabled` : className
+    variant,
+    size: sizeClass,
+    className: [
+      size === "default" ? "text-sm sm:text-base" : "",
+      disabled ? "liquid-glass-button-disabled" : "",
+      className
+    ]
+      .filter(Boolean)
+      .join(" ")
   });
 
   if (disabled) {

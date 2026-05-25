@@ -1,5 +1,7 @@
 "use client";
 
+import { GlassButton } from "@/components/GlassButton";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Category, CurrencyCode, Dish } from "@/lib/demoMenuData";
 import { getRestaurant } from "@/lib/demoMenuData";
@@ -155,8 +157,8 @@ export function DemoMenuClient({
     <section
       className={
         isPhoneSimulation
-          ? "min-w-0 overflow-clip rounded-xl border border-white/9 bg-[#050403]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-          : "min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#070504]/85 shadow-[0_12px_60px_rgba(0,0,0,0.25)]"
+          ? "glass-panel min-w-0 overflow-clip rounded-xl"
+          : "glass-panel min-w-0 overflow-hidden rounded-2xl"
       }
       aria-label="Carte du restaurant"
     >
@@ -223,24 +225,26 @@ export function DemoMenuClient({
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             {searchActive ? (
-              <button
-                type="button"
+              <GlassButton
+                variant="ghost"
+                size="small"
+                className="font-medium"
                 onClick={() => setSearchQuery("")}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/14 px-5 text-sm font-medium text-cream transition hover:border-champagne/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
               >
                 Effacer la recherche
-              </button>
+              </GlassButton>
             ) : null}
             {filterActive ? (
-              <button
-                type="button"
+              <GlassButton
+                variant="ghost"
+                size="small"
+                className="font-medium"
                 onClick={() =>
                   handleFiltersChange(defaultMenuFilterState(), "reset_filters")
                 }
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/30 bg-champagne/8 px-5 text-sm font-medium text-champagne transition hover:bg-champagne/12 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
               >
                 Réinitialiser
-              </button>
+              </GlassButton>
             ) : null}
           </div>
         </div>

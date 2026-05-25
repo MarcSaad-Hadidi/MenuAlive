@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { SecondaryButtonLink } from "@/components/SecondaryButtonLink";
 
 const steps = [
   {
@@ -47,7 +47,7 @@ export function ProductJourneySection() {
           {steps.map((step, index) => (
             <li
               key={step.label}
-              className="rounded-lg border border-white/10 bg-[#0d0907] p-5"
+              className="glass-card rounded-lg p-5"
             >
               <p className="text-[10px] font-semibold tracking-[0.2em] text-white/30">
                 0{index + 1}
@@ -60,18 +60,12 @@ export function ProductJourneySection() {
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <PrimaryButton href="/demo">Explorer le menu client</PrimaryButton>
-          <Link
-            href="/demo/dishes/homard-bisque"
-            className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-          >
+          <SecondaryButtonLink href="/demo/dishes/homard-bisque">
             Voir une fiche plat 3D
-          </Link>
-          <Link
-            href="/admin"
-            className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-          >
+          </SecondaryButtonLink>
+          <SecondaryButtonLink href="/admin" variant="ghost">
             Aperçu restaurateur
-          </Link>
+          </SecondaryButtonLink>
         </div>
       </div>
     </section>

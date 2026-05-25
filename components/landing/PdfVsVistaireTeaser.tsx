@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { SecondaryButtonLink } from "@/components/SecondaryButtonLink";
 
 const contrasts = [
   {
@@ -43,7 +43,7 @@ export function PdfVsVistaireTeaser() {
           {contrasts.map((row) => (
             <div
               key={row.pdf}
-              className="grid gap-3 rounded-lg border border-white/10 bg-[#0d0907] p-4 sm:grid-cols-2 sm:gap-6 sm:p-5"
+              className="glass-card grid gap-3 rounded-lg p-4 sm:grid-cols-2 sm:gap-6 sm:p-5"
             >
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
@@ -63,12 +63,9 @@ export function PdfVsVistaireTeaser() {
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <PrimaryButton href="/demo">Voir la démo Vistaire</PrimaryButton>
-          <Link
-            href="/menu-pdf-vs-menu-digital"
-            className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#5c2a1f]/40 px-6 text-sm font-semibold text-[#d4846a] transition hover:border-[#8b3a28]/60 hover:text-[#f0c4b4] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-          >
+          <SecondaryButtonLink href="/menu-pdf-vs-menu-digital" variant="accent">
             Comparer PDF vs menu digital
-          </Link>
+          </SecondaryButtonLink>
         </div>
       </div>
     </section>

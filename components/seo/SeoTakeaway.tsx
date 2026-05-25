@@ -5,10 +5,10 @@ type SeoTakeawayProps = {
 };
 
 const variantStyles = {
-  calm: "border-champagne/25 bg-[#0d0a08]",
-  speed: "border-white/12 bg-[#0a0807]",
-  confrontation: "border-[#8b3a28]/40 bg-[#120908]",
-  immersion: "border-emerald-900/35 bg-[#0a0d0a]"
+  calm: "glass-card border-champagne/25",
+  speed: "glass-card",
+  confrontation: "glass-card border-[#8b3a28]/40 bg-[#120908]/88",
+  immersion: "glass-card border-emerald-900/35 bg-[#0a0d0a]/88"
 } as const;
 
 export function SeoTakeaway({

@@ -72,7 +72,7 @@ function RestaurantValueSection() {
 
         <div className="mt-12 grid gap-8 border-t border-white/12 pt-9 md:grid-cols-3 lg:mt-16 lg:pt-11">
           {benefits.map((benefit, index) => (
-            <article key={benefit.title} className="max-w-sm md:pr-8">
+            <article key={benefit.title} className="glass-surface-soft max-w-sm rounded-lg p-5 md:pr-8">
               <p className="mb-5 text-xs font-semibold tracking-[0.2em] text-white/28">
                 0{index + 1}
               </p>

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
+import { SecondaryButtonLink } from "@/components/SecondaryButtonLink";
 import { DemoMenuClient } from "@/components/menu/DemoMenuClient";
 import { MenuHero } from "@/components/menu/MenuHero";
 import {
@@ -12,7 +12,7 @@ import { buildBreadcrumbJsonLd } from "@/lib/seo";
 function PresentationPathway() {
   return (
     <section
-      className="my-5 rounded-lg border border-white/10 bg-[#0b0806]/88 px-4 py-4 shadow-[0_18px_70px_rgba(0,0,0,0.22)] sm:my-6 sm:px-5"
+      className="glass-panel my-5 rounded-lg px-4 py-4 sm:my-6 sm:px-5"
       aria-labelledby="presentation-pathway-heading"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -29,19 +29,18 @@ function PresentationPathway() {
           </p>
         </div>
         <div className="flex flex-col gap-2 min-[420px]:flex-row sm:shrink-0">
-          <Link
+          <SecondaryButtonLink
             href="/demo"
             aria-current="page"
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/40 bg-champagne/10 px-4 text-sm font-semibold text-champagne focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+            size="small"
+            variant="secondary"
+            className="text-champagne"
           >
             Menu client
-          </Link>
-          <Link
-            href="/admin"
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/14 px-4 text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-          >
+          </SecondaryButtonLink>
+          <SecondaryButtonLink href="/admin" size="small" variant="ghost">
             Aperçu restaurateur
-          </Link>
+          </SecondaryButtonLink>
         </div>
       </div>
     </section>

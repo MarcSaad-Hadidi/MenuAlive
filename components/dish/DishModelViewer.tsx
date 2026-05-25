@@ -291,15 +291,13 @@ function PremiumFailureState({
             <IosQuickLookArLink
               href={quickLookHref!}
               onClick={onQuickLookClick!}
-              className="relative inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-4 text-xs font-semibold text-[#17100a] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+              className="relative inline-flex min-h-10 items-center justify-center rounded-full px-4 text-xs font-semibold glass-button-primary glass-focus-ring"
             />
           ) : null}
           <button
             type="button"
-            className={`inline-flex min-h-10 items-center justify-center rounded-full px-4 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${
-              hasDirectAr
-                ? "border border-white/18 bg-black/35 text-cream hover:bg-white/10"
-                : "border border-champagne/45 bg-champagne text-[#17100a] hover:bg-[#e3c785]"
+            className={`inline-flex min-h-10 items-center justify-center rounded-full px-4 text-xs font-semibold glass-focus-ring ${
+              hasDirectAr ? "glass-button-secondary" : "glass-button-primary"
             }`}
             onClick={onRetry}
           >
@@ -307,7 +305,7 @@ function PremiumFailureState({
           </button>
           <button
             type="button"
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/18 bg-black/35 px-4 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+            className="glass-button-secondary glass-focus-ring inline-flex min-h-10 items-center justify-center rounded-full px-4 text-xs font-semibold"
             onClick={onReturnToDish}
           >
             Revenir à la fiche du plat
@@ -565,7 +563,7 @@ export function DishModelViewer({
   if (!hasModel) {
     return (
       <section
-        className="overflow-hidden rounded-2xl border border-white/12 bg-gradient-to-br from-[#14100c] via-[#0f0b08] to-[#080706] shadow-inner"
+        className="glass-card overflow-hidden rounded-2xl bg-gradient-to-br from-[#14100c] via-[#0f0b08] to-[#080706] shadow-inner"
         aria-labelledby={titleId}
       >
         <div className="flex min-h-[200px] flex-col items-center justify-center px-5 py-10 text-center sm:min-h-[240px]">
@@ -587,7 +585,7 @@ export function DishModelViewer({
             <IosQuickLookArLink
               href={directIosQuickLookHref}
               onClick={trackArIntent}
-              className="relative mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-5 text-sm font-semibold text-[#17100a] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+              className="glass-button-primary glass-focus-ring relative mt-5 inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-semibold"
             />
           ) : null}
           {showNoModelIosHandoff ? (
@@ -605,7 +603,7 @@ export function DishModelViewer({
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <button
                   type="button"
-                  className="min-h-10 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  className="glass-button-secondary glass-focus-ring min-h-10 rounded-full px-3 text-xs font-semibold text-champagne"
                   onClick={() => {
                     void copyPageLink().then((ok) => {
                       setCopyConfirmed(ok);
@@ -619,7 +617,7 @@ export function DishModelViewer({
                 </button>
                 <button
                   type="button"
-                  className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  className="glass-button-secondary glass-focus-ring min-h-10 rounded-full px-3 text-xs font-semibold"
                   onClick={() => {
                     void sharePageLink(dish.name);
                   }}
@@ -636,7 +634,7 @@ export function DishModelViewer({
 
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-white/[0.14] bg-gradient-to-b from-[#14100c] to-[#070605] p-3 shadow-[inset_0_1px_0_rgba(217,184,121,0.08)] transition-opacity duration-300 sm:p-4"
+      className="glass-card overflow-hidden rounded-2xl p-3 transition-opacity duration-300 sm:p-4"
       aria-labelledby={minimalChrome ? undefined : titleId}
     >
       {!minimalChrome ? (
@@ -690,7 +688,7 @@ export function DishModelViewer({
                     <button
                       type="button"
                       slot="ar-button"
-                      className="absolute bottom-4 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full border border-champagne/45 bg-[#080706]/92 px-5 text-sm font-semibold text-champagne shadow-[0_14px_40px_rgba(0,0,0,0.48)] backdrop-blur transition hover:border-champagne/70 hover:bg-[#120d09] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#10100e]"
+                      className="glass-button-secondary glass-focus-ring absolute bottom-4 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full px-5 text-sm font-semibold text-champagne shadow-[0_14px_40px_rgba(0,0,0,0.48)]"
                       onClick={trackArIntent}
                     >
                       Afficher devant moi
@@ -704,7 +702,7 @@ export function DishModelViewer({
                 <IosQuickLookArLink
                   href={directIosQuickLookHref}
                   onClick={trackArIntent}
-                  className="absolute bottom-4 left-1/2 z-30 inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full border border-champagne/45 bg-[#080706]/92 px-5 text-sm font-semibold text-champagne shadow-[0_14px_40px_rgba(0,0,0,0.48)] backdrop-blur transition hover:border-champagne/70 hover:bg-[#120d09] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#10100e]"
+                  className="glass-button-secondary glass-focus-ring absolute bottom-4 left-1/2 z-30 inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full px-5 text-sm font-semibold text-champagne shadow-[0_14px_40px_rgba(0,0,0,0.48)]"
                 />
               ) : null}
               {showLoader ? (
@@ -738,7 +736,7 @@ export function DishModelViewer({
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="glass-button-secondary glass-focus-ring min-h-10 rounded-full px-3 text-xs font-semibold text-champagne"
                       onClick={() => {
                         void copyPageLink().then((ok) => {
                           setCopyConfirmed(ok);
@@ -752,7 +750,7 @@ export function DishModelViewer({
                     </button>
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="glass-button-secondary glass-focus-ring min-h-10 rounded-full px-3 text-xs font-semibold"
                       onClick={() => {
                         void sharePageLink(dish.name);
                       }}
@@ -761,7 +759,7 @@ export function DishModelViewer({
                     </button>
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="glass-button-secondary glass-focus-ring min-h-10 rounded-full px-3 text-xs font-semibold"
                       onClick={() => {
                         setHandoffDismissed(true);
                       }}
@@ -786,14 +784,14 @@ export function DishModelViewer({
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-champagne/45 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="glass-button-secondary glass-focus-ring min-h-10 rounded-full px-3 text-xs font-semibold text-champagne"
                       onClick={() => setHandoffDismissed(true)}
                     >
                       Continuer en 3D
                     </button>
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="glass-button-secondary glass-focus-ring min-h-10 rounded-full px-3 text-xs font-semibold"
                       onClick={() => {
                         void copyPageLink().then((ok) => {
                           setCopyConfirmed(ok);
@@ -807,7 +805,7 @@ export function DishModelViewer({
                     </button>
                     <button
                       type="button"
-                      className="min-h-10 rounded-full border border-white/18 px-3 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                      className="glass-button-secondary glass-focus-ring min-h-10 rounded-full px-3 text-xs font-semibold"
                       onClick={() => {
                         void sharePageLink(dish.name);
                       }}

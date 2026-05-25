@@ -17,6 +17,8 @@ import { formatPrice } from "@/lib/formatPrice";
 import { AllergenBadge } from "@/components/dish/AllergenBadge";
 import type { DishModelViewerProps } from "@/components/dish/DishModelViewer";
 import { DishDetailHero } from "@/components/dish/DishDetailHero";
+import { LiquidGlassShell } from "@/components/LiquidGlassShell";
+import { liquidGlassButtonClasses } from "@/lib/liquidGlassButton";
 
 type DishDetailProps = {
   dish: Dish;
@@ -53,7 +55,7 @@ function warmModelViewerOnIntent() {
 function DelayedModelViewerImportFallback() {
   return (
     <div
-      className="relative isolate flex h-[min(58vh,420px)] min-h-[280px] w-full flex-col justify-end overflow-hidden rounded-2xl border border-white/[0.14] bg-[#10100e] px-5 py-6 text-left shadow-[inset_0_1px_0_rgba(217,184,121,0.08)] sm:h-[min(65vh,460px)] sm:min-h-[340px]"
+      className="glass-card relative isolate flex h-[min(58vh,420px)] min-h-[280px] w-full flex-col justify-end overflow-hidden rounded-2xl px-5 py-6 text-left sm:h-[min(65vh,460px)] sm:min-h-[340px]"
       role="status"
       aria-live="polite"
       aria-busy="true"
@@ -111,8 +113,11 @@ function refreshVisibleModelViewerLayout() {
   });
 }
 
-const VIEW_3D_BUTTON_CLASS =
-  "inline-flex min-h-11 w-full items-center justify-center rounded-full border border-champagne/50 bg-champagne px-5 text-center text-sm font-semibold text-[#17100a] shadow-[0_12px_34px_rgba(217,184,121,0.18)] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal sm:w-auto sm:min-w-[190px]";
+const VIEW_3D_BUTTON_CLASS = `${liquidGlassButtonClasses({
+  variant: "primary",
+  size: "small",
+  className: "min-h-11 w-full px-5 sm:w-auto sm:min-w-[190px]"
+})}`;
 
 function getQuickLookPreparationLabel(
   state: QuickLookPrefetchState
@@ -234,7 +239,7 @@ export function DishDetail({ dish }: DishDetailProps) {
       >
         <div className="flex flex-wrap gap-2">
           {dish.isSignature ? (
-            <span className="rounded-full border border-champagne/50 bg-champagne/12 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-champagne">
+            <span className="glass-badge-champagne rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-champagne">
               Signature
             </span>
           ) : null}
@@ -336,7 +341,7 @@ export function DishDetail({ dish }: DishDetailProps) {
 
         <section
           id="recommandation-chef"
-          className="mt-8 scroll-mt-28 rounded-2xl border border-champagne/20 bg-black/30 p-5 sm:p-6"
+          className="glass-card mt-8 scroll-mt-28 rounded-2xl p-5 sm:p-6"
           aria-labelledby="chef-heading"
         >
           <h2
@@ -360,7 +365,7 @@ export function DishDetail({ dish }: DishDetailProps) {
                 onFocus={handleModelModuleWarmup}
                 onClick={handleVoir3dClick}
               >
-                Voir en 3D
+                <LiquidGlassShell>Voir en 3D</LiquidGlassShell>
               </button>
               {quickLookPreparationLabel ? (
                 <p

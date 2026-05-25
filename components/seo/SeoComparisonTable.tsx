@@ -19,7 +19,7 @@ export function SeoComparisonTable({
       : "text-[#eadcc6]";
 
   return (
-    <div className="overflow-hidden rounded-lg border border-white/10 bg-[#0c0907]">
+    <div className="glass-card overflow-hidden rounded-lg">
       <div className="hidden grid-cols-[0.5fr_1fr_1fr] border-b border-white/10 bg-white/[0.035] text-xs font-semibold uppercase tracking-[0.16em] text-champagne/80 md:grid">
         <div className="px-5 py-4">Critère</div>
         <div className="border-l border-white/10 px-5 py-4">

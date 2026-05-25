@@ -23,7 +23,7 @@ type FooterGroupProps = {
 
 function FooterGroup({ title, children }: FooterGroupProps) {
   return (
-    <div>
+    <div className="glass-surface-soft rounded-lg p-4">
       <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-champagne/75">
         {title}
       </p>

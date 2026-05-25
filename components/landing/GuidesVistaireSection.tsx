@@ -24,7 +24,7 @@ export function GuidesVistaireSection() {
             <Link
               key={page.path}
               href={page.path}
-              className="group rounded-lg border border-white/10 bg-[#0d0907] p-6 transition hover:border-champagne/35 hover:bg-[#120d09] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+              className="glass-card-interactive group rounded-lg p-6 focus:outline-none glass-focus-ring"
             >
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-champagne/70">
                 {page.eyebrow}

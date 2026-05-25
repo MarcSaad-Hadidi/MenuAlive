@@ -1,24 +1,13 @@
 import Image from "next/image";
-import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { SecondaryButtonLink } from "@/components/SecondaryButtonLink";
 import { SeoComparisonTable } from "@/components/seo/SeoComparisonTable";
 import { SeoFaq } from "@/components/seo/SeoFaq";
 import { SeoTakeaway } from "@/components/seo/SeoTakeaway";
 import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import type { SeoPageData } from "@/lib/seoPages";
-
-function SecondaryButton({ href, children }: { href: string; children: string }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/16 px-6 py-3 text-center text-sm font-semibold text-[#eadcc6] transition hover:border-champagne/40 hover:bg-white/[0.04] hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-    >
-      {children}
-    </Link>
-  );
-}
 
 export function MenuPdfVsDigitalPage({ page }: { page: SeoPageData }) {
   return (
@@ -55,9 +44,9 @@ export function MenuPdfVsDigitalPage({ page }: { page: SeoPageData }) {
                   {page.primaryCta.label}
                 </PrimaryButton>
                 {page.secondaryCta ? (
-                  <SecondaryButton href={page.secondaryCta.href}>
+                  <SecondaryButtonLink href={page.secondaryCta.href}>
                     {page.secondaryCta.label}
-                  </SecondaryButton>
+                  </SecondaryButtonLink>
                 ) : null}
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { SecondaryButton } from "@/components/SecondaryButton";
 import type { VideoChapter } from "@/lib/videoChapters";
 
 type DynamicVideoTextProps = {
@@ -31,13 +32,9 @@ export function DynamicVideoText({ chapter }: DynamicVideoTextProps) {
             {chapter.cta}
           </PrimaryButton>
           {chapter.secondaryCta ? (
-            <a
-              href={secondaryHref}
-              aria-label={chapter.secondaryCta}
-              className="inline-flex min-h-12 max-w-full items-center justify-center rounded-full border border-white/22 bg-white/6 px-6 py-3 text-center text-base font-semibold leading-tight text-cream transition duration-300 hover:border-champagne/40 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal"
-            >
+            <SecondaryButton href={secondaryHref} aria-label={chapter.secondaryCta}>
               {chapter.secondaryCta}
-            </a>
+            </SecondaryButton>
           ) : null}
         </div>
       ) : null}

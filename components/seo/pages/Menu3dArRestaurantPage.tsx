@@ -1,23 +1,12 @@
 import Image from "next/image";
-import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { SecondaryButtonLink } from "@/components/SecondaryButtonLink";
 import { SeoFaq } from "@/components/seo/SeoFaq";
 import { SeoTakeaway } from "@/components/seo/SeoTakeaway";
 import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import type { SeoPageData } from "@/lib/seoPages";
-
-function SecondaryButton({ href, children }: { href: string; children: string }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/16 px-6 py-3 text-center text-sm font-semibold text-[#eadcc6] transition hover:border-champagne/40 hover:bg-white/[0.04] hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-    >
-      {children}
-    </Link>
-  );
-}
 
 export function Menu3dArRestaurantPage({ page }: { page: SeoPageData }) {
   return (
@@ -61,9 +50,9 @@ export function Menu3dArRestaurantPage({ page }: { page: SeoPageData }) {
                 {page.primaryCta.label}
               </PrimaryButton>
               {page.secondaryCta ? (
-                <SecondaryButton href={page.secondaryCta.href}>
+                <SecondaryButtonLink href={page.secondaryCta.href}>
                   {page.secondaryCta.label}
-                </SecondaryButton>
+                </SecondaryButtonLink>
               ) : null}
             </div>
           </div>
@@ -92,7 +81,7 @@ export function Menu3dArRestaurantPage({ page }: { page: SeoPageData }) {
                 ))}
               </div>
             </article>
-            <article className="rounded-lg border border-white/10 bg-[#0d0907] p-6 sm:p-8">
+            <article className="glass-card rounded-lg p-6 sm:p-8">
               <h2 className="font-display text-3xl font-normal text-cream">
                 Quand s&apos;en passer
               </h2>
@@ -129,7 +118,7 @@ export function Menu3dArRestaurantPage({ page }: { page: SeoPageData }) {
               {page.comparison.rows.map((row) => (
                 <article
                   key={row.label}
-                  className="rounded-lg border border-white/10 bg-[#0d0907] p-5"
+                  className="glass-card rounded-lg p-5"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-champagne/70">
                     {row.label}

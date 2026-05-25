@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { SecondaryButtonLink } from "@/components/SecondaryButtonLink";
 
 const highlights = [
   {
@@ -44,18 +44,15 @@ export function DemoRequestSection() {
             <PrimaryButton href="/demo" className="justify-center sm:w-auto">
               Explorer le menu client
             </PrimaryButton>
-            <Link
-              href="/admin"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-            >
+            <SecondaryButtonLink href="/admin">
               Voir l’aperçu restaurateur
-            </Link>
+            </SecondaryButtonLink>
           </div>
         </div>
 
         <div className="mt-12 grid gap-6 border-t border-white/12 pt-8 md:grid-cols-3">
           {highlights.map((item) => (
-            <article key={item.title} className="max-w-sm md:pr-6">
+            <article key={item.title} className="glass-surface-soft max-w-sm rounded-lg p-5 md:pr-6">
               <h3 className="text-lg font-semibold text-champagne">
                 {item.title}
               </h3>

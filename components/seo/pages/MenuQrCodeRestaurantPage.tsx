@@ -1,8 +1,8 @@
 import Image from "next/image";
-import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { SecondaryButtonLink } from "@/components/SecondaryButtonLink";
 import { SeoComparisonTable } from "@/components/seo/SeoComparisonTable";
 import { SeoFaq } from "@/components/seo/SeoFaq";
 import { SeoTakeaway } from "@/components/seo/SeoTakeaway";
@@ -15,17 +15,6 @@ const journeySteps = [
   { step: "03", label: "Fiche plat", detail: "Photo, allergènes, prix, détails" },
   { step: "04", label: "Décision", detail: "Le client choisit avec confiance" }
 ];
-
-function SecondaryButton({ href, children }: { href: string; children: string }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/16 px-6 py-3 text-center text-sm font-semibold text-[#eadcc6] transition hover:border-champagne/40 hover:bg-white/[0.04] hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-    >
-      {children}
-    </Link>
-  );
-}
 
 export function MenuQrCodeRestaurantPage({ page }: { page: SeoPageData }) {
   return (
@@ -64,7 +53,7 @@ export function MenuQrCodeRestaurantPage({ page }: { page: SeoPageData }) {
               {journeySteps.map((item, index) => (
                 <li
                   key={item.step}
-                  className="relative rounded-lg border border-white/10 bg-[#0d0907] p-5"
+                  className="glass-card relative rounded-lg p-5"
                 >
                   {index < journeySteps.length - 1 ? (
                     <span
@@ -111,7 +100,7 @@ export function MenuQrCodeRestaurantPage({ page }: { page: SeoPageData }) {
                       {section.points.map((point) => (
                         <li
                           key={point}
-                          className="rounded-full border border-champagne/25 px-3 py-1.5 text-xs text-[#eadcc6]"
+                          className="glass-badge-champagne rounded-full px-3 py-1.5 text-xs text-[#eadcc6]"
                         >
                           {point}
                         </li>
@@ -125,9 +114,9 @@ export function MenuQrCodeRestaurantPage({ page }: { page: SeoPageData }) {
                   {page.primaryCta.label}
                 </PrimaryButton>
                 {page.secondaryCta ? (
-                  <SecondaryButton href={page.secondaryCta.href}>
+                  <SecondaryButtonLink href={page.secondaryCta.href}>
                     {page.secondaryCta.label}
-                  </SecondaryButton>
+                  </SecondaryButtonLink>
                 ) : null}
               </div>
             </div>

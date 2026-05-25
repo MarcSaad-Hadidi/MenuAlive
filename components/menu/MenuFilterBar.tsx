@@ -81,10 +81,10 @@ export function MenuFilterBar({
               type="button"
               onClick={() => toggle(chip.key)}
               aria-pressed={pressed}
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-full border px-3 pb-[7px] pt-[5px] text-[11px] font-medium leading-[1.2] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 pb-[7px] pt-[5px] text-[11px] font-medium leading-[1.2] transition glass-focus-ring ${
                 pressed
-                  ? "border-champagne/50 bg-champagne/[0.13] text-cream ring-1 ring-champagne/20"
-                  : "border-white/[0.1] bg-black/40 text-[#b9aa94] hover:border-white/18 hover:bg-black/48"
+                  ? "glass-chip-active"
+                  : "glass-chip"
               }`}
             >
               {label}
@@ -115,8 +115,8 @@ export function MenuFilterBar({
           }}
           className={
             compact
-              ? "min-h-[40px] w-full rounded-xl border border-white/[0.11] bg-black/50 px-3.5 py-2 text-[13px] text-cream shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] outline-none focus:border-champagne/35 focus:ring-1 focus:ring-champagne/22"
-              : "min-h-9 min-w-[12rem] rounded-lg border border-white/12 bg-black/40 px-3 py-1.5 text-xs text-cream outline-none focus:border-champagne/35 focus:ring-2 focus:ring-champagne/20 sm:text-sm"
+              ? "glass-input min-h-[40px] w-full rounded-xl px-3.5 py-2 text-[13px] outline-none focus:ring-1 focus:ring-champagne/22"
+              : "glass-input min-h-9 min-w-[12rem] rounded-lg px-3 py-1.5 text-xs sm:text-sm"
           }
         >
           {ALLERGEN_OPTIONS.map((opt) => (

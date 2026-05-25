@@ -9,7 +9,7 @@ type SeoFaqProps = {
 export function SeoFaq({ faqs, className = "", layout = "split" }: SeoFaqProps) {
   if (layout === "stack") {
     return (
-      <div className={`divide-y divide-white/10 rounded-lg border border-white/10 bg-[#0d0907] ${className}`}>
+      <div className={`glass-card divide-y divide-white/10 rounded-lg ${className}`}>
         {faqs.map((item) => (
           <article key={item.question} className="p-5 sm:p-6">
             <h3 className="font-display text-xl leading-tight text-cream">
@@ -34,7 +34,7 @@ export function SeoFaq({ faqs, className = "", layout = "split" }: SeoFaqProps) 
             promesses non prouvées.
           </p>
         </div>
-        <div className="divide-y divide-white/10 rounded-lg border border-white/10 bg-[#0d0907]">
+        <div className="glass-card divide-y divide-white/10 rounded-lg">
           {faqs.map((item) => (
             <article key={item.question} className="p-5 sm:p-6">
               <h3 className="font-display text-xl leading-tight text-cream">

@@ -111,7 +111,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
   if (isPhoneSimulation) {
     return (
       <article
-        className={`group isolate overflow-hidden rounded-xl bg-gradient-to-b from-[#15110e]/98 to-[#080706] shadow-[0_0_0_1px_rgba(255,255,255,0.055),0_8px_32px_rgba(0,0,0,0.38)] ${
+        className={`group isolate overflow-hidden rounded-xl glass-card shadow-[0_8px_32px_rgba(0,0,0,0.38)] ${
           unavailable ? "opacity-[0.82]" : ""
         }`}
       >
@@ -187,7 +187,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
                     ctaName: "dish_card_open"
                   });
                 }}
-                className="inline-flex min-h-9 w-full items-center justify-center rounded-lg bg-champagne/[0.12] text-[11px] font-semibold text-cream ring-1 ring-inset ring-champagne/35 transition active:bg-champagne/[0.18] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#080706]"
+                className="glass-button-secondary glass-focus-ring inline-flex min-h-9 w-full items-center justify-center rounded-lg text-[11px] font-semibold"
                 aria-label={`Voir le plat : ${dish.name}`}
               >
                 Voir le plat
@@ -201,7 +201,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
 
   return (
     <article
-      className={`group flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-[#16100d]/95 to-[#0a0806] shadow-[0_8px_40px_rgba(0,0,0,0.28)] transition hover:border-champagne/22 ${
+      className={`group flex h-full flex-col overflow-hidden rounded-xl glass-card transition hover:border-champagne/22 ${
         unavailable ? "opacity-[0.78]" : ""
       }`}
     >
@@ -278,7 +278,7 @@ export function DishCard({ dish, currency, priorityImage = false }: DishCardProp
                   ctaName: "dish_card_open"
                 });
               }}
-              className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-champagne/40 bg-champagne/[0.1] text-center text-xs font-semibold text-cream transition hover:border-champagne/55 hover:bg-champagne/[0.16] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0806]"
+              className="glass-button-secondary glass-focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-lg text-center text-xs font-semibold"
               aria-label={`Voir le plat : ${dish.name}`}
             >
               Voir le plat

@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { AdminAssistant } from "@/components/admin/AdminAssistant";
 import { AdminInsightCard } from "@/components/admin/AdminInsightCard";
 import { AdminSearchInsights } from "@/components/admin/AdminSearchInsights";
 import { AdminServiceActivity } from "@/components/admin/AdminServiceActivity";
 import { AdminTopDishes } from "@/components/admin/AdminTopDishes";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { SecondaryButtonLink } from "@/components/SecondaryButtonLink";
 import {
   getDemoRestaurantId,
   getRestaurantInsights
@@ -42,7 +42,7 @@ export default async function AdminPage({
   return (
     <div className="px-4 pb-20 pt-24 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-6xl">
-        <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#090705]/92 px-5 py-7 shadow-[0_24px_90px_rgba(0,0,0,0.32)] sm:px-8 sm:py-9">
+        <section className="glass-panel relative overflow-hidden rounded-2xl px-5 py-7 sm:px-8 sm:py-9">
           <div
             className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_42%)]"
             aria-hidden
@@ -66,12 +66,9 @@ export default async function AdminPage({
               Explorer le menu client
             </PrimaryButton>
             {popularDish ? (
-              <Link
-                href={`/demo/dishes/${popularDish.slug}`}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-              >
+              <SecondaryButtonLink href={`/demo/dishes/${popularDish.slug}`}>
                 Ouvrir une fiche populaire
-              </Link>
+              </SecondaryButtonLink>
             ) : null}
           </div>
         </section>

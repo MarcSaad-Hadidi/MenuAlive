@@ -80,10 +80,8 @@ export function DemoExperienceShell({ children }: DemoExperienceShellProps) {
             <button
               type="button"
               onClick={() => setSimulateMobile(!simulateMobile)}
-              className={`inline-flex min-h-11 items-center justify-center rounded-full border px-5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-[#080706] ${
-                simulateMobile
-                  ? "border-champagne/50 bg-champagne/12 text-champagne"
-                  : "border-white/16 bg-black/35 text-cream hover:border-champagne/35"
+              className={`inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-semibold glass-focus-ring ${
+                simulateMobile ? "glass-chip-active text-champagne" : "glass-chip"
               }`}
               aria-pressed={simulateMobile}
             >
