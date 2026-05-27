@@ -107,13 +107,17 @@ function QrCodeMark() {
 }
 
 export function VistaireMenuQrCodeRestaurantPreview({
+  h1,
   routeMode = "preview",
   seoAppendix
 }: {
+  h1?: string;
   routeMode?: VistaireRouteMode;
   seoAppendix?: ReactNode;
 }) {
   const routes = getVistaireChromeRoutes(routeMode);
+  const pageTitle =
+    h1 ?? "Menu QR code restaurant : le scan doit ouvrir une expérience";
   const pageInternalLinks =
     routeMode === "preview"
       ? internalLinks
@@ -154,7 +158,7 @@ export function VistaireMenuQrCodeRestaurantPreview({
             <div className={styles.qrHeroText}>
               <p className={styles.badge}>QR code restaurant</p>
               <h1 id="menu-qr-code-restaurant-preview-title">
-                Menu QR code restaurant : le scan doit ouvrir une expérience
+                {pageTitle}
               </h1>
               <p className={styles.heroLead}>
                 Le QR code n&apos;est pas la carte. C&apos;est le premier geste.
@@ -180,6 +184,7 @@ export function VistaireMenuQrCodeRestaurantPreview({
                 alt="Cliente consultant une carte Vistaire ouverte après scan QR à table"
                 className={styles.visualImage}
                 fill
+                priority
                 quality={100}
                 sizes="(max-width: 920px) calc(100vw - 56px), 42vw"
                 src={photoQrCode1}

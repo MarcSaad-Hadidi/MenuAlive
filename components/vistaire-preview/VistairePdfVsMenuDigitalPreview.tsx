@@ -121,13 +121,17 @@ function ArrowIcon() {
 }
 
 export function VistairePdfVsMenuDigitalPreview({
+  h1,
   routeMode = "preview",
   seoAppendix
 }: {
+  h1?: string;
   routeMode?: VistaireRouteMode;
   seoAppendix?: ReactNode;
 }) {
   const routes = getVistaireChromeRoutes(routeMode);
+  const pageTitle =
+    h1 ?? "PDF vs menu digital : pourquoi les restaurants haut de gamme doivent évoluer";
   const pageInternalLinks =
     routeMode === "preview"
       ? internalLinks
@@ -166,7 +170,7 @@ export function VistairePdfVsMenuDigitalPreview({
         <div className={styles.previewFrame}>
           <article className={`${styles.card} ${styles.heroCopy}`}>
             <p className={styles.badge}>Guide restaurateur</p>
-            <h1 id="pdf-vs-menu-digital-preview-title">PDF vs menu digital : pourquoi les restaurants haut de gamme doivent évoluer</h1>
+            <h1 id="pdf-vs-menu-digital-preview-title">{pageTitle}</h1>
             <p className={styles.heroLead}>
               Un menu PDF reproduit une carte papier sur un écran. Vistaire transforme la carte en expérience mobile premium : claire, visuelle, rapide et pensée pour donner envie.
             </p>

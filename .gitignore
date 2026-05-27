@@ -40,6 +40,10 @@ asset-review/
 # reviewed public assets or CDN-hosted files instead of new Git blobs.
 Framer/*.mp4
 Framer/*.zip
+# Future Framer PNG source exports are ignored by default. Reviewed runtime
+# PNGs that are already tracked remain available until a dedicated asset
+# optimization pass moves them to an approved runtime path.
+Framer/*.png
 
 # local heavy 3D source drops and generated review assets
 3D Plat/

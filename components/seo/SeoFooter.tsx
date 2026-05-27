@@ -106,8 +106,13 @@ export function SeoFooter({ compact = false }: SeoFooterProps) {
                 Prendre rendez-vous
               </Link>
             </li>
-            <li className="mt-2 text-xs text-[#8f8170]">
-              contact@vistaire.ca
+            <li className="mt-2">
+              <a
+                href="mailto:contact@vistaire.ca"
+                className="text-xs text-[#8f8170] transition hover:text-[#cdbfa9] focus:outline-none focus-visible:text-cream focus-visible:ring-2 focus-visible:ring-champagne"
+              >
+                contact@vistaire.ca
+              </a>
             </li>
           </FooterGroup>
         </div>

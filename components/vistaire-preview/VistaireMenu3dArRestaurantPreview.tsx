@@ -57,13 +57,17 @@ function ArrowIcon() {
 }
 
 export function VistaireMenu3dArRestaurantPreview({
+  h1,
   routeMode = "preview",
   seoAppendix
 }: {
+  h1?: string;
   routeMode?: VistaireRouteMode;
   seoAppendix?: ReactNode;
 }) {
   const routes = getVistaireChromeRoutes(routeMode);
+  const pageTitle =
+    h1 ?? "Menu 3D AR restaurant : montrer le plat quand cela aide vraiment";
   const internalLinks = [
     { label: "Voir la carte", href: routes.menu },
     { label: "Menu digital restaurant", href: routes.menuDigital },
@@ -97,7 +101,7 @@ export function VistaireMenu3dArRestaurantPreview({
           <article className={`${styles.card} ${styles.heroCopy}`}>
             <p className={styles.badge}>3D / AR sélective</p>
             <h1 id="menu-3d-ar-restaurant-title">
-              Menu 3D AR restaurant : montrer le plat quand cela aide vraiment
+              {pageTitle}
             </h1>
             <p className={styles.heroLead}>
               Vistaire intègre la 3D et la réalité augmentée avec retenue :
@@ -122,6 +126,7 @@ export function VistaireMenu3dArRestaurantPreview({
                 alt="Vue 3D et réalité augmentée Vistaire présentées sur téléphone"
                 className={styles.visualImage}
                 fill
+                priority
                 quality={100}
                 sizes="(max-width: 920px) calc(100vw - 56px), 20vw"
                 src={photoDigital2}
@@ -162,6 +167,7 @@ export function VistaireMenu3dArRestaurantPreview({
                 alt="Cliente consultant une carte digitale Vistaire dans un restaurant sombre"
                 className={styles.visualImage}
                 fill
+                priority
                 quality={100}
                 sizes="(max-width: 920px) calc(100vw - 56px), 58vw"
                 src={photoDigital3}

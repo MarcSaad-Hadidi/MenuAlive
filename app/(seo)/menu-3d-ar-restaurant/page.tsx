@@ -41,6 +41,7 @@ export default function Menu3dArRestaurantRoute() {
     <>
       <JsonLd data={buildSeoPillarJsonLd(page)} />
       <VistaireMenu3dArRestaurantPreview
+        h1={page.h1}
         routeMode="production"
         seoAppendix={<VistaireSeoProductionSections page={page} />}
       />

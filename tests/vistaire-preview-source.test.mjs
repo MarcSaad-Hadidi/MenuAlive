@@ -84,6 +84,60 @@ function literalPattern(value) {
   return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 }
 
+test("literalPattern escapes every regex metacharacter occurrence", () => {
+  const pattern = literalPattern("{{dish}}.{{price}}?[x]");
+
+  assert.match("{{dish}}.{{price}}?[x]", pattern);
+  assert.doesNotMatch("{dish}.{{price}}?[x]", pattern);
+});
+
+test("production SEO preview pages keep canonical H1s and text depth visible", async () => {
+  const [
+    digitalRoute,
+    qrRoute,
+    arRoute,
+    pdfRoute,
+    appendix,
+    digitalPreview,
+    qrPreview,
+    arPreview,
+    pdfPreview
+  ] = await Promise.all([
+    readText("app/(seo)/menu-digital-restaurant/page.tsx"),
+    readText("app/(seo)/menu-qr-code-restaurant/page.tsx"),
+    readText("app/(seo)/menu-3d-ar-restaurant/page.tsx"),
+    readText("app/(seo)/menu-pdf-vs-menu-digital/page.tsx"),
+    readText("components/vistaire-preview/VistaireSeoProductionSections.tsx"),
+    readText(menuDigitalPreviewComponentPath),
+    readText(menuQrCodePreviewComponentPath),
+    readText("components/vistaire-preview/VistaireMenu3dArRestaurantPreview.tsx"),
+    readText(pdfVsDigitalPreviewComponentPath)
+  ]);
+
+  for (const route of [digitalRoute, qrRoute, arRoute, pdfRoute]) {
+    assert.match(route, /h1=\{page\.h1\}/);
+    assert.match(route, /buildSeoPillarJsonLd\(page\)/);
+    assert.match(route, /VistaireSeoProductionSections page=\{page\}/);
+  }
+
+  assert.match(appendix, /page\.answer\.map/);
+  assert.match(appendix, /page\.sections\.map/);
+  assert.match(appendix, /section\.body\.map/);
+  assert.match(appendix, /section\.points\.map/);
+  assert.match(appendix, /SeoFaq faqs=\{page\.faq\}/);
+  assert.match(appendix, /InternalSeoLinks currentSlug=\{page\.slug\}/);
+
+  for (const component of [
+    digitalPreview,
+    qrPreview,
+    arPreview,
+    pdfPreview
+  ]) {
+    assert.match(component, /h1\?: string/);
+    assert.match(component, /const pageTitle =\s*h1 \?\?/);
+  }
+});
+
 test("vistaire preview routes stay noindex while production pages reuse the validated preview UI", async () => {
   const [
     home,
@@ -256,7 +310,7 @@ test("vistaire PDF vs menu digital preview is premium, SEO-readable, and convers
   }
 
   for (const assetName of ["PhotoRestoComplet3.png"]) {
-    assert.match(component, new RegExp(assetName.replace(".", "\\.")));
+    assert.match(component, literalPattern(assetName));
   }
   assert.match(component, /PhotoComparaisonPDF\.png/);
   assert.match(component, /PhotoPDFvsDigitalDetail\.png/);
@@ -382,7 +436,7 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
     "Photo table.png",
     "PhotoFemme.png"
   ]) {
-    assert.match(component, new RegExp(assetName.replace(".", "\\.")));
+    assert.match(component, literalPattern(assetName));
   }
 
   for (const videoAttribute of [
@@ -392,7 +446,7 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
     "playsInline",
     "controls={false}"
   ]) {
-    assert.match(component, new RegExp(videoAttribute.replace("{", "\\{")));
+    assert.match(component, literalPattern(videoAttribute));
   }
 
   assert.match(component, /\/vistaire-preview\/video/);
@@ -404,7 +458,7 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
   assert.match(css, /@font-face[\s\S]*font-family: "Neue Montreal"/);
   for (const fontFile of previewFontFiles) {
     const publicUrl = fontFile.replace("public", "").replaceAll("\\", "/");
-    assert.match(css, new RegExp(publicUrl.replaceAll("/", "\\/")));
+    assert.match(css, literalPattern(publicUrl));
   }
   for (const fontBuffer of fontBuffers) {
     assert.ok(fontBuffer.byteLength > 10000);
@@ -458,7 +512,7 @@ test("vistaire about preview matches the Framer bento story", async () => {
     "PageApropos2.png",
     "PageApropos.png"
   ]) {
-    assert.match(component, new RegExp(assetName.replace(".", "\\.")));
+    assert.match(component, literalPattern(assetName));
   }
 
   assert.match(component, /PreviewNav activeSection="about" routeMode=\{routeMode\}/);
@@ -514,7 +568,7 @@ test("vistaire contact preview stays a premium contact page", async () => {
     "Desert.png",
     "Photo table.png"
   ]) {
-    assert.match(component, new RegExp(assetName.replace(".", "\\.")));
+    assert.match(component, literalPattern(assetName));
   }
 
   assert.match(component, /href=\{routes\.appointment\}/);
@@ -676,7 +730,7 @@ test("vistaire menu preview is a real filtered menu, not a static screenshot", a
   }
 
   for (const assetName of ["pageCarte.png", "PhotoRestoComplet2.png"]) {
-    assert.match(component, new RegExp(assetName.replace(".", "\\.")));
+    assert.match(component, literalPattern(assetName));
   }
 
   assert.match(

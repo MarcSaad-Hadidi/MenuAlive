@@ -65,17 +65,14 @@ export function CategoryTabs({
 
   return (
     <div className={shell} data-lenis-prevent>
-      <div className={rowClass} role="tablist" aria-label="Catégories du menu">
+      <div className={rowClass} aria-label="Catégories du menu">
         {tabs.map((tab) => {
           const selected = tab.slug === activeSlug;
           return (
             <button
               key={tab.id}
               type="button"
-              role="tab"
-              aria-selected={selected}
-              aria-controls={`panel-${tab.slug}`}
-              id={`tab-${tab.slug}`}
+              aria-pressed={selected}
               className={chipClass(selected)}
               onClick={() => onSelect(tab.slug)}
             >

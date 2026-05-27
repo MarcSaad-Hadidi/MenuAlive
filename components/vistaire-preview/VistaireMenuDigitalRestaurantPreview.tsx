@@ -112,13 +112,17 @@ function ArrowIcon() {
 }
 
 export function VistaireMenuDigitalRestaurantPreview({
+  h1,
   routeMode = "preview",
   seoAppendix
 }: {
+  h1?: string;
   routeMode?: VistaireRouteMode;
   seoAppendix?: ReactNode;
 }) {
   const routes = getVistaireChromeRoutes(routeMode);
+  const pageTitle =
+    h1 ?? "Menu digital restaurant : une carte premium pensée pour le mobile";
   const pageInternalLinks =
     routeMode === "preview"
       ? internalLinks
@@ -158,10 +162,10 @@ export function VistaireMenuDigitalRestaurantPreview({
           <article className={`${styles.card} ${styles.heroCopy}`}>
             <p className={styles.badge}>Guide restaurateur</p>
             <h1
-              aria-label="Menu digital restaurant : une carte premium pensée pour le mobile"
+              aria-label={pageTitle}
               id="menu-digital-restaurant-preview-title"
             >
-              Menu digital restaurant{"\u00a0"}: une carte premium pensée pour le mobile
+              {pageTitle}
             </h1>
             <p className={styles.heroLead}>
               Vistaire transforme le QR code d&apos;un restaurant en carte digitale

@@ -41,6 +41,7 @@ export default function MenuPdfVsMenuDigitalRoute() {
     <>
       <JsonLd data={buildSeoPillarJsonLd(page)} />
       <VistairePdfVsMenuDigitalPreview
+        h1={page.h1}
         routeMode="production"
         seoAppendix={<VistaireSeoProductionSections page={page} />}
       />

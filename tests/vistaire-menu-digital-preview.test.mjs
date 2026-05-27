@@ -58,11 +58,12 @@ test("menu digital restaurant preview route stays noindex and uses the preview v
   assert.match(route, /canonical:\s*"\/vistaire-preview\/menu-digital-restaurant"/);
   assert.match(component, /className=\{styles\.previewFrame\}/);
   assert.match(component, /styles\.heroCopy/);
+  assert.match(component, /aria-label=\{pageTitle\}/);
   assert.match(
     component,
-    /aria-label="Menu digital restaurant : une carte premium pensée pour le mobile"/
+    /h1 \?\? "Menu digital restaurant : une carte premium pensée pour le mobile"/
   );
-  assert.match(component, /Menu digital restaurant\{"\\u00a0"\}: une carte/);
+  assert.match(component, /\{pageTitle\}/);
   assert.match(component, /styles\.revealCard/);
   assert.match(component, /styles\.comparisonCard/);
   assert.match(component, /styles\.mobileProofCard/);
