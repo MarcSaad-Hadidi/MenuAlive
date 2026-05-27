@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { MenuPdfVsDigitalPage } from "@/components/seo/pages/MenuPdfVsDigitalPage";
+import { JsonLd } from "@/components/JsonLd";
+import { VistairePdfVsMenuDigitalPreview } from "@/components/vistaire-preview/VistairePdfVsMenuDigitalPreview";
+import { VistaireSeoProductionSections } from "@/components/vistaire-preview/VistaireSeoProductionSections";
 import { absoluteUrl } from "@/lib/seo";
+import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import { getSeoPage } from "@/lib/seoPages";
 
 const page = getSeoPage("menu-pdf-vs-menu-digital");
@@ -34,5 +37,13 @@ export const metadata: Metadata = {
 };
 
 export default function MenuPdfVsMenuDigitalRoute() {
-  return <MenuPdfVsDigitalPage page={page} />;
+  return (
+    <>
+      <JsonLd data={buildSeoPillarJsonLd(page)} />
+      <VistairePdfVsMenuDigitalPreview
+        routeMode="production"
+        seoAppendix={<VistaireSeoProductionSections page={page} />}
+      />
+    </>
+  );
 }

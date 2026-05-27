@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
-import { DishDetail } from "@/components/dish/DishDetail";
+import { VistaireDishDetailPreview } from "@/components/vistaire-preview/VistaireDishDetailPreview";
 import {
   getAllDishes,
+  getCategoryBySlug,
   getDishBySlug,
   getRestaurant
 } from "@/lib/demoMenuData";
@@ -77,6 +78,9 @@ export default async function DishPage({ params }: PageProps) {
   if (!dish) {
     notFound();
   }
+  const restaurant = getRestaurant();
+  const categoryName =
+    getCategoryBySlug(dish.categorySlug)?.name ?? "Création Maison Élyse";
 
   return (
     <>
@@ -87,7 +91,12 @@ export default async function DishPage({ params }: PageProps) {
           { name: dish.name, path: `/demo/dishes/${dish.slug}` }
         ])}
       />
-      <DishDetail dish={dish} />
+      <VistaireDishDetailPreview
+        categoryName={categoryName}
+        dish={dish}
+        restaurant={restaurant}
+        routeMode="production"
+      />
     </>
   );
 }

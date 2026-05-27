@@ -1,4 +1,5 @@
 import type { AnchorHTMLAttributes, ReactNode } from "react";
+import { VISTAIRE_GLASS_CTA } from "@/lib/vistaireGlass";
 
 type PrimaryButtonProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   children: ReactNode;
@@ -18,7 +19,7 @@ export function PrimaryButton({
 
   return (
     <a
-      className={`inline-flex max-w-full items-center justify-center rounded-full border border-champagne/50 bg-champagne text-center font-semibold leading-tight text-charcoal shadow-[0_18px_48px_rgba(217,184,121,0.2)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#f0d396] hover:shadow-[0_22px_58px_rgba(217,184,121,0.26)] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal ${sizeClass} ${className}`}
+      className={`inline-flex max-w-full items-center justify-center rounded-full text-center font-semibold leading-tight transition duration-300 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne ${VISTAIRE_GLASS_CTA} ${sizeClass} ${className}`}
       {...props}
     >
       {children}

@@ -36,6 +36,11 @@ yarn-error.log*
 /asset-review/
 asset-review/
 
+# Local Framer video exports for preview reference; heavy runtime video must use
+# reviewed public assets or CDN-hosted files instead of new Git blobs.
+Framer/*.mp4
+Framer/*.zip
+
 # local heavy 3D source drops and generated review assets
 3D Plat/
 3D photo/

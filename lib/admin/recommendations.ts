@@ -194,7 +194,7 @@ function metricValue(insights: DemoAdminInsights, id: string): string {
 function compactDishName(name: string): string {
   return name
     .replace(", bisque corsée & fenouil", "")
-    .replace(", bisque corsÃ©e & fenouil", "")
+    .replace(", bisque corsée & fenouil", "")
     .trim();
 }
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { trackMenuEvent } from "@/lib/analytics/client";
+import { VISTAIRE_GLASS_CTA } from "@/lib/vistaireGlass";
 
 export function Header({ userSlot }: { userSlot?: ReactNode }) {
   const pathname = usePathname();
@@ -19,10 +20,10 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
   const logoHref = isHome ? "#experience" : "/";
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-[#050403]/95 to-transparent pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
+    <header className="fixed inset-x-0 top-0 z-50 bg-transparent px-2 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-4">
       <nav
         aria-label="Navigation principale"
-        className="mx-auto flex min-h-14 max-w-7xl items-center justify-between gap-3 rounded-full border border-white/10 bg-[#070504]/92 px-3 py-2 shadow-[0_18px_80px_rgba(0,0,0,0.35)] sm:min-h-16 sm:gap-4 sm:px-5 sm:py-2.5"
+        className="mx-auto flex min-h-14 max-w-7xl items-center justify-between gap-3 rounded-full border border-white/25 bg-transparent px-3 py-2 shadow-[0_24px_70px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,250,240,0.18),inset_0_-1px_0_rgba(255,250,240,0.1)] backdrop-blur-[5px] backdrop-saturate-[110%] sm:min-h-16 sm:gap-4 sm:px-5 sm:py-2.5"
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <Link
@@ -83,7 +84,7 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
                     ctaName: "demo_header"
                   })
                 }
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/35 px-3 text-xs font-semibold text-champagne transition hover:bg-champagne/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:px-4"
+                className={`inline-flex min-h-10 items-center justify-center rounded-full px-3 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne sm:px-4 ${VISTAIRE_GLASS_CTA}`}
                 aria-label="Ouvrir l'aperçu restaurateur"
               >
                 <span className="hidden min-[430px]:inline">Aperçu restaurateur</span>
@@ -136,7 +137,7 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
                     ctaName: "landing_header"
                   })
                 }
-                className="hidden min-h-11 items-center justify-center rounded-full border border-white/14 px-4 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne lg:inline-flex"
+                className={`hidden min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne lg:inline-flex ${VISTAIRE_GLASS_CTA}`}
               >
                 Aperçu restaurateur
               </Link>

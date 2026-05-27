@@ -53,6 +53,24 @@ export const PUBLIC_SEO_SITEMAP_ENTRIES = [
   }
 ] as const;
 
+export const PUBLIC_PRODUCT_SITEMAP_ENTRIES = [
+  {
+    path: "/a-propos",
+    changeFrequency: "monthly",
+    priority: 0.72
+  },
+  {
+    path: "/contact",
+    changeFrequency: "monthly",
+    priority: 0.7
+  },
+  {
+    path: "/prendre-rendez-vous",
+    changeFrequency: "monthly",
+    priority: 0.74
+  }
+] as const;
+
 export type SitemapEntry = {
   url: string;
   lastModified: Date;
@@ -122,6 +140,12 @@ export function buildSitemapEntries(
     changeFrequency: entry.changeFrequency,
     priority: entry.priority
   }));
+  const productPageEntries = PUBLIC_PRODUCT_SITEMAP_ENTRIES.map((entry) => ({
+    url: absoluteUrl(entry.path, env),
+    lastModified,
+    changeFrequency: entry.changeFrequency,
+    priority: entry.priority
+  }));
 
   return [
     {
@@ -130,6 +154,7 @@ export function buildSitemapEntries(
       changeFrequency: "monthly",
       priority: 1
     },
+    ...productPageEntries,
     ...seoPageEntries,
     {
       url: absoluteUrl("/demo", env),

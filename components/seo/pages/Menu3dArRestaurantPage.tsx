@@ -30,14 +30,10 @@ export function Menu3dArRestaurantPage({ page }: { page: SeoPageData }) {
             alt={page.visualImage.alt}
             fill
             sizes="100vw"
-            className="object-cover opacity-50"
+            className="object-cover"
             priority
           />
-          <div
-            className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,4,3,0.5),rgba(5,4,3,0.92)_55%,rgba(5,4,3,1))]"
-            aria-hidden
-          />
-          <div className="relative mx-auto w-full max-w-7xl">
+          <div className="relative mx-auto w-full max-w-7xl rounded-2xl border border-white/12 bg-[#050403]/74 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,250,240,0.12)] sm:p-7 lg:p-9">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-champagne/90">
               {page.eyebrow}
             </p>

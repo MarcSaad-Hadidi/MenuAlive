@@ -97,15 +97,17 @@ export function SeoFooter({ compact = false }: SeoFooterProps) {
             ))}
           </FooterGroup>
 
-          <FooterGroup title="Interne">
+          <FooterGroup title="Contact">
             <li>
               <Link
-                href="/owner"
-                rel="nofollow"
+                href="/prendre-rendez-vous"
                 className="text-xs text-[#8f8170] transition hover:text-[#cdbfa9] focus:outline-none focus-visible:text-cream focus-visible:ring-2 focus-visible:ring-champagne"
               >
-                Accès interne
+                Prendre rendez-vous
               </Link>
+            </li>
+            <li className="mt-2 text-xs text-[#8f8170]">
+              contact@vistaire.ca
             </li>
           </FooterGroup>
         </div>
