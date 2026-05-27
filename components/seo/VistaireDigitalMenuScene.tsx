@@ -27,7 +27,7 @@ function CompareCategoryChip({
       className={`inline-flex min-h-[28px] max-w-full items-center justify-center whitespace-nowrap rounded-full border px-2 pb-[5px] pt-[3px] text-[clamp(0.48rem,2.2vw,0.62rem)] font-medium leading-[1.2] tracking-wide ${
         selected
           ? "border-champagne/55 bg-champagne/[0.15] text-cream shadow-[inset_0_1px_0_rgba(255,255,255,0.07)] ring-1 ring-champagne/25"
-          : "border-white/[0.12] bg-black/45 text-[#d1c2aa]"
+          : "border-white/[0.12] bg-[#1a1008]/55 text-[#d1c2aa]"
       }`}
     >
       {tab.name}
@@ -68,10 +68,6 @@ function CompareDishCardPreview({
               quality={90}
               draggable={false}
             />
-            <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-black/10"
-              aria-hidden
-            />
           </>
         ) : null}
       </div>
@@ -90,7 +86,7 @@ function CompareDishCardPreview({
           ) : null}
           {dish.has3d ? (
             <span
-              className={`rounded border border-champagne/30 bg-black/45 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.16em] text-champagne/95 ${
+              className={`rounded border border-champagne/30 bg-[#1a1008]/55 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.16em] text-champagne/95 ${
                 bloomLayers ? "cmb-badge" : ""
               }`}
               style={

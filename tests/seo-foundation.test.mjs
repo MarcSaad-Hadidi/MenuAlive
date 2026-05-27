@@ -43,6 +43,9 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
 
   assert.deepEqual(urls, [
     "https://www.vistaire.ca/",
+    "https://www.vistaire.ca/a-propos",
+    "https://www.vistaire.ca/contact",
+    "https://www.vistaire.ca/prendre-rendez-vous",
     "https://www.vistaire.ca/menu-digital-restaurant",
     "https://www.vistaire.ca/menu-qr-code-restaurant",
     "https://www.vistaire.ca/menu-3d-ar-restaurant",

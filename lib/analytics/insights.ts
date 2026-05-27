@@ -43,7 +43,7 @@ const DEMO_RESTAURANT_ID =
 function compactDishName(name: string): string {
   return name
     .replace(", bisque corsée & fenouil", "")
-    .replace(", bisque corsÃ©e & fenouil", "");
+    .replace(", bisque corsée & fenouil", "");
 }
 
 function formatCount(value: number): string {

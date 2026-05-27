@@ -65,7 +65,7 @@ function HeroSignaturePreview({
         aria-hidden
         className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-[radial-gradient(ellipse_at_50%_30%,rgba(217,184,121,0.18),transparent_62%)]"
       />
-      <div className="relative overflow-hidden rounded-2xl border border-champagne/20 bg-gradient-to-b from-[#15110e] to-[#080706] shadow-[0_28px_80px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.05)]">
+      <div className="relative overflow-hidden rounded-2xl border border-champagne/25 bg-gradient-to-b from-[#1d140d] to-[#0b0705] shadow-[0_28px_80px_rgba(0,0,0,0.42),0_0_70px_rgba(217,184,121,0.12),inset_0_1px_0_rgba(255,255,255,0.08)]">
         <div className="relative aspect-[5/4] overflow-hidden">
           <Image
             src={src}
@@ -77,18 +77,14 @@ function HeroSignaturePreview({
             style={{ objectPosition: "center 42%" }}
             quality={90}
           />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/15"
-          />
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded border border-champagne/45 bg-black/55 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-champagne">
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded border border-champagne/45 bg-[#1a1008]/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-champagne">
             <span
               aria-hidden
               className="h-1 w-1 rounded-full bg-champagne/90"
             />
             Signature
           </span>
-          <span className="absolute right-3 top-3 rounded border border-white/16 bg-black/55 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-cream/90">
+          <span className="absolute right-3 top-3 rounded border border-white/16 bg-[#1a1008]/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-cream/90">
             Maison Élyse
           </span>
         </div>

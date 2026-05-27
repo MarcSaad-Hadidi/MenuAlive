@@ -55,8 +55,11 @@ export default function RootLayout({
   return (
     <html lang="fr" data-scroll-behavior="smooth">
       <body>
+        <a className="skip-link" href="#contenu">
+          Aller au contenu
+        </a>
         <JsonLd data={[buildOrganizationJsonLd(), buildWebsiteJsonLd()]} />
-        {children}
+        <div id="contenu">{children}</div>
       </body>
     </html>
   );

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { MenuQrCodeRestaurantPage } from "@/components/seo/pages/MenuQrCodeRestaurantPage";
+import { JsonLd } from "@/components/JsonLd";
+import { VistaireMenuQrCodeRestaurantPreview } from "@/components/vistaire-preview/VistaireMenuQrCodeRestaurantPreview";
+import { VistaireSeoProductionSections } from "@/components/vistaire-preview/VistaireSeoProductionSections";
 import { absoluteUrl } from "@/lib/seo";
+import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import { getSeoPage } from "@/lib/seoPages";
 
 const page = getSeoPage("menu-qr-code-restaurant");
@@ -34,5 +37,14 @@ export const metadata: Metadata = {
 };
 
 export default function MenuQrCodeRestaurantRoute() {
-  return <MenuQrCodeRestaurantPage page={page} />;
+  return (
+    <>
+      <JsonLd data={buildSeoPillarJsonLd(page)} />
+      <VistaireMenuQrCodeRestaurantPreview
+        h1={page.h1}
+        routeMode="production"
+        seoAppendix={<VistaireSeoProductionSections page={page} />}
+      />
+    </>
+  );
 }

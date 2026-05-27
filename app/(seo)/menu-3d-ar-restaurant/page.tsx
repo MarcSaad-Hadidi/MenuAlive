@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { Menu3dArRestaurantPage } from "@/components/seo/pages/Menu3dArRestaurantPage";
+import { JsonLd } from "@/components/JsonLd";
+import { VistaireMenu3dArRestaurantPreview } from "@/components/vistaire-preview/VistaireMenu3dArRestaurantPreview";
+import { VistaireSeoProductionSections } from "@/components/vistaire-preview/VistaireSeoProductionSections";
 import { absoluteUrl } from "@/lib/seo";
+import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import { getSeoPage } from "@/lib/seoPages";
 
 const page = getSeoPage("menu-3d-ar-restaurant");
@@ -34,5 +37,14 @@ export const metadata: Metadata = {
 };
 
 export default function Menu3dArRestaurantRoute() {
-  return <Menu3dArRestaurantPage page={page} />;
+  return (
+    <>
+      <JsonLd data={buildSeoPillarJsonLd(page)} />
+      <VistaireMenu3dArRestaurantPreview
+        h1={page.h1}
+        routeMode="production"
+        seoAppendix={<VistaireSeoProductionSections page={page} />}
+      />
+    </>
+  );
 }

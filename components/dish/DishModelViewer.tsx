@@ -19,6 +19,7 @@ import {
   shouldShowArBrowserHandoff
 } from "@/lib/arEnvironment";
 import { resolveActiveQuickLookUsdzUrl } from "@/lib/quickLookAssets";
+import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const MV_INIT_TIMEOUT_MS = 12_000;
 const MODEL_LOAD_TIMEOUT_MS = 15_000;
@@ -338,6 +339,7 @@ export function DishModelViewer({
   const [copyConfirmed, setCopyConfirmed] = useState(false);
   const loadWatchRef = useRef<ModelViewerElement | null>(null);
   const listenerCleanupRef = useRef<(() => void) | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const isAndroid = isAndroidDevice();
   const originalModelSrc = useMemo(
@@ -669,7 +671,7 @@ export function DishModelViewer({
                   alt={`Vue du plat : ${dish.name}`}
                   aria-describedby={helpId}
                   camera-controls
-                  auto-rotate
+                  {...(!prefersReducedMotion ? { "auto-rotate": true } : {})}
                   {...(androidNativeArEnabled ? { ar: true } : {})}
                   ar-modes="webxr scene-viewer quick-look"
                   ar-placement="floor"

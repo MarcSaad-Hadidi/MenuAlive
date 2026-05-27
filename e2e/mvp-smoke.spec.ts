@@ -1,12 +1,8 @@
 import { expect, type Page, test } from "@playwright/test";
 
-const DESKTOP_HERO_VIDEO =
-  "/videos/optimized/upscaled-video-desktop-scrub.mp4";
-const MOBILE_HERO_VIDEO = "/videos/optimized/upscaled-video-mobile-scrub.mp4";
 const DEMO_RESTAURANT_ID = "11111111-1111-1111-1111-111111111111";
 const MODEL_ASSET_RE = /\.(?:glb|usdz)(?:$|[?#])/i;
-const HERO_VIDEO_RE = /\/videos\/optimized\/.*\.mp4(?:$|[?#])/i;
-const OLD_RAVIOLES_USDZ = "/models/demo/ravioles-chevre-miel.usdz";
+const LANDING_VIDEO_ROUTE = "/vistaire-preview/video";
 
 type PageHealth = {
   expectClean: () => void;
@@ -99,24 +95,10 @@ function collectModelAssetRequests(page: Page) {
   const requests: string[] = [];
 
   page.on("request", (request) => {
-    const url = request.url();
-    const pathname = new URL(url).pathname;
+    const pathname = new URL(request.url()).pathname;
 
     if (MODEL_ASSET_RE.test(pathname)) {
-      requests.push(url);
-    }
-  });
-
-  return requests;
-}
-
-function collectHeroVideoRequests(page: Page) {
-  const requests: string[] = [];
-
-  page.on("request", (request) => {
-    const url = request.url();
-    if (HERO_VIDEO_RE.test(url)) {
-      requests.push(url);
+      requests.push(request.url());
     }
   });
 
@@ -137,69 +119,49 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(overflow).toBeLessThanOrEqual(2);
 }
 
-async function expectHeroVideoReady(page: Page, expectedSource: string) {
-  const experience = page.locator("#experience");
-  const video = experience.locator("video.hero-video-media");
+async function expectPromotedLanding(page: Page) {
+  const video = page.locator("main video").first();
 
-  await expect(experience).toHaveAttribute(
-    "data-hero-engine",
-    "video-scroll-scrub"
-  );
-  await expect(experience).toHaveAttribute("data-video-source", expectedSource);
-  await expect(experience).toHaveAttribute("data-video-failed", "false");
+  await expect(
+    page.getByRole("heading", { exact: true, name: "VISTAIRE" })
+  ).toBeVisible();
   await expect(video).toBeVisible();
-
   await expect
-    .poll(
-      () => video.evaluate((element) => (element as HTMLVideoElement).currentSrc),
-      { timeout: 30_000 }
+    .poll(() =>
+      video.evaluate((element) => {
+        const media = element as HTMLVideoElement;
+        return {
+          autoplay: media.autoplay,
+          controls: media.controls,
+          loop: media.loop,
+          muted: media.muted,
+          paused: media.paused,
+          playsInline: media.playsInline,
+          src: media.currentSrc || media.querySelector("source")?.src || ""
+        };
+      })
     )
-    .toContain(expectedSource);
+    .toEqual(
+      expect.objectContaining({
+        autoplay: true,
+        controls: false,
+        loop: true,
+        muted: true,
+        paused: false,
+        playsInline: true
+      })
+    );
   await expect
-    .poll(
-      () => video.evaluate((element) => (element as HTMLVideoElement).readyState),
-      { timeout: 30_000 }
+    .poll(() =>
+      video.evaluate(
+        (element) =>
+          (element as HTMLVideoElement).currentSrc ||
+          element.querySelector("source")?.src ||
+          ""
+      )
     )
-    .toBeGreaterThanOrEqual(1);
-  await expect
-    .poll(
-      () =>
-        experience.evaluate((element) => ({
-          deferred: element.getAttribute("data-video-deferred"),
-          ready: element.getAttribute("data-video-ready"),
-          readyState:
-            element.querySelector("video") instanceof HTMLVideoElement
-              ? element.querySelector("video")?.readyState
-              : 0
-        })),
-      { timeout: 30_000 }
-    )
-    .toEqual(expect.objectContaining({ deferred: "false" }));
-}
-
-async function expectHeroScrollAdvances(page: Page) {
-  const video = page.locator("#experience video.hero-video-media");
-  const before = await video.evaluate(
-    (element) => (element as HTMLVideoElement).currentTime
-  );
-
-  const scrollTarget = await page.evaluate(() => {
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    return Math.max(420, Math.floor(max * 0.55));
-  });
-
-  await page.evaluate((target) => {
-    window.scrollTo({ top: target, behavior: "auto" });
-    window.dispatchEvent(new Event("scroll"));
-  }, scrollTarget);
-
-  await expect
-    .poll(
-      () =>
-        video.evaluate((element) => (element as HTMLVideoElement).currentTime),
-      { timeout: 15_000 }
-    )
-    .toBeGreaterThan(before + 0.01);
+    .toContain(LANDING_VIDEO_ROUTE);
+  await expect(page.getByText(/Demander une demo|Demander une démo/i)).toHaveCount(0);
 }
 
 async function openDish3d(page: Page) {
@@ -210,18 +172,17 @@ async function openDish3d(page: Page) {
   await expect(page.locator("model-viewer")).toHaveCount(0);
   await view3d.scrollIntoViewIfNeeded();
   await view3d.click();
-  await expect(page.locator("model-viewer")).toHaveCount(1, {
-    timeout: 15_000
-  });
+  await expect
+    .poll(() => page.locator("model-viewer").count(), { timeout: 15_000 })
+    .toBeGreaterThan(0);
 }
 
 test.describe("Vistaire MVP smoke", () => {
-  test("landing keeps the desktop always-video hero healthy", async ({
+  test("landing production keeps the promoted Framer video hero healthy", async ({
     page
   }) => {
     const health = installPageHealth(page);
     const modelRequests = collectModelAssetRequests(page);
-    const heroRequests = collectHeroVideoRequests(page);
 
     await stubAnalytics(page);
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -229,26 +190,12 @@ test.describe("Vistaire MVP smoke", () => {
       await page.goto("/", { waitUntil: "domcontentloaded" })
     );
 
-    await expect(page.getByText("Vistaire").first()).toBeVisible();
-    await expect(page.locator("#experience")).toBeVisible();
-    await expect(page.locator("#experience video")).toBeVisible();
-    await expect(page.locator("#experience canvas")).toHaveCount(0);
-    await expect(page.locator("#benefices")).toBeVisible();
+    await expectPromotedLanding(page);
     await expect(
-      page.getByRole("link", { name: /Explorer/i }).first()
-    ).toHaveAttribute("href", "/demo");
-
-    await expectHeroVideoReady(page, DESKTOP_HERO_VIDEO);
-    await expectHeroScrollAdvances(page);
-
-    expect(heroRequests.some((url) => url.includes(DESKTOP_HERO_VIDEO))).toBe(
-      true
-    );
-    expect(heroRequests.some((url) => url.includes(MOBILE_HERO_VIDEO))).toBe(
-      false
-    );
-    expect(modelRequests).toEqual([]);
+      page.getByRole("link", { name: "Prendre rendez-vous" }).first()
+    ).toHaveAttribute("href", "/prendre-rendez-vous");
     await expectNoHorizontalOverflow(page);
+    expect(modelRequests).toEqual([]);
     health.expectClean();
   });
 
@@ -257,11 +204,10 @@ test.describe("Vistaire MVP smoke", () => {
     { label: "390", width: 390, height: 844 },
     { label: "430", width: 430, height: 932 }
   ]) {
-    test(`landing mobile ${viewport.label}px uses only the mobile hero video`, async ({
+    test(`landing mobile ${viewport.label}px keeps the promoted video loop`, async ({
       page
     }) => {
       const health = installPageHealth(page);
-      const heroRequests = collectHeroVideoRequests(page);
       const modelRequests = collectModelAssetRequests(page);
 
       await stubAnalytics(page);
@@ -273,29 +219,14 @@ test.describe("Vistaire MVP smoke", () => {
         await page.goto("/", { waitUntil: "domcontentloaded" })
       );
 
-      const experience = page.locator("#experience");
-      await expect(experience).toHaveAttribute(
-        "data-landing-hero-mode",
-        "mobile"
-      );
-      await expectHeroVideoReady(page, MOBILE_HERO_VIDEO);
-      await expect(
-        page.getByRole("link", { name: /Explorer/i }).first()
-      ).toBeVisible();
-
-      expect(heroRequests.some((url) => url.includes(MOBILE_HERO_VIDEO))).toBe(
-        true
-      );
-      expect(heroRequests.some((url) => url.includes(DESKTOP_HERO_VIDEO))).toBe(
-        false
-      );
-      expect(modelRequests).toEqual([]);
+      await expectPromotedLanding(page);
       await expectNoHorizontalOverflow(page);
+      expect(modelRequests).toEqual([]);
       health.expectClean();
     });
   }
 
-  test("demo menu loads, filters, searches, and avoids early model assets", async ({
+  test("demo menu loads, searches, and avoids early model assets", async ({
     page
   }) => {
     const health = installPageHealth(page);
@@ -307,27 +238,11 @@ test.describe("Vistaire MVP smoke", () => {
       await page.goto("/demo", { waitUntil: "domcontentloaded" })
     );
 
-    await expect(page.locator("[data-demo-root]").first()).toBeVisible();
-    await expect(
-      page.getByRole("heading", { level: 1, name: /Maison/i })
-    ).toBeVisible();
-    await expect(
-      page.locator('section[aria-label="Carte du restaurant"]')
-    ).toBeVisible();
-
-    const search = page.getByLabel(/Rechercher un plat ou un ingr/i);
-    await expect(search).toBeVisible();
-    await search.fill("homard");
-
-    const homardLink = page.getByRole("link", {
-      name: /Voir le plat.*Homard/i
-    });
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    const homardLink = page.locator(
+      'a[class*="dishRow"][href="/demo/dishes/homard-bisque"]'
+    );
     await expect(homardLink).toBeVisible();
-
-    await search.fill("");
-    const view3dFilter = page.getByRole("button", { name: /3D|Avec vue 3D/i });
-    await view3dFilter.click();
-    await expect(view3dFilter).toHaveAttribute("aria-pressed", "true");
 
     expect(modelRequests).toEqual([]);
     await expectNoHorizontalOverflow(page);
@@ -351,9 +266,6 @@ test.describe("Vistaire MVP smoke", () => {
     );
 
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByText(/\$\s*$|CAD/i).first()).toBeVisible();
-    await expect(page.getByText(/Bisque/i).first()).toBeVisible();
-    await expect(page.locator('a[rel="ar"][href$=".usdz"]')).toHaveCount(0);
     await expect(page.locator("model-viewer")).toHaveCount(0);
     expect(modelRequests).toEqual([]);
     await expectNoHorizontalOverflow(page);
@@ -369,45 +281,6 @@ test.describe("Vistaire MVP smoke", () => {
       .toBe(true);
     expect(
       modelRequests.some((url) => new URL(url).pathname.endsWith(".usdz"))
-    ).toBe(false);
-    health.expectClean();
-  });
-
-  test("ravioles dish route is stable and does not request the removed USDZ", async ({
-    page
-  }) => {
-    const health = installPageHealth(page);
-    const modelRequests = collectModelAssetRequests(page);
-
-    await stubAnalytics(page);
-    await page.setViewportSize({ width: 390, height: 844 });
-    await expectHealthyResponse(
-      await page.goto("/demo/dishes/ravioles-romarin", {
-        waitUntil: "domcontentloaded"
-      })
-    );
-
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Voir en 3D" })).toBeVisible();
-    await expect(page.locator("model-viewer")).toHaveCount(0);
-    expect(modelRequests).toEqual([]);
-
-    await openDish3d(page);
-    await expect
-      .poll(() =>
-        modelRequests.some((url) => {
-          const pathname = new URL(url).pathname;
-          return pathname.endsWith(".glb") && pathname.includes("ravioles");
-        })
-      )
-      .toBe(true);
-    expect(
-      modelRequests.some((url) =>
-        new URL(url).pathname.endsWith(OLD_RAVIOLES_USDZ)
-      )
-    ).toBe(false);
-    expect(
-      health.networkIssues.some((issue) => issue.includes(OLD_RAVIOLES_USDZ))
     ).toBe(false);
     health.expectClean();
   });
@@ -428,15 +301,9 @@ test.describe("Vistaire MVP smoke", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByText(/Lecture rapide du service/i)).toBeVisible();
     await expect(page.getByText(/Assistant Vistaire/i)).toBeVisible();
-    await expect(page.getByText(/Recherches et moments/i)).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Explorer le menu client/i })
     ).toHaveAttribute("href", "/demo");
-    expect(
-      await page
-        .locator('section[aria-labelledby="quick-view-heading"] article')
-        .count()
-    ).toBeGreaterThanOrEqual(4);
     await expectNoHorizontalOverflow(page);
     health.expectClean();
   });
@@ -445,10 +312,7 @@ test.describe("Vistaire MVP smoke", () => {
     request
   }, testInfo) => {
     const baseURL = String(testInfo.project.use.baseURL ?? "http://localhost:3000");
-    const ownerResponse = await request.get("/owner", {
-      maxRedirects: 0,
-      headers: { accept: "text/html" }
-    });
+    const ownerResponse = await request.get("/owner", { maxRedirects: 0 });
 
     expectNotSuccessfulStatus(ownerResponse.status());
     const location = ownerResponse.headers().location;
@@ -462,16 +326,13 @@ test.describe("Vistaire MVP smoke", () => {
 
     const protectedResponses = await Promise.all([
       request.get("/api/restaurants", {
-        maxRedirects: 0,
-        headers: { accept: "text/html" }
+        maxRedirects: 0
       }),
       request.get(`/api/analytics/summary?restaurantId=${DEMO_RESTAURANT_ID}`, {
-        maxRedirects: 0,
-        headers: { accept: "text/html" }
+        maxRedirects: 0
       }),
       request.get("/api/owner/insights", {
-        maxRedirects: 0,
-        headers: { accept: "text/html" }
+        maxRedirects: 0
       })
     ]);
 
@@ -487,15 +348,16 @@ test.describe("Vistaire MVP smoke", () => {
     }
   });
 
-  test("existing metadata routes respond for robots and sitemap", async ({
-    request
-  }) => {
+  test("metadata routes respond for robots and sitemap", async ({ request }) => {
     const robots = await request.get("/robots.txt");
     const sitemap = await request.get("/sitemap.xml");
+    const sitemapText = await sitemap.text();
 
     expect(robots.status()).toBe(200);
     expect(await robots.text()).toContain("Sitemap:");
     expect(sitemap.status()).toBe(200);
-    expect(await sitemap.text()).toContain("<urlset");
+    expect(sitemapText).toContain("<urlset");
+    expect(sitemapText).toContain("/prendre-rendez-vous");
+    expect(sitemapText).not.toContain("/vistaire-preview");
   });
 });

@@ -8,6 +8,8 @@ assets/3d/source/
 assets/3d/work/
 assets/3d/reports/
 video/
+Framer/*.mp4
+Framer/*.zip
 
 # Local build/test output.
 .next/

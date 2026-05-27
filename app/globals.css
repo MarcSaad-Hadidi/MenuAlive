@@ -74,6 +74,28 @@ button[aria-label="Keyless prompt"] {
   display: none !important;
 }
 
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 1000;
+  transform: translateY(-150%);
+  border-radius: 999px;
+  background: var(--color-champagne);
+  color: var(--color-charcoal);
+  padding: 0.7rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--color-cream);
+  outline-offset: 3px;
+}
+
 #clerk-components:has(a[href*="dashboard.clerk.com/apps/claim"]) {
   display: none !important;
 }

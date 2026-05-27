@@ -16,8 +16,6 @@ export function DishGrid({ dishes, currency, categorySlug }: DishGridProps) {
   return (
     <div
       id={`panel-${categorySlug}`}
-      role="tabpanel"
-      aria-labelledby={`tab-${categorySlug}`}
       className={
         isPhoneSimulation
           ? "grid grid-cols-1 gap-4 px-0 pb-6 pt-6"

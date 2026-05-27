@@ -7,6 +7,8 @@ const seoPages = [
   "/menu-pdf-vs-menu-digital"
 ];
 
+const publicProductPages = ["/a-propos", "/contact", "/prendre-rendez-vous"];
+
 const forbiddenJsonLdTypes = [
   "Restaurant",
   "LocalBusiness",
@@ -95,7 +97,7 @@ test.describe("Vistaire SEO smoke", () => {
       )
     );
 
-    expect(sitemapUrls).toEqual(["/", ...seoPages, "/demo"]);
+    expect(sitemapUrls).toEqual(["/", ...publicProductPages, ...seoPages, "/demo"]);
   });
 
   test("public pages have canonical metadata and safe early network behavior", async ({
@@ -139,25 +141,17 @@ test.describe("Vistaire SEO smoke", () => {
       await expectNoHorizontalOverflow(page);
       await expectNoEarlyModelAssets(page);
 
-      await expect(
-        page.getByRole("link", { name: "Comparer PDF vs menu digital" })
-      ).toBeVisible();
-      await expect(page.getByRole("link", { name: "Menu digital restaurant", exact: true }).first()).toBeVisible();
-      await expect(page.locator("#guides")).toBeVisible();
+      await expect(page.getByRole("link", { name: "Prendre rendez-vous" }).first()).toBeVisible();
+      await expect(page.getByRole("link", { name: "Carte" }).first()).toBeVisible();
 
-      const hero = page.locator("#experience");
-      const heroVideo = hero.locator("video.hero-video-media");
-      await expect(hero).toHaveAttribute("data-video-deferred", "false");
-      const currentSrc = await heroVideo.evaluate(
-        (video) => (video as HTMLVideoElement).currentSrc
-      );
-      expect(currentSrc).toContain("/videos/optimized/");
+      const videoSource = await page.locator("video source").first().getAttribute("src");
+      expect(videoSource).toBe("/vistaire-preview/video");
     }
 
     for (const path of ["/demo", ...seoPages]) {
       for (const width of [390, 430]) {
         await page.setViewportSize({ width, height: 844 });
-        await page.goto(path, { waitUntil: "networkidle" });
+        await page.goto(path, { waitUntil: "domcontentloaded" });
         await expectCanonicalPath(page, path);
         await expect(page.locator('meta[name="description"]')).not.toHaveAttribute(
           "content",
@@ -177,7 +171,7 @@ test.describe("Vistaire SEO smoke", () => {
           const visibleFaqCount = await page.locator("article h3").count();
           expect(visibleFaqCount).toBeGreaterThanOrEqual(5);
           await expect(page.getByRole("link", { name: "Menu digital restaurant", exact: true }).first()).toBeVisible();
-          await expect(page.getByRole("link", { name: "Accès interne" })).toBeVisible();
+          await expect(page.getByRole("link", { name: "Accès interne" })).toHaveCount(0);
         }
         await expectNoHorizontalOverflow(page);
         await expectNoEarlyModelAssets(page);
@@ -216,7 +210,7 @@ test.describe("Vistaire SEO smoke", () => {
       }
     });
 
-    for (const path of ["/admin", "/demo/dishes/homard-bisque"]) {
+    for (const path of ["/admin", "/demo/dishes/homard-bisque", "/legacy/landing"]) {
       for (const width of [390, 430]) {
         await page.setViewportSize({ width, height: 844 });
         await page.goto(path, { waitUntil: "networkidle" });

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { MenuDigitalRestaurantPage } from "@/components/seo/pages/MenuDigitalRestaurantPage";
+import { JsonLd } from "@/components/JsonLd";
+import { VistaireMenuDigitalRestaurantPreview } from "@/components/vistaire-preview/VistaireMenuDigitalRestaurantPreview";
+import { VistaireSeoProductionSections } from "@/components/vistaire-preview/VistaireSeoProductionSections";
 import { absoluteUrl } from "@/lib/seo";
+import { buildSeoPillarJsonLd } from "@/lib/seoPillarJsonLd";
 import { getSeoPage } from "@/lib/seoPages";
 
 const page = getSeoPage("menu-digital-restaurant");
@@ -34,5 +37,14 @@ export const metadata: Metadata = {
 };
 
 export default function MenuDigitalRestaurantRoute() {
-  return <MenuDigitalRestaurantPage page={page} />;
+  return (
+    <>
+      <JsonLd data={buildSeoPillarJsonLd(page)} />
+      <VistaireMenuDigitalRestaurantPreview
+        h1={page.h1}
+        routeMode="production"
+        seoAppendix={<VistaireSeoProductionSections page={page} />}
+      />
+    </>
+  );
 }
