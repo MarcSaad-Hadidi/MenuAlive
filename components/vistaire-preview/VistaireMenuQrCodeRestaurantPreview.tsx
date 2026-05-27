@@ -320,10 +320,11 @@ export function VistaireMenuQrCodeRestaurantPreview({
               ))}
             </nav>
           </section>
+
+          {seoAppendix}
         </div>
       </section>
 
-      {seoAppendix}
       <PreviewFooter routeMode={routeMode} width="wide" />
     </main>
   );

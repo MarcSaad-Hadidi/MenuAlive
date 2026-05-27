@@ -142,7 +142,7 @@ export function VistairePreviewLanding({
                 >
                   <FramerImage
                     alt=""
-                    className={styles.cardImage}
+                    className={`${styles.cardImage} ${styles.discoveryTableImage}`}
                     src={restaurantTable}
                   />
                 </div>
@@ -152,7 +152,7 @@ export function VistairePreviewLanding({
                 >
                   <FramerImage
                     alt=""
-                    className={styles.cardImage}
+                    className={`${styles.cardImage} ${styles.discoveryGuestImage}`}
                     src={restaurantGuest}
                   />
                 </div>

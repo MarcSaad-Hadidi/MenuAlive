@@ -346,6 +346,8 @@
 
 .discoveryCard {
   min-height: 250px;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .discoveryImage {
@@ -354,6 +356,14 @@
   opacity: 1;
   transform: translateX(100%);
   will-change: transform;
+}
+
+.discoveryTableImage {
+  object-position: 62% 58%;
+}
+
+.discoveryGuestImage {
+  object-position: 42% 48%;
 }
 
 .vistaire-discovery-image--first {
@@ -689,22 +699,6 @@
 
   100% {
     background: rgba(255, 255, 255, 0.45);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .vistaire-discovery-image--first,
-  .vistaire-discovery-image--second,
-  .dotFirst,
-  .dotSecond {
-    animation: none !important;
-  }
-
-  .darkButton,
-  .lightButton,
-  .previewNav a,
-  .footerLinkList a {
-    transition: none;
   }
 }
 

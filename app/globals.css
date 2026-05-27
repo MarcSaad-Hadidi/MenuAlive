@@ -357,21 +357,6 @@ button[aria-label="Keyless prompt"] {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  .chapter-copy {
-    animation: none !important;
-  }
-}
-
 /* Mockup téléphone /demo — scrollbar masquée, scroll conservé (souris, trackpad, tactile) */
 .phone-mockup-scroll--premium {
   -ms-overflow-style: none;

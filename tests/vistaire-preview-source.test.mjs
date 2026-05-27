@@ -126,8 +126,10 @@ test("production SEO preview pages keep canonical H1s and text depth visible", a
   assert.match(appendix, /section\.points\.map/);
   assert.match(appendix, /SeoFaq faqs=\{page\.faq\}/);
   assert.match(appendix, /InternalSeoLinks currentSlug=\{page\.slug\}/);
-  assert.match(appendix, /PhotoRestoComplet5\.png/);
-  assert.match(appendix, /src=\{guideBackground\}/);
+  assert.match(appendix, /col-span-full/);
+  assert.match(appendix, /bg-transparent/);
+  assert.doesNotMatch(appendix, /PhotoRestoComplet5\.png/);
+  assert.doesNotMatch(appendix, /guideBackground|<Image/);
 
   for (const component of [
     digitalPreview,
@@ -137,6 +139,18 @@ test("production SEO preview pages keep canonical H1s and text depth visible", a
   ]) {
     assert.match(component, /h1\?: string/);
     assert.match(component, /const pageTitle =\s*h1 \?\?/);
+    const appendixIndex = component.lastIndexOf("{seoAppendix}");
+    const frameIndex = component.indexOf("className={styles.previewFrame}");
+    const footerIndex = component.indexOf("<PreviewFooter");
+
+    assert.ok(
+      appendixIndex > frameIndex,
+      "SEO guide appendix should be rendered inside the preview frame"
+    );
+    assert.ok(
+      appendixIndex < footerIndex,
+      "SEO guide appendix should appear before the footer, not as a detached band"
+    );
   }
 });
 
@@ -440,6 +454,15 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
   ]) {
     assert.match(component, literalPattern(assetName));
   }
+
+  assert.match(component, /styles\.discoveryTableImage/);
+  assert.match(component, /styles\.discoveryGuestImage/);
+  assert.match(css, /\.discoveryTableImage[\s\S]*object-position/);
+  assert.match(css, /\.discoveryGuestImage[\s\S]*object-position/);
+  assert.match(css, /\.vistaire-discovery-image--first[\s\S]*firstDiscoveryImage/);
+  assert.match(css, /\.vistaire-discovery-image--second[\s\S]*secondDiscoveryImage/);
+  assert.doesNotMatch(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.doesNotMatch(css, /animation:\s*none\s*!important/);
 
   for (const videoAttribute of [
     "autoPlay",
