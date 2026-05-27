@@ -346,6 +346,8 @@
 
 .discoveryCard {
   min-height: 250px;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .discoveryImage {
@@ -354,6 +356,14 @@
   opacity: 1;
   transform: translateX(100%);
   will-change: transform;
+}
+
+.discoveryTableImage {
+  object-position: 62% 58%;
+}
+
+.discoveryGuestImage {
+  object-position: 42% 48%;
 }
 
 .vistaire-discovery-image--first {
@@ -693,18 +703,20 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vistaire-discovery-image--first,
-  .vistaire-discovery-image--second,
-  .dotFirst,
-  .dotSecond {
-    animation: none !important;
+  .vistaire-discovery-image--first {
+    animation: firstDiscoveryImage 8s infinite cubic-bezier(0.72, 0, 0.28, 1) !important;
   }
 
-  .darkButton,
-  .lightButton,
-  .previewNav a,
-  .footerLinkList a {
-    transition: none;
+  .vistaire-discovery-image--second {
+    animation: secondDiscoveryImage 8s infinite cubic-bezier(0.72, 0, 0.28, 1) !important;
+  }
+
+  .dotFirst {
+    animation: firstDiscoveryDot 8s infinite !important;
+  }
+
+  .dotSecond {
+    animation: secondDiscoveryDot 8s infinite !important;
   }
 }
 
@@ -761,10 +773,13 @@
   }
 
   .rightGrid {
+    display: flex;
+    flex-direction: column;
     grid-template-rows: auto auto;
   }
 
   .menuCard {
+    order: 2;
     min-height: 0;
     aspect-ratio: 1.95 / 1;
   }
@@ -779,15 +794,18 @@
   }
 
   .bottomGrid {
+    display: contents;
     min-height: 0;
     grid-template-columns: 1fr;
   }
 
   .aboutCard {
+    order: 1;
     min-height: 236px;
   }
 
   .discoveryCard {
+    order: 3;
     min-height: 0;
     aspect-ratio: 1.18 / 1;
   }

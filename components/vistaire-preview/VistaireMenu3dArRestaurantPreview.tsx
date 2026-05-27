@@ -272,10 +272,11 @@ export function VistaireMenu3dArRestaurantPreview({
               ))}
             </nav>
           </section>
+
+          {seoAppendix}
         </div>
       </section>
 
-      {seoAppendix}
       <PreviewFooter routeMode={routeMode} width="wide" />
     </main>
   );

@@ -17,6 +17,7 @@ const menuDigitalPreviewRoutePath =
 const menuQrCodePreviewRoutePath =
   "app/vistaire-preview/menu-qr-code-restaurant/page.tsx";
 const videoRoutePath = "app/vistaire-preview/video/route.ts";
+const globalCssPath = "app/globals.css";
 const landingComponentPath =
   "components/vistaire-preview/VistairePreviewLanding.tsx";
 const landingCssPath =
@@ -126,6 +127,10 @@ test("production SEO preview pages keep canonical H1s and text depth visible", a
   assert.match(appendix, /section\.points\.map/);
   assert.match(appendix, /SeoFaq faqs=\{page\.faq\}/);
   assert.match(appendix, /InternalSeoLinks currentSlug=\{page\.slug\}/);
+  assert.match(appendix, /col-span-full/);
+  assert.match(appendix, /bg-transparent/);
+  assert.doesNotMatch(appendix, /PhotoRestoComplet5\.png/);
+  assert.doesNotMatch(appendix, /guideBackground|<Image/);
 
   for (const component of [
     digitalPreview,
@@ -135,6 +140,18 @@ test("production SEO preview pages keep canonical H1s and text depth visible", a
   ]) {
     assert.match(component, /h1\?: string/);
     assert.match(component, /const pageTitle =\s*h1 \?\?/);
+    const appendixIndex = component.lastIndexOf("{seoAppendix}");
+    const frameIndex = component.indexOf("className={styles.previewFrame}");
+    const footerIndex = component.indexOf("<PreviewFooter");
+
+    assert.ok(
+      appendixIndex > frameIndex,
+      "SEO guide appendix should be rendered inside the preview frame"
+    );
+    assert.ok(
+      appendixIndex < footerIndex,
+      "SEO guide appendix should appear before the footer, not as a detached band"
+    );
   }
 });
 
@@ -385,11 +402,20 @@ test("vistaire PDF vs menu digital preview is premium, SEO-readable, and convers
 });
 
 test("vistaire landing preview keeps the corrected Framer visual system", async () => {
-  const [component, videoRoute, css, chromeComponent, chromeCss, ...fontBuffers] =
+  const [
+    component,
+    videoRoute,
+    css,
+    globalCss,
+    chromeComponent,
+    chromeCss,
+    ...fontBuffers
+  ] =
     await Promise.all([
     readText(landingComponentPath),
     readText(videoRoutePath),
     readText(landingCssPath),
+    readText(globalCssPath),
     readText(chromeComponentPath),
     readText(chromeCssPath),
     ...previewFontFiles.map((path) => readFile(path))
@@ -439,6 +465,33 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
     assert.match(component, literalPattern(assetName));
   }
 
+  assert.match(component, /styles\.discoveryTableImage/);
+  assert.match(component, /styles\.discoveryGuestImage/);
+  assert.match(css, /\.discoveryTableImage[\s\S]*object-position/);
+  assert.match(css, /\.discoveryGuestImage[\s\S]*object-position/);
+  assert.match(css, /\.vistaire-discovery-image--first[\s\S]*firstDiscoveryImage/);
+  assert.match(css, /\.vistaire-discovery-image--second[\s\S]*secondDiscoveryImage/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.rightGrid\s*\{[\s\S]*display:\s*flex/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.bottomGrid\s*\{[\s\S]*display:\s*contents/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.aboutCard\s*\{[\s\S]*order:\s*1/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.menuCard\s*\{[\s\S]*order:\s*2/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.discoveryCard\s*\{[\s\S]*order:\s*3/);
+  assert.match(globalCss, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(globalCss, /animation-duration:\s*0\.01ms\s*!important/);
+  assert.match(globalCss, /animation-iteration-count:\s*1\s*!important/);
+  assert.match(globalCss, /\.chapter-copy\s*\{[\s\S]*animation:\s*none\s*!important/);
+  assert.match(
+    css,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.vistaire-discovery-image--first[\s\S]*firstDiscoveryImage 8s infinite[\s\S]*!important/
+  );
+  assert.match(
+    css,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.vistaire-discovery-image--second[\s\S]*secondDiscoveryImage 8s infinite[\s\S]*!important/
+  );
+  assert.match(css, /\.dotFirst\s*\{[\s\S]*firstDiscoveryDot 8s infinite !important/);
+  assert.match(css, /\.dotSecond\s*\{[\s\S]*secondDiscoveryDot 8s infinite !important/);
+  assert.doesNotMatch(css, /animation:\s*none\s*!important/);
+
   for (const videoAttribute of [
     "autoPlay",
     "loop",
@@ -449,11 +502,15 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
     assert.match(component, literalPattern(videoAttribute));
   }
 
-  assert.match(component, /\/vistaire-preview\/video/);
-  assert.match(videoRoute, /Vistaire2\.mp4/);
-  assert.match(videoRoute, /FALLBACK_VIDEO_PATH/);
-  assert.match(videoRoute, /upscaled-video-desktop-scrub\.mp4/);
-  assert.match(videoRoute, /206/);
+  const videoBlock = component.match(/<video[\s\S]*?<\/video>/)?.[0] ?? "";
+  assert.match(component, /const landingVideoSrc = "\/videos\/Vistaire2\.mp4"/);
+  assert.match(videoBlock, /<source src=\{landingVideoSrc\} type="video\/mp4" \/>/);
+  assert.doesNotMatch(videoBlock, /media=/);
+  assert.doesNotMatch(videoBlock, /upscaled-video-mobile-scrub/);
+
+  assert.match(videoRoute, /const VISTAIRE_VIDEO_SRC = "\/videos\/Vistaire2\.mp4"/);
+  assert.match(videoRoute, /Response\.redirect/);
+  assert.doesNotMatch(videoRoute, /upscaled-video/);
   assert.match(css, /@font-face[\s\S]*font-family: "BT Suave"/);
   assert.match(css, /@font-face[\s\S]*font-family: "Neue Montreal"/);
   for (const fontFile of previewFontFiles) {
@@ -860,8 +917,16 @@ test("vistaire preview dish detail is universal, premium, and honest about 3D", 
   assert.match(component, /href=\{routes\.menu\}/);
   assert.match(component, /PreviewNav activeSection="menu" routeMode=\{routeMode\}/);
   assert.match(component, /<PreviewFooter routeMode=\{routeMode\} width="wide" \/>/);
-  assert.match(component, /setShowModel\(true\)/);
-  assert.match(component, /showModel \? \(/);
+  assert.match(component, /type ModelPanelVariant = "desktop" \| "mobile"/);
+  assert.match(component, /const \[activeModelPanel, setActiveModelPanel\]/);
+  assert.match(component, /const isActivePanel = activeModelPanel === panelVariant/);
+  assert.match(component, /aria-expanded=\{isActivePanel\}/);
+  assert.match(component, /onClick=\{\(\) => setActiveModelPanel\(panelVariant\)\}/);
+  assert.match(component, /isActivePanel \? \(/);
+  assert.match(component, /onReturnToDish=\{\(\) => setActiveModelPanel\(null\)\}/);
+  assert.match(component, /styles\.desktopModelPanel,[\s\S]*"desktop"/);
+  assert.match(component, /styles\.mobileModelPanel,[\s\S]*"mobile"/);
+  assert.doesNotMatch(component, /const \[showModel/);
   assert.match(component, /styles\.desktopModelPanel/);
   assert.match(component, /styles\.mobileModelPanel/);
   assert.ok(

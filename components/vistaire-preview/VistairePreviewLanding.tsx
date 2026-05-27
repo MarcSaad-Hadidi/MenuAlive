@@ -12,6 +12,8 @@ import {
 } from "./VistairePreviewChrome";
 import styles from "./VistairePreviewLanding.module.css";
 
+const landingVideoSrc = "/videos/Vistaire2.mp4";
+
 type FramerImageProps = {
   alt: string;
   className?: string;
@@ -92,7 +94,7 @@ export function VistairePreviewLanding({
               poster="/frames/menualive/frame_0200.webp"
               preload="metadata"
             >
-              <source src="/vistaire-preview/video" type="video/mp4" />
+              <source src={landingVideoSrc} type="video/mp4" />
             </video>
             <div aria-hidden="true" className={styles.videoShade} />
             <div className={styles.videoCopy}>
@@ -140,7 +142,7 @@ export function VistairePreviewLanding({
                 >
                   <FramerImage
                     alt=""
-                    className={styles.cardImage}
+                    className={`${styles.cardImage} ${styles.discoveryTableImage}`}
                     src={restaurantTable}
                   />
                 </div>
@@ -150,7 +152,7 @@ export function VistairePreviewLanding({
                 >
                   <FramerImage
                     alt=""
-                    className={styles.cardImage}
+                    className={`${styles.cardImage} ${styles.discoveryGuestImage}`}
                     src={restaurantGuest}
                   />
                 </div>
