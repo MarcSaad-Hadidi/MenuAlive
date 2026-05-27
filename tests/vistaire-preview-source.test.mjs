@@ -17,6 +17,7 @@ const menuDigitalPreviewRoutePath =
 const menuQrCodePreviewRoutePath =
   "app/vistaire-preview/menu-qr-code-restaurant/page.tsx";
 const videoRoutePath = "app/vistaire-preview/video/route.ts";
+const globalCssPath = "app/globals.css";
 const landingComponentPath =
   "components/vistaire-preview/VistairePreviewLanding.tsx";
 const landingCssPath =
@@ -401,11 +402,20 @@ test("vistaire PDF vs menu digital preview is premium, SEO-readable, and convers
 });
 
 test("vistaire landing preview keeps the corrected Framer visual system", async () => {
-  const [component, videoRoute, css, chromeComponent, chromeCss, ...fontBuffers] =
+  const [
+    component,
+    videoRoute,
+    css,
+    globalCss,
+    chromeComponent,
+    chromeCss,
+    ...fontBuffers
+  ] =
     await Promise.all([
     readText(landingComponentPath),
     readText(videoRoutePath),
     readText(landingCssPath),
+    readText(globalCssPath),
     readText(chromeComponentPath),
     readText(chromeCssPath),
     ...previewFontFiles.map((path) => readFile(path))
@@ -461,7 +471,20 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
   assert.match(css, /\.discoveryGuestImage[\s\S]*object-position/);
   assert.match(css, /\.vistaire-discovery-image--first[\s\S]*firstDiscoveryImage/);
   assert.match(css, /\.vistaire-discovery-image--second[\s\S]*secondDiscoveryImage/);
-  assert.doesNotMatch(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(globalCss, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(globalCss, /animation-duration:\s*0\.01ms\s*!important/);
+  assert.match(globalCss, /animation-iteration-count:\s*1\s*!important/);
+  assert.match(globalCss, /\.chapter-copy\s*\{[\s\S]*animation:\s*none\s*!important/);
+  assert.match(
+    css,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.vistaire-discovery-image--first[\s\S]*firstDiscoveryImage 8s infinite[\s\S]*!important/
+  );
+  assert.match(
+    css,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.vistaire-discovery-image--second[\s\S]*secondDiscoveryImage 8s infinite[\s\S]*!important/
+  );
+  assert.match(css, /\.dotFirst\s*\{[\s\S]*firstDiscoveryDot 8s infinite !important/);
+  assert.match(css, /\.dotSecond\s*\{[\s\S]*secondDiscoveryDot 8s infinite !important/);
   assert.doesNotMatch(css, /animation:\s*none\s*!important/);
 
   for (const videoAttribute of [

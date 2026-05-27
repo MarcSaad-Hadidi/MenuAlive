@@ -702,6 +702,24 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .vistaire-discovery-image--first {
+    animation: firstDiscoveryImage 8s infinite cubic-bezier(0.72, 0, 0.28, 1) !important;
+  }
+
+  .vistaire-discovery-image--second {
+    animation: secondDiscoveryImage 8s infinite cubic-bezier(0.72, 0, 0.28, 1) !important;
+  }
+
+  .dotFirst {
+    animation: firstDiscoveryDot 8s infinite !important;
+  }
+
+  .dotSecond {
+    animation: secondDiscoveryDot 8s infinite !important;
+  }
+}
+
 @media (max-width: 1180px) {
   .hero {
     padding-top: 48px;
