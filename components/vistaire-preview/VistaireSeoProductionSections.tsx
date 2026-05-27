@@ -1,3 +1,5 @@
+import Image from "next/image";
+import guideBackground from "@/Framer/PhotoRestoComplet5.png";
 import { InternalSeoLinks } from "@/components/seo/InternalSeoLinks";
 import { SeoFaq } from "@/components/seo/SeoFaq";
 import type { SeoPageData } from "@/lib/seoPages";
@@ -10,9 +12,23 @@ export function VistaireSeoProductionSections({
   return (
     <section
       aria-labelledby={`${page.slug}-seo-guide-title`}
-      className="relative z-[2] border-y border-[#f6e1b7]/15 bg-[#050302]/82 px-5 py-16 text-[#fff7ea] sm:px-8 lg:px-12"
+      className="relative z-[2] overflow-hidden border-y border-[#f6e1b7]/15 bg-[#050302] px-5 py-16 text-[#fff7ea] sm:px-8 lg:px-12"
     >
-      <div className="mx-auto grid max-w-7xl gap-14">
+      <Image
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 z-0 object-cover"
+        fill
+        quality={100}
+        sizes="100vw"
+        src={guideBackground}
+        unoptimized
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 z-[1] bg-[#050302]/58"
+      />
+      <div className="relative z-[2] mx-auto grid max-w-7xl gap-14">
         <div className="max-w-3xl">
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#e8cf9b]/75">
             Guide Vistaire

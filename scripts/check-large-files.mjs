@@ -282,6 +282,17 @@ const ALLOWLIST = new Map(
       }
     ],
     [
+      "public/videos/Vistaire2.mp4",
+      {
+        maxBytes: 34449258,
+        sha256: [
+          "e4a89ed6ab21f55f60c9ee33a676ea2292bae5b6ecef09efefcf3173a6e85e29"
+        ],
+        reason:
+          "Reviewed runtime landing hero video requested for Vistaire PR #45; served directly from public assets without Git LFS."
+      }
+    ],
+    [
       "public/videos/optimized/upscaled-video-desktop-scrub.mp4",
       {
         maxBytes: 24297153,

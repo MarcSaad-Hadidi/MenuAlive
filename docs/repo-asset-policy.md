@@ -12,6 +12,9 @@ on `main` are grandfathered exceptions, not precedent.
 - The two current optimized hero scrub videos while the hero depends on them:
   `public/videos/optimized/upscaled-video-desktop-scrub.mp4` and
   `public/videos/optimized/upscaled-video-mobile-scrub.mp4`.
+- The reviewed Vistaire PR #45 landing hero runtime video:
+  `public/videos/Vistaire2.mp4` (max 34,449,258 bytes,
+  sha256 `e4a89ed6ab21f55f60c9ee33a676ea2292bae5b6ecef09efefcf3173a6e85e29`).
 - Existing demo runtime assets already on `main`, until a separate migration
   moves them to storage/CDN.
 
@@ -67,7 +70,9 @@ non-public asset workflow, so LFS cannot block Vercel clone or checkout.
 1. Do not commit new raw exports.
 2. Optimize locally.
 3. Keep the current hero scrub files only while they are referenced by code.
-4. Any new hero video must pass network/performance review before it is
+4. Keep `public/videos/Vistaire2.mp4` only while the promoted Vistaire landing
+   explicitly depends on that exact runtime video.
+5. Any new hero video must pass network/performance review before it is
    allowlisted.
 
 ## Before opening a PR

@@ -30,6 +30,8 @@ type DetailBadge = {
   tone?: "alert";
 };
 
+type ModelPanelVariant = "desktop" | "mobile";
+
 const allergenLabels: Record<Allergen, string> = {
   gluten: "Gluten",
   dairy: "Produits laitiers",
@@ -95,64 +97,73 @@ export function VistaireDishDetailPreview({
   routeMode = "preview"
 }: VistaireDishDetailPreviewProps) {
   const routes = getVistaireChromeRoutes(routeMode);
-  const [showModel, setShowModel] = useState(false);
+  const [activeModelPanel, setActiveModelPanel] =
+    useState<ModelPanelVariant | null>(null);
   const has3d = hasWebModel(dish);
   const hasImmersiveAsset = dishHasImmersiveAsset(dish);
   const badges = useMemo(() => getDishBadges(dish), [dish]);
   const objectPosition = getDishDetailImageObjectPosition(dish);
   const primaryIngredients = dish.ingredients.slice(0, 6);
-  const renderModelPanel = (panelId: string, className: string) => (
-    <section
-      className={`${styles.modelPanel} ${className}`}
-      aria-labelledby={`${panelId}-heading`}
-    >
-      <div className={styles.modelIntro}>
-        <p className={styles.kicker}>3D / AR sélective</p>
-        <h2 id={`${panelId}-heading`}>
-          {has3d
-            ? "Aperçu immersif disponible"
-            : "Vue 3D bientôt disponible pour ce plat"}
-        </h2>
-        <p>{getArAvailabilityCopy(dish)}</p>
-      </div>
+  const renderModelPanel = (
+    panelId: string,
+    className: string,
+    panelVariant: ModelPanelVariant
+  ) => {
+    const isActivePanel = activeModelPanel === panelVariant;
 
-      {has3d ? (
-        <>
-          <button
-            aria-controls={`${panelId}-viewer`}
-            aria-expanded={showModel}
-            className={styles.modelButton}
-            onClick={() => setShowModel(true)}
-            type="button"
-          >
-            Voir en 3D
-          </button>
-          {showModel ? (
-            <div className={styles.modelViewer} id={`${panelId}-viewer`}>
-              <LazyDishModelViewer
-                dish={dish}
-                minimalChrome
-                onReturnToDish={() => setShowModel(false)}
-              />
-            </div>
-          ) : (
-            <div
-              className={styles.modelPreview}
-              id={`${panelId}-viewer`}
-              aria-hidden="true"
-            >
-              {hasImmersiveAsset ? "3D" : "AR"}
-            </div>
-          )}
-        </>
-      ) : (
-        <div className={styles.fallback3d}>
-          <span aria-hidden="true">{restaurant.logoMonogram}</span>
-          <p>Aperçu 3D non disponible sur cette création.</p>
+    return (
+      <section
+        className={`${styles.modelPanel} ${className}`}
+        aria-labelledby={`${panelId}-heading`}
+      >
+        <div className={styles.modelIntro}>
+          <p className={styles.kicker}>3D / AR sélective</p>
+          <h2 id={`${panelId}-heading`}>
+            {has3d
+              ? "Aperçu immersif disponible"
+              : "Vue 3D bientôt disponible pour ce plat"}
+          </h2>
+          <p>{getArAvailabilityCopy(dish)}</p>
         </div>
-      )}
-    </section>
-  );
+
+        {has3d ? (
+          <>
+            <button
+              aria-controls={`${panelId}-viewer`}
+              aria-expanded={isActivePanel}
+              className={styles.modelButton}
+              onClick={() => setActiveModelPanel(panelVariant)}
+              type="button"
+            >
+              Voir en 3D
+            </button>
+            {isActivePanel ? (
+              <div className={styles.modelViewer} id={`${panelId}-viewer`}>
+                <LazyDishModelViewer
+                  dish={dish}
+                  minimalChrome
+                  onReturnToDish={() => setActiveModelPanel(null)}
+                />
+              </div>
+            ) : (
+              <div
+                className={styles.modelPreview}
+                id={`${panelId}-viewer`}
+                aria-hidden="true"
+              >
+                {hasImmersiveAsset ? "3D" : "AR"}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className={styles.fallback3d}>
+            <span aria-hidden="true">{restaurant.logoMonogram}</span>
+            <p>Aperçu 3D non disponible sur cette création.</p>
+          </div>
+        )}
+      </section>
+    );
+  };
 
   return (
     <main className={styles.page}>
@@ -203,7 +214,11 @@ export function VistaireDishDetailPreview({
                   </p>
                 ) : null}
               </div>
-              {renderModelPanel("preview-dish-model-desktop", styles.desktopModelPanel)}
+              {renderModelPanel(
+                "preview-dish-model-desktop",
+                styles.desktopModelPanel,
+                "desktop"
+              )}
             </section>
 
             <section className={styles.contentColumn} aria-label="Fiche plat">
@@ -297,7 +312,11 @@ export function VistaireDishDetailPreview({
                 </div>
               ) : null}
 
-              {renderModelPanel("preview-dish-model-mobile", styles.mobileModelPanel)}
+              {renderModelPanel(
+                "preview-dish-model-mobile",
+                styles.mobileModelPanel,
+                "mobile"
+              )}
 
               <div className={styles.actionRow}>
                 <Link

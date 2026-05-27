@@ -126,6 +126,8 @@ test("production SEO preview pages keep canonical H1s and text depth visible", a
   assert.match(appendix, /section\.points\.map/);
   assert.match(appendix, /SeoFaq faqs=\{page\.faq\}/);
   assert.match(appendix, /InternalSeoLinks currentSlug=\{page\.slug\}/);
+  assert.match(appendix, /PhotoRestoComplet5\.png/);
+  assert.match(appendix, /src=\{guideBackground\}/);
 
   for (const component of [
     digitalPreview,
@@ -449,11 +451,15 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
     assert.match(component, literalPattern(videoAttribute));
   }
 
-  assert.match(component, /\/vistaire-preview\/video/);
-  assert.match(videoRoute, /Vistaire2\.mp4/);
-  assert.match(videoRoute, /FALLBACK_VIDEO_PATH/);
-  assert.match(videoRoute, /upscaled-video-desktop-scrub\.mp4/);
-  assert.match(videoRoute, /206/);
+  const videoBlock = component.match(/<video[\s\S]*?<\/video>/)?.[0] ?? "";
+  assert.match(component, /const landingVideoSrc = "\/videos\/Vistaire2\.mp4"/);
+  assert.match(videoBlock, /<source src=\{landingVideoSrc\} type="video\/mp4" \/>/);
+  assert.doesNotMatch(videoBlock, /media=/);
+  assert.doesNotMatch(videoBlock, /upscaled-video-mobile-scrub/);
+
+  assert.match(videoRoute, /const VISTAIRE_VIDEO_SRC = "\/videos\/Vistaire2\.mp4"/);
+  assert.match(videoRoute, /Response\.redirect/);
+  assert.doesNotMatch(videoRoute, /upscaled-video/);
   assert.match(css, /@font-face[\s\S]*font-family: "BT Suave"/);
   assert.match(css, /@font-face[\s\S]*font-family: "Neue Montreal"/);
   for (const fontFile of previewFontFiles) {
@@ -860,8 +866,16 @@ test("vistaire preview dish detail is universal, premium, and honest about 3D", 
   assert.match(component, /href=\{routes\.menu\}/);
   assert.match(component, /PreviewNav activeSection="menu" routeMode=\{routeMode\}/);
   assert.match(component, /<PreviewFooter routeMode=\{routeMode\} width="wide" \/>/);
-  assert.match(component, /setShowModel\(true\)/);
-  assert.match(component, /showModel \? \(/);
+  assert.match(component, /type ModelPanelVariant = "desktop" \| "mobile"/);
+  assert.match(component, /const \[activeModelPanel, setActiveModelPanel\]/);
+  assert.match(component, /const isActivePanel = activeModelPanel === panelVariant/);
+  assert.match(component, /aria-expanded=\{isActivePanel\}/);
+  assert.match(component, /onClick=\{\(\) => setActiveModelPanel\(panelVariant\)\}/);
+  assert.match(component, /isActivePanel \? \(/);
+  assert.match(component, /onReturnToDish=\{\(\) => setActiveModelPanel\(null\)\}/);
+  assert.match(component, /styles\.desktopModelPanel,[\s\S]*"desktop"/);
+  assert.match(component, /styles\.mobileModelPanel,[\s\S]*"mobile"/);
+  assert.doesNotMatch(component, /const \[showModel/);
   assert.match(component, /styles\.desktopModelPanel/);
   assert.match(component, /styles\.mobileModelPanel/);
   assert.ok(
