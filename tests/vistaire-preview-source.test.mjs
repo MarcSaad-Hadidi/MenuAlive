@@ -471,6 +471,11 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
   assert.match(css, /\.discoveryGuestImage[\s\S]*object-position/);
   assert.match(css, /\.vistaire-discovery-image--first[\s\S]*firstDiscoveryImage/);
   assert.match(css, /\.vistaire-discovery-image--second[\s\S]*secondDiscoveryImage/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.rightGrid\s*\{[\s\S]*display:\s*flex/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.bottomGrid\s*\{[\s\S]*display:\s*contents/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.aboutCard\s*\{[\s\S]*order:\s*1/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.menuCard\s*\{[\s\S]*order:\s*2/);
+  assert.match(css, /@media \(max-width: 920px\)[\s\S]*\.discoveryCard\s*\{[\s\S]*order:\s*3/);
   assert.match(globalCss, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(globalCss, /animation-duration:\s*0\.01ms\s*!important/);
   assert.match(globalCss, /animation-iteration-count:\s*1\s*!important/);

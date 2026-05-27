@@ -773,10 +773,13 @@
   }
 
   .rightGrid {
+    display: flex;
+    flex-direction: column;
     grid-template-rows: auto auto;
   }
 
   .menuCard {
+    order: 2;
     min-height: 0;
     aspect-ratio: 1.95 / 1;
   }
@@ -791,15 +794,18 @@
   }
 
   .bottomGrid {
+    display: contents;
     min-height: 0;
     grid-template-columns: 1fr;
   }
 
   .aboutCard {
+    order: 1;
     min-height: 236px;
   }
 
   .discoveryCard {
+    order: 3;
     min-height: 0;
     aspect-ratio: 1.18 / 1;
   }
