@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import QRCode from "qrcode";
 import restaurantBackground from "@/Framer/PhotoRestoComplet6.png";
 import photoQrCode1 from "@/Framer/PhotoQRcode1.png";
 import photoQrCode2 from "@/Framer/PhotoQRcode2.png";
+import { absoluteUrl } from "@/lib/seo";
 import {
   getVistaireChromeRoutes,
   PreviewFooter,
@@ -13,11 +15,6 @@ import {
 import styles from "./VistaireMenuDigitalRestaurantPreview.module.css";
 
 const menuHref = "/vistaire-preview/demo";
-
-const qrCells = new Set([
-  0, 1, 2, 3, 4, 6, 8, 9, 10, 12, 14, 15, 18, 20, 21, 22, 24, 25, 27, 28, 30,
-  31, 33, 35, 36, 38, 40, 42, 43, 44, 45, 46, 48
-]);
 
 const journeySteps = [
   {
@@ -93,20 +90,38 @@ function ArrowIcon() {
   );
 }
 
-function QrCodeMark() {
+function QrCodeMark({
+  qrSvgMarkup,
+  targetUrl
+}: {
+  qrSvgMarkup: string;
+  targetUrl: string;
+}) {
   return (
-    <div className={styles.qrCodeMark} aria-hidden="true">
-      {Array.from({ length: 49 }, (_, index) => (
-        <span
-          className={qrCells.has(index) ? styles.qrCellOn : undefined}
-          key={index}
-        />
-      ))}
+    <div className={styles.qrCodeMark}>
+      <span
+        aria-label={`QR code Vistaire vers ${targetUrl}`}
+        role="img"
+        dangerouslySetInnerHTML={{ __html: qrSvgMarkup }}
+      />
     </div>
   );
 }
 
-export function VistaireMenuQrCodeRestaurantPreview({
+async function buildMenuQrSvg(targetUrl: string) {
+  return QRCode.toString(targetUrl, {
+    type: "svg",
+    errorCorrectionLevel: "H",
+    margin: 3,
+    width: 232,
+    color: {
+      dark: "#120906",
+      light: "#fff7ea"
+    }
+  });
+}
+
+export async function VistaireMenuQrCodeRestaurantPreview({
   h1,
   routeMode = "preview",
   seoAppendix
@@ -116,6 +131,8 @@ export function VistaireMenuQrCodeRestaurantPreview({
   seoAppendix?: ReactNode;
 }) {
   const routes = getVistaireChromeRoutes(routeMode);
+  const qrTargetUrl = absoluteUrl(routes.menu);
+  const qrSvgMarkup = await buildMenuQrSvg(qrTargetUrl);
   const pageTitle =
     h1 ?? "Menu QR code restaurant : le scan doit ouvrir une expérience";
   const pageInternalLinks =
@@ -198,8 +215,9 @@ export function VistaireMenuQrCodeRestaurantPreview({
             aria-labelledby="scan-title"
           >
             <div className={styles.qrMarkWrap}>
-              <QrCodeMark />
+              <QrCodeMark qrSvgMarkup={qrSvgMarkup} targetUrl={qrTargetUrl} />
               <span>Table 12 · Vistaire</span>
+              <small>{qrTargetUrl}</small>
             </div>
             <div className={styles.qrScanCopy}>
               <p className={styles.badge}>Après le scan</p>
