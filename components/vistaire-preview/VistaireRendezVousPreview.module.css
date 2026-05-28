@@ -209,10 +209,34 @@
   line-height: 1.25;
 }
 
+.exchangeBlock {
+  margin-top: 18px;
+  border-top: 1px solid rgba(255, 250, 240, 0.12);
+  padding-top: 15px;
+}
+
+.exchangeBlock h2 {
+  margin: 0;
+  color: #fffaf0;
+  font-family: var(--vistaire-font-display);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.exchangeBlock p {
+  margin: 8px 0 0;
+  color: rgba(244, 229, 205, 0.72);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .contactForm {
   display: grid;
   gap: 13px;
-  margin-top: 32px;
+  margin-top: 24px;
 }
 
 .formField {
@@ -469,7 +493,7 @@
   }
 
   .contactForm {
-    margin-top: 28px;
+    margin-top: 22px;
   }
 }
 
@@ -512,7 +536,7 @@
   }
 
   .formContent h1 {
-    font-size: 28px;
+    font-size: 26px;
   }
 
   .introText {
@@ -527,7 +551,7 @@
 
   .contactForm {
     gap: 11px;
-    margin-top: 24px;
+    margin-top: 20px;
   }
 
   .formField input {

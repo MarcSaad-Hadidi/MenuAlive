@@ -1,6 +1,7 @@
 "use client";
 
 import { type ChangeEvent, type FormEvent, useState } from "react";
+import { CONTACT_PHONE_DISPLAY } from "@/lib/seo";
 import styles from "./VistaireRendezVousPreview.module.css";
 
 type ContactField = "name" | "email" | "restaurant" | "message";
@@ -65,7 +66,8 @@ function buildMailtoHref(values: ContactFormValues): string {
     `Nom: ${values.name}`,
     `Courriel: ${values.email}`,
     `Restaurant: ${values.restaurant}`,
-    "Region: Montreal / Quebec",
+    "Région: Montréal / Québec",
+    `Téléphone Vistaire: ${CONTACT_PHONE_DISPLAY}`,
     "",
     "Message:",
     values.message

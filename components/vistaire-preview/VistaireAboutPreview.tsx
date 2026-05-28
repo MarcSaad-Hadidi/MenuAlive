@@ -84,7 +84,10 @@ export function VistaireAboutPreview({
             <div aria-hidden="true" className={styles.textShade} />
             <div className={styles.introCopy}>
               <p className={styles.badge}>À propos</p>
-              <h1>Vistaire transforme le QR code en expérience.</h1>
+              <h1>
+                Vistaire transforme le QR code restaurant en carte digitale
+                premium.
+              </h1>
               <p>
                 Vistaire aide les restaurants haut de gamme à présenter leur
                 carte dans une expérience mobile élégante : menu clair, fiches
@@ -157,11 +160,19 @@ export function VistaireAboutPreview({
             <div aria-hidden="true" className={styles.visionShade} />
             <div className={styles.visionCopy}>
               <p className={styles.badge}>Notre Vision</p>
+              <h2>
+                Une maison montréalaise dédiée aux restaurants haut de gamme
+              </h2>
               <p>
                 Le digital doit prolonger l&apos;expérience du restaurant, pas
                 la remplacer. Vistaire garde le plat au centre : une carte
                 claire, visuelle et mobile-first, conçue pour donner envie sans
                 transformer la salle en application froide.
+              </p>
+              <p>
+                Vistaire accompagne les restaurants de Montréal, du Québec et du
+                Canada qui veulent présenter leur carte sur mobile sans perdre
+                l&apos;élégance de la salle.
               </p>
               <p className={styles.values}>
                 Mobile-First <span>·</span> 3D Sélective <span>·</span> Sans

@@ -98,7 +98,12 @@ export function VistairePreviewLanding({
             </video>
             <div aria-hidden="true" className={styles.videoShade} />
             <div className={styles.videoCopy}>
-              <h1>VISTAIRE</h1>
+              <h1>
+                VISTAIRE
+                <span className={styles.srOnly}>
+                  , carte digitale premium pour restaurants haut de gamme
+                </span>
+              </h1>
               <p>CARTE DIGITALE PREMIUM</p>
             </div>
           </article>
@@ -131,6 +136,11 @@ export function VistairePreviewLanding({
                     Vistaire transforme le QR code d’un restaurant en carte
                     digitale premium : menu clair, fiches plats visuelles et
                     3D/AR quand elle apporte une vraie valeur
+                  </p>
+                  <p>
+                    Basé à Montréal, Vistaire aide les restaurants du Québec à
+                    remplacer un PDF par une expérience mobile claire,
+                    citable et fidèle à la salle.
                   </p>
                 </div>
               </article>

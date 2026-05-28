@@ -78,7 +78,7 @@ premium sales demo and first pilot if the manual boundaries below are respected.
 | --- | --- | --- |
 | Public landing | Public, indexable | Marketing and value proposition for Vistaire. |
 | Public demo Maison Elyse | Public, indexable at `/demo` | Demo restaurant only; not a real customer claim. |
-| Public admin preview demo | Public, noindex at `/admin` | Sales preview of restaurateur insights; not private admin. |
+| Public admin preview demo | Public, noindex and robots-disallowed at `/admin` | Sales preview of restaurateur insights; not private admin or SEO content. |
 | Protected owner internal | Clerk + owner allowlist at `/owner` | Vistaire internal pilot operations; not client self-service. |
 | Future client dashboard | Not built | Requires tenant auth, restaurant scoping, production data contracts, and client UX. |
 | Public APIs | Public ingestion/preview only | `/api/analytics/events`, `/api/admin/assistant`; constrained but not authenticated. |

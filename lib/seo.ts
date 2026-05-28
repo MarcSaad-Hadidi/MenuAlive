@@ -1,5 +1,10 @@
 export const SITE_NAME = "Vistaire";
 export const SITE_URL_FALLBACK = "https://www.vistaire.ca";
+export const CONTACT_EMAIL = "contact@vistaire.ca";
+export const CONTACT_PHONE_DISPLAY = "514-715-2421";
+export const CONTACT_PHONE_TEL = "+15147152421";
+export const CONTACT_LOCATION_LABEL = "Montréal, Québec, Canada";
+export const CONTACT_REGION_LABEL = "Montréal, Québec";
 export const DEFAULT_SITE_DESCRIPTION =
   "Vistaire transforme le QR code restaurant en carte digitale immersive pour restaurants haut de gamme : fiches plats, visuels, allergènes, 3D/AR sélective et aperçu restaurateur.";
 
@@ -12,13 +17,27 @@ const SITE_URL_ENV_KEYS = [
 ] as const;
 
 export const INTERNAL_ROBOTS_DISALLOW = [
+  "/api",
   "/api/",
+  "/api/*",
   "/owner",
   "/owner/",
+  "/owner/*",
+  "/admin",
+  "/admin/",
+  "/admin/*",
   "/sign-in",
   "/sign-in/",
+  "/sign-in/*",
   "/todos",
-  "/todos/"
+  "/todos/",
+  "/todos/*",
+  "/vistaire-preview",
+  "/vistaire-preview/",
+  "/vistaire-preview/*",
+  "/legacy",
+  "/legacy/",
+  "/legacy/*"
 ] as const;
 
 type SiteUrlEnv = {
@@ -87,6 +106,98 @@ export type RobotsRule = {
   userAgent: string;
   allow: string;
   disallow: string[];
+  contentSignal?: string;
+};
+
+export type SocialProfile = {
+  label: string;
+  url: string;
+};
+
+const PUBLIC_AI_CRAWLERS = [
+  "GPTBot",
+  "ClaudeBot",
+  "CCBot",
+  "Google-Extended",
+  "OAI-SearchBot",
+  "ChatGPT-User",
+  "PerplexityBot",
+  "Amazonbot",
+  "Applebot",
+  "Applebot-Extended",
+  "Bytespider",
+  "CloudflareBrowserRenderingCrawler",
+  "Googlebot",
+  "meta-externalagent",
+  "anthropic-ai",
+  "Claude-User",
+  "cohere-ai",
+  "Perplexity-User",
+  "YouBot"
+] as const;
+
+const ROBOTS_CONTENT_SIGNAL = "search=yes,ai-input=yes,ai-train=yes";
+
+const AREA_SERVED_JSON_LD: JsonLdObject[] = [
+  {
+    "@type": "City",
+    name: "Montréal"
+  },
+  {
+    "@type": "AdministrativeArea",
+    name: "Québec"
+  },
+  {
+    "@type": "Country",
+    name: "Canada"
+  }
+];
+
+const SERVICE_OFFER_CATALOG: JsonLdObject = {
+  "@type": "OfferCatalog",
+  name: "Experience Vistaire",
+  itemListElement: [
+    {
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        name: "Carte digitale QR premium",
+        serviceType: "Menu digital QR premium pour restaurants"
+      }
+    },
+    {
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        name: "Fiches plats visuelles",
+        serviceType: "Présentation mobile des plats, prix et allergènes"
+      }
+    },
+    {
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        name: "Menu PDF vers menu digital mobile",
+        serviceType: "Transformation de menu PDF en carte digitale"
+      }
+    },
+    {
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        name: "3D/AR sélective pour plats signatures",
+        serviceType: "Présentation immersive sélective"
+      }
+    },
+    {
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        name: "Dashboard restaurateur",
+        serviceType: "Aperçu restaurateur des signaux de consultation"
+      }
+    }
+  ]
 };
 
 type JsonLdPrimitive = string | number | boolean | null;
@@ -97,6 +208,14 @@ export type JsonLdValue =
 
 export type JsonLdObject = {
   [key: string]: JsonLdValue;
+};
+
+type SocialProfileEnv = SiteUrlEnv & {
+  NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL?: string;
+  NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL?: string;
+  NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL?: string;
+  NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL?: string;
+  NEXT_PUBLIC_VISTAIRE_X_URL?: string;
 };
 
 export function resolveSiteUrl(value?: string | null): URL {
@@ -171,29 +290,131 @@ export function buildSitemapEntries(
 }
 
 export function buildRobotsRules(): RobotsRule[] {
+  return ["*", ...PUBLIC_AI_CRAWLERS].map((userAgent) => ({
+    userAgent,
+    contentSignal: ROBOTS_CONTENT_SIGNAL,
+    allow: "/",
+    disallow: [...INTERNAL_ROBOTS_DISALLOW]
+  }));
+}
+
+function formatRobotsRule(rule: RobotsRule): string {
   return [
+    `User-agent: ${rule.userAgent}`,
+    rule.contentSignal ? `Content-Signal: ${rule.contentSignal}` : null,
+    `Allow: ${rule.allow}`,
+    ...rule.disallow.map((path) => `Disallow: ${path}`)
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function buildRobotsTxt(env?: SiteUrlEnv): string {
+  return `${buildRobotsRules()
+    .map(formatRobotsRule)
+    .join("\n\n")}\n\nSitemap: ${absoluteUrl("/sitemap.xml", env)}\n`;
+}
+
+function resolvePublicUrl(value?: string): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function buildSocialProfiles(
+  candidates: ReadonlyArray<{
+    label: string;
+    url: string | undefined;
+  }>
+): SocialProfile[] {
+  const profiles: SocialProfile[] = [];
+
+  for (const profile of candidates) {
+    const url = resolvePublicUrl(profile.url);
+    if (url && !profiles.some((candidate) => candidate.url === url)) {
+      profiles.push({
+        label: profile.label,
+        url
+      });
+    }
+  }
+
+  return profiles;
+}
+
+export function getVistaireSocialProfiles(env?: SocialProfileEnv): SocialProfile[] {
+  if (env) {
+    return buildSocialProfiles([
+      { label: "LinkedIn", url: env.NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL },
+      { label: "Instagram", url: env.NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL },
+      {
+        label: "Google Business Profile",
+        url: env.NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL
+      },
+      { label: "Facebook", url: env.NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL },
+      { label: "X", url: env.NEXT_PUBLIC_VISTAIRE_X_URL }
+    ]);
+  }
+
+  return buildSocialProfiles([
     {
-      userAgent: "OAI-SearchBot",
-      allow: "/",
-      disallow: [...INTERNAL_ROBOTS_DISALLOW]
+      label: "LinkedIn",
+      url: process.env.NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL
     },
     {
-      userAgent: "*",
-      allow: "/",
-      disallow: [...INTERNAL_ROBOTS_DISALLOW]
-    }
-  ];
+      label: "Instagram",
+      url: process.env.NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL
+    },
+    {
+      label: "Google Business Profile",
+      url: process.env.NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL
+    },
+    {
+      label: "Facebook",
+      url: process.env.NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL
+    },
+    { label: "X", url: process.env.NEXT_PUBLIC_VISTAIRE_X_URL }
+  ]);
 }
 
 export function buildOrganizationJsonLd(env?: SiteUrlEnv): JsonLdObject {
+  const sameAs = getVistaireSocialProfiles(env).map((profile) => profile.url);
+
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${absoluteUrl("/", env)}#organization`,
     name: SITE_NAME,
     url: absoluteUrl("/", env),
+    email: CONTACT_EMAIL,
+    telephone: CONTACT_PHONE_TEL,
     description:
-      "Vistaire conçoit des expériences de menu digital premium pour restaurants."
+      "Vistaire conçoit des expériences de menu digital QR premium pour restaurants haut de gamme à Montréal, au Québec et au Canada.",
+    areaServed: AREA_SERVED_JSON_LD,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: CONTACT_EMAIL,
+      telephone: CONTACT_PHONE_TEL,
+      areaServed: "CA",
+      availableLanguage: ["fr-CA", "en-CA"]
+    },
+    knowsAbout: [
+      "menu digital restaurant",
+      "menu QR code restaurant",
+      "carte digitale restaurant",
+      "remplacement de menu PDF",
+      "fiches plats visuelles",
+      "3D et réalité augmentée pour restaurant"
+    ],
+    ...(sameAs.length > 0 ? { sameAs } : {})
   };
 }
 
@@ -208,6 +429,43 @@ export function buildWebsiteJsonLd(env?: SiteUrlEnv): JsonLdObject {
     publisher: {
       "@id": `${absoluteUrl("/", env)}#organization`
     }
+  };
+}
+
+export function buildProfessionalServiceJsonLd(env?: SiteUrlEnv): JsonLdObject {
+  const sameAs = getVistaireSocialProfiles(env).map((profile) => profile.url);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "@id": `${absoluteUrl("/", env)}#professional-service`,
+    name: SITE_NAME,
+    url: absoluteUrl("/", env),
+    email: CONTACT_EMAIL,
+    telephone: CONTACT_PHONE_TEL,
+    description:
+      "Vistaire est un service professionnel de menu digital QR premium pour restaurants haut de gamme, restaurants indépendants et cartes issues de menus PDF.",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Montréal",
+      addressRegion: "QC",
+      addressCountry: "CA"
+    },
+    areaServed: AREA_SERVED_JSON_LD,
+    serviceType: "Menu digital QR premium pour restaurants",
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      email: CONTACT_EMAIL,
+      telephone: CONTACT_PHONE_TEL,
+      areaServed: "CA",
+      availableLanguage: ["fr-CA", "en-CA"]
+    },
+    makesOffer: SERVICE_OFFER_CATALOG.itemListElement,
+    parentOrganization: {
+      "@id": `${absoluteUrl("/", env)}#organization`
+    },
+    ...(sameAs.length > 0 ? { sameAs } : {})
   };
 }
 
@@ -226,44 +484,13 @@ export function buildVistaireServiceJsonLd(env?: SiteUrlEnv): JsonLdObject {
     provider: {
       "@id": `${absoluteUrl("/", env)}#organization`
     },
+    areaServed: AREA_SERVED_JSON_LD,
     audience: {
       "@type": "BusinessAudience",
-      audienceType: "Restaurants"
+      audienceType:
+        "Restaurants haut de gamme, restaurants indépendants et restaurants avec menu QR ou PDF"
     },
-    hasOfferCatalog: {
-      "@type": "OfferCatalog",
-      name: "Expérience Vistaire",
-      itemListElement: [
-        {
-          "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "Carte QR mobile"
-          }
-        },
-        {
-          "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "Fiches plats visuelles"
-          }
-        },
-        {
-          "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "3D/AR sélective pour plats signatures"
-          }
-        },
-        {
-          "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "Aperçu restaurateur des signaux d'attention"
-          }
-        }
-      ]
-    }
+    hasOfferCatalog: SERVICE_OFFER_CATALOG
   };
 }
 
@@ -319,9 +546,53 @@ export function buildPageServiceJsonLd(
     provider: {
       "@id": `${absoluteUrl("/", env)}#organization`
     },
+    areaServed: AREA_SERVED_JSON_LD,
     audience: {
       "@type": "BusinessAudience",
-      audienceType: "Restaurants"
+      audienceType:
+        "Restaurants haut de gamme, restaurants indépendants et restaurants avec menu QR ou PDF"
+    },
+    hasOfferCatalog: SERVICE_OFFER_CATALOG
+  };
+}
+
+export function buildContactPageJsonLd(
+  page: {
+    path: string;
+    name: string;
+    description: string;
+  },
+  env?: SiteUrlEnv
+): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "@id": `${absoluteUrl(page.path, env)}#webpage`,
+    url: absoluteUrl(page.path, env),
+    name: page.name,
+    description: page.description,
+    inLanguage: "fr-CA",
+    isPartOf: {
+      "@id": `${absoluteUrl("/", env)}#website`
+    },
+    publisher: {
+      "@id": `${absoluteUrl("/", env)}#organization`
+    },
+    mainEntity: {
+      "@type": "Organization",
+      "@id": `${absoluteUrl("/", env)}#organization`,
+      name: SITE_NAME,
+      email: CONTACT_EMAIL,
+      telephone: CONTACT_PHONE_TEL,
+      areaServed: AREA_SERVED_JSON_LD,
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: CONTACT_EMAIL,
+        telephone: CONTACT_PHONE_TEL,
+        areaServed: "CA",
+        availableLanguage: ["fr-CA", "en-CA"]
+      }
     }
   };
 }

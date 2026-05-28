@@ -4,16 +4,22 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  CONTACT_EMAIL,
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_PHONE_TEL,
   INTERNAL_ROBOTS_DISALLOW,
   SITE_URL_FALLBACK,
   absoluteUrl,
   buildBreadcrumbJsonLd,
   buildFaqPageJsonLd,
   buildOrganizationJsonLd,
+  buildProfessionalServiceJsonLd,
   buildRobotsRules,
+  buildRobotsTxt,
   buildSitemapEntries,
   buildVistaireServiceJsonLd,
   buildWebsiteJsonLd,
+  getVistaireSocialProfiles,
   getSiteUrl,
   resolveSiteUrl
 } from "../lib/seo.ts";
@@ -61,6 +67,39 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
   assert.equal(entries.every((entry) => entry.priority > 0 && entry.priority <= 1), true);
 });
 
+test("publishes an llms.txt guide for public AI crawlers without private claims", () => {
+  const llmsPath = join(process.cwd(), "public", "llms.txt");
+  assert.equal(existsSync(llmsPath), true);
+
+  const content = readFileSync(llmsPath, "utf8");
+  for (const expected of [
+    "# Vistaire",
+    "https://www.vistaire.ca/",
+    "https://www.vistaire.ca/menu-digital-restaurant",
+    "https://www.vistaire.ca/menu-qr-code-restaurant",
+    "https://www.vistaire.ca/menu-3d-ar-restaurant",
+    "https://www.vistaire.ca/menu-pdf-vs-menu-digital",
+    "https://www.vistaire.ca/a-propos",
+    "https://www.vistaire.ca/contact",
+    "https://www.vistaire.ca/prendre-rendez-vous",
+    "contact@vistaire.ca",
+    CONTACT_PHONE_DISPLAY,
+    "Montréal, Québec, Canada",
+    "Do not mix Vistaire with MenuAlive or MenuVivant"
+  ]) {
+    assert.match(content, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+
+  for (const forbidden of [
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "CLERK_SECRET_KEY",
+    "MISTRAL_API_KEY",
+    "guaranteed ROI"
+  ]) {
+    assert.equal(content.includes(forbidden), false);
+  }
+});
+
 test("keeps demo admin and dish detail pages out of search indexes", () => {
   const adminLayout = readFileSync(
     join(process.cwd(), "app", "admin", "layout.tsx"),
@@ -103,8 +142,8 @@ test("landing preview footer routes restaurateur preview to the public dashboard
   );
 
   assert.match(previewChrome, /restaurateurDashboard:\s*"\/apercu-restaurateur"/);
-  assert.match(previewChrome, /\{\s*label:\s*"Dashboard exemple",\s*href:\s*"\/admin"\s*\}/);
-  assert.match(previewChrome, /href="\/owner"/);
+  assert.doesNotMatch(previewChrome, /\{\s*label:\s*"Dashboard exemple",\s*href:\s*"\/admin"\s*\}/);
+  assert.doesNotMatch(previewChrome, /href="\/owner"/);
   assert.doesNotMatch(
     previewChrome,
     /footerUtilityLinks[\s\S]{0,220}Dashboard exemple/
@@ -155,37 +194,74 @@ test("declares the focused SEO page inventory without generic scale pages", asyn
 
 test("allows useful crawlers while keeping internal surfaces out of robots crawl", () => {
   const rules = buildRobotsRules();
-  const searchBotRule = rules.find((rule) => rule.userAgent === "OAI-SearchBot");
   const defaultRule = rules.find((rule) => rule.userAgent === "*");
+  const gptRule = rules.find((rule) => rule.userAgent === "GPTBot");
+  const claudeRule = rules.find((rule) => rule.userAgent === "ClaudeBot");
   const expectedInternalDisallow = [
+    "/api",
     "/api/",
+    "/api/*",
     "/owner",
     "/owner/",
+    "/owner/*",
+    "/admin",
+    "/admin/",
+    "/admin/*",
     "/sign-in",
     "/sign-in/",
+    "/sign-in/*",
     "/todos",
-    "/todos/"
+    "/todos/",
+    "/todos/*",
+    "/vistaire-preview",
+    "/vistaire-preview/",
+    "/vistaire-preview/*",
+    "/legacy",
+    "/legacy/",
+    "/legacy/*"
   ];
 
-  assert.ok(searchBotRule);
   assert.ok(defaultRule);
-  assert.deepEqual(searchBotRule.allow, "/");
+  assert.ok(gptRule);
+  assert.ok(claudeRule);
   assert.deepEqual(defaultRule.allow, "/");
+  assert.deepEqual(gptRule.allow, "/");
+  assert.deepEqual(claudeRule.allow, "/");
+  assert.equal(defaultRule.contentSignal, "search=yes,ai-input=yes,ai-train=yes");
+  assert.equal(gptRule.contentSignal, "search=yes,ai-input=yes,ai-train=yes");
   assert.deepEqual(INTERNAL_ROBOTS_DISALLOW, expectedInternalDisallow);
   for (const internalPath of expectedInternalDisallow) {
     assert.equal(INTERNAL_ROBOTS_DISALLOW.includes(internalPath), true);
   }
-  assert.deepEqual(searchBotRule.disallow, INTERNAL_ROBOTS_DISALLOW);
   assert.deepEqual(defaultRule.disallow, INTERNAL_ROBOTS_DISALLOW);
+  assert.deepEqual(gptRule.disallow, INTERNAL_ROBOTS_DISALLOW);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/_next/"), false);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/images/"), false);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/models/"), false);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/videos/"), false);
   assert.equal(INTERNAL_ROBOTS_DISALLOW.includes("/frames/"), false);
+
+  const robotsText = buildRobotsTxt(siteEnv);
+  for (const userAgent of [
+    "*",
+    "GPTBot",
+    "ClaudeBot",
+    "CCBot",
+    "Google-Extended",
+    "OAI-SearchBot",
+    "ChatGPT-User",
+    "PerplexityBot"
+  ]) {
+    assert.match(robotsText, new RegExp(`User-agent: ${userAgent}`));
+  }
+  assert.match(robotsText, /Content-Signal: search=yes,ai-input=yes,ai-train=yes/);
+  assert.match(robotsText, /Disallow: \/admin\/\*/);
+  assert.match(robotsText, /Sitemap: https:\/\/www\.vistaire\.ca\/sitemap\.xml/);
 });
 
 test("emits honest global JSON-LD without fictional restaurant markup", () => {
   const organization = buildOrganizationJsonLd(siteEnv);
+  const professionalService = buildProfessionalServiceJsonLd(siteEnv);
   const website = buildWebsiteJsonLd(siteEnv);
   const service = buildVistaireServiceJsonLd(siteEnv);
   const breadcrumb = buildBreadcrumbJsonLd(
@@ -197,12 +273,23 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   );
 
   assert.equal(organization["@type"], "Organization");
+  assert.equal(organization.email, CONTACT_EMAIL);
+  assert.equal(organization.telephone, CONTACT_PHONE_TEL);
+  assert.equal(organization.contactPoint.email, CONTACT_EMAIL);
+  assert.equal(organization.contactPoint.telephone, CONTACT_PHONE_TEL);
+  assert.equal(organization.areaServed.length, 3);
+  assert.equal("sameAs" in organization, false);
+  assert.equal(professionalService["@type"], "ProfessionalService");
+  assert.equal(professionalService.email, CONTACT_EMAIL);
+  assert.equal(professionalService.telephone, CONTACT_PHONE_TEL);
+  assert.equal(professionalService.contactPoint.telephone, CONTACT_PHONE_TEL);
+  assert.equal(professionalService.address.addressLocality, "Montréal");
   assert.equal(website["@type"], "WebSite");
   assert.equal(service["@type"], "Service");
   assert.equal(breadcrumb["@type"], "BreadcrumbList");
   assert.equal(service.provider["@id"], organization["@id"]);
   assert.equal(service.url, "https://www.vistaire.ca/");
-  assert.equal("areaServed" in service, false);
+  assert.equal(service.areaServed.length, 3);
   assert.equal(service.mainEntityOfPage["@id"], "https://www.vistaire.ca/#webpage");
   assert.equal(service.hasOfferCatalog["@type"], "OfferCatalog");
   assert.deepEqual(
@@ -212,6 +299,7 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
 
   const serialized = JSON.stringify([
     organization,
+    professionalService,
     website,
     service,
     breadcrumb
@@ -222,6 +310,35 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   assert.equal(serialized.includes("AggregateRating"), false);
   assert.equal(serialized.includes("Review"), false);
   assert.equal(serialized.includes("FAQPage"), false);
+});
+
+test("reads public social profile env vars in a Next client-bundle compatible way", () => {
+  const socialEnv = {
+    NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL: "",
+    NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL: "",
+    NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL:
+      "https://example.com/vistaire-public-profile",
+    NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL: "not-a-url",
+    NEXT_PUBLIC_VISTAIRE_X_URL: ""
+  };
+
+  assert.deepEqual(getVistaireSocialProfiles(socialEnv), [
+    {
+      label: "Google Business Profile",
+      url: "https://example.com/vistaire-public-profile"
+    }
+  ]);
+
+  const seoSource = readFileSync(join(process.cwd(), "lib/seo.ts"), "utf8");
+  assert.match(
+    seoSource,
+    /process\.env\.NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL/
+  );
+  assert.match(
+    seoSource,
+    /process\.env\.NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL/
+  );
+  assert.doesNotMatch(seoSource, /env\[[^\]]+profile\.key[^\]]*\]/);
 });
 
 test("guide cards use hand-written descriptions without truncation", () => {
@@ -276,7 +393,7 @@ test("builds WebPage and per-page Service JSON-LD with absolute URLs", async () 
     {
       path: "/menu-3d-ar-restaurant",
       name: "Menu 3D/AR Vistaire",
-      serviceType: "Presentation 3D/AR selective pour menus de restaurants",
+      serviceType: "Présentation 3D/AR sélective pour menus de restaurants",
       description:
         "Vues 3D/AR quand les assets et appareils le permettent, avec fallback premium."
     },
@@ -292,7 +409,8 @@ test("builds WebPage and per-page Service JSON-LD with absolute URLs", async () 
   assert.equal(servicePage["@type"], "Service");
   assert.equal(servicePage.url, "https://www.vistaire.ca/menu-3d-ar-restaurant");
   assert.equal(servicePage.provider["@id"], "https://www.vistaire.ca/#organization");
-  assert.equal("areaServed" in servicePage, false);
+  assert.equal(servicePage.areaServed.length, 3);
+  assert.equal(servicePage.hasOfferCatalog["@type"], "OfferCatalog");
 
   const faqPage = buildFaqPageJsonLd(
     [

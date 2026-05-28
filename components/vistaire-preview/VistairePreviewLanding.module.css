@@ -268,6 +268,15 @@
   flex: 0 0 auto;
 }
 
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .bottomGrid {
   display: grid;
   min-height: 250px;
@@ -335,13 +344,17 @@
   letter-spacing: 0;
 }
 
-.aboutContent > p:last-child {
+.aboutContent > p:not(.aboutTag) {
   max-width: 224px;
   margin: 18px 0 0;
   color: rgba(238, 230, 215, 0.68);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.07;
+}
+
+.aboutContent > p:not(.aboutTag) + p {
+  margin-top: 10px;
 }
 
 .discoveryCard {
@@ -884,7 +897,7 @@
     font-size: 19px;
   }
 
-  .aboutContent > p:last-child {
+  .aboutContent > p:not(.aboutTag) {
     font-size: 13px;
   }
 

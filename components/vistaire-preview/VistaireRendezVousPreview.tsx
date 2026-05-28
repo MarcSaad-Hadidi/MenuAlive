@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import appointmentBackground from "@/Framer/PhotoRestoComplet.png";
 import tableImage from "@/Framer/Photo table.png";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "@/lib/seo";
 import {
   getVistaireChromeRoutes,
   PreviewFooter,
@@ -55,7 +56,9 @@ export function VistaireRendezVousPreview({
             <div aria-hidden="true" className={styles.formPanelShade} />
             <div className={styles.formContent}>
               <p className={styles.kicker}>Parlons de Vistaire</p>
-              <h1 id="rendez-vous-preview-title">Prendre rendez-vous</h1>
+              <h1 id="rendez-vous-preview-title">
+                Prendre rendez-vous pour une carte digitale Vistaire
+              </h1>
               <p className={styles.introText}>
                 Parlez-nous de votre restaurant, de votre carte et de
                 l&apos;exp&eacute;rience que vous souhaitez offrir.
@@ -63,12 +66,25 @@ export function VistaireRendezVousPreview({
               <p className={styles.serviceLine}>
                 Restaurants haut de gamme &middot; Montr&eacute;al, Qu&eacute;bec
               </p>
+              <section
+                aria-labelledby="rendez-vous-exchange-title"
+                className={styles.exchangeBlock}
+              >
+                <h2 id="rendez-vous-exchange-title">
+                  Pendant l&apos;échange, nous regardons votre carte actuelle.
+                </h2>
+                <p>
+                  Plats signatures, allergènes, visuels, prix lisibles,
+                  remplacement PDF et cas où la 3D/AR apporte une vraie valeur.
+                </p>
+              </section>
 
               <VistaireContactForm />
 
               <div className={styles.directContact} aria-label="Contact direct">
                 <span>Contact direct</span>
                 <a href="mailto:contact@vistaire.ca">contact@vistaire.ca</a>
+                <a href={`tel:${CONTACT_PHONE_TEL}`}>{CONTACT_PHONE_DISPLAY}</a>
               </div>
               <Link
                 className={styles.backLink}

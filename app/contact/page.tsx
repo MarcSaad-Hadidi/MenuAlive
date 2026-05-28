@@ -1,17 +1,26 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/JsonLd";
 import { VistaireContactPreview } from "@/components/vistaire-preview/VistaireContactPreview";
-import { absoluteUrl } from "@/lib/seo";
+import {
+  absoluteUrl,
+  buildBreadcrumbJsonLd,
+  buildContactPageJsonLd
+} from "@/lib/seo";
+
+const canonicalPath = "/contact";
+const title = "Contact Vistaire";
+const description =
+  "Contactez Vistaire pour créer une carte digitale premium pour restaurant haut de gamme.";
 
 export const metadata: Metadata = {
-  title: "Contact Vistaire",
-  description:
-    "Contactez Vistaire pour créer une carte digitale premium pour restaurant haut de gamme.",
+  title,
+  description,
   alternates: {
-    canonical: "/contact"
+    canonical: canonicalPath
   },
   openGraph: {
-    url: absoluteUrl("/contact"),
-    title: "Contact Vistaire",
+    url: absoluteUrl(canonicalPath),
+    title,
     description:
       "Parlez à Vistaire de votre carte, de vos fiches plats et de votre expérience mobile.",
     type: "website"
@@ -25,5 +34,22 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  return <VistaireContactPreview routeMode="production" />;
+  return (
+    <>
+      <JsonLd
+        data={[
+          buildContactPageJsonLd({
+            path: canonicalPath,
+            name: title,
+            description
+          }),
+          buildBreadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Contact", path: canonicalPath }
+          ])
+        ]}
+      />
+      <VistaireContactPreview routeMode="production" />
+    </>
+  );
 }

@@ -1,4 +1,9 @@
 import Link from "next/link";
+import {
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_PHONE_TEL,
+  getVistaireSocialProfiles
+} from "@/lib/seo";
 import styles from "./VistairePreviewChrome.module.css";
 
 type PreviewNavItem = {
@@ -69,9 +74,7 @@ const navLabels = {
 const footerProduct = [
   { label: "Carte digitale", href: "/vistaire-preview/demo" },
   { label: "Fiches plats", href: "/vistaire-preview/demo/dishes/homard-bisque" },
-  { label: "3D / AR sélective", href: "/vistaire-preview/menu-3d-ar-restaurant" },
-  { label: "Aperçu restaurateur", href: "/apercu-restaurateur" },
-  { label: "Dashboard exemple", href: "/admin" }
+  { label: "3D / AR sélective", href: "/vistaire-preview/menu-3d-ar-restaurant" }
 ] as const;
 
 const footerResources = [
@@ -187,8 +190,7 @@ export function PreviewFooter({
           { label: "Carte digitale", href: routes.menu },
           { label: "Fiches plats", href: routes.dish },
           { label: "3D / AR sélective", href: routes.menu3dAr },
-          { label: "Aperçu restaurateur", href: routes.restaurateurDashboard },
-          { label: "Dashboard exemple", href: "/admin" }
+          { label: "Aperçu restaurateur", href: routes.restaurateurDashboard }
         ];
   const resourceLinks =
     routeMode === "preview"
@@ -199,6 +201,7 @@ export function PreviewFooter({
           { label: "PDF vs menu digital", href: routes.pdfVsDigital },
           { label: "Restaurants haut de gamme", href: routes.about }
         ];
+  const socialProfiles = getVistaireSocialProfiles();
 
   return (
     <footer
@@ -242,9 +245,12 @@ export function PreviewFooter({
 
       <section className={styles.footerColumn} aria-label="Contact">
         <h2>Contact</h2>
-        <p className={styles.footerPlace}>Montréal, Québec</p>
+        <p className={styles.footerPlace}>Montréal, Québec, Canada</p>
         <a className={styles.footerEmail} href="mailto:contact@vistaire.ca">
           contact@vistaire.ca
+        </a>
+        <a className={styles.footerEmail} href={`tel:${CONTACT_PHONE_TEL}`}>
+          {CONTACT_PHONE_DISPLAY}
         </a>
         <Link
           className={styles.footerCta}
@@ -253,17 +259,29 @@ export function PreviewFooter({
         >
           Prendre rendez-vous
         </Link>
+        {socialProfiles.length > 0 ? (
+          <nav
+            aria-label="Profils publics Vistaire"
+            className={styles.footerSocialLinks}
+          >
+            {socialProfiles.map((profile) => (
+              <a
+                href={profile.url}
+                key={profile.url}
+                rel="me noopener noreferrer"
+                target="_blank"
+              >
+                {profile.label}
+              </a>
+            ))}
+          </nav>
+        ) : null}
       </section>
 
       <div className={styles.footerBottom}>
         <p className={styles.footerCopyright}>
           © 2026 Vistaire. Tous droits réservés.
         </p>
-        <nav className={styles.footerUtilityLinks} aria-label="Acces Vistaire">
-          <Link href="/owner" prefetch={false}>
-            Accès interne
-          </Link>
-        </nav>
       </div>
     </footer>
   );

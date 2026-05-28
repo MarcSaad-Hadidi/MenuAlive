@@ -1,4 +1,9 @@
 import Link from "next/link";
+import {
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_PHONE_TEL,
+  getVistaireSocialProfiles
+} from "@/lib/seo";
 import { SEO_PAGES } from "@/lib/seoPages";
 
 const experienceLinks = [
@@ -37,6 +42,8 @@ type SeoFooterProps = {
 };
 
 export function SeoFooter({ compact = false }: SeoFooterProps) {
+  const socialProfiles = getVistaireSocialProfiles();
+
   return (
     <footer
       className={`border-t border-white/10 bg-[#050403] text-sm text-[#b9aa94] ${
@@ -98,6 +105,9 @@ export function SeoFooter({ compact = false }: SeoFooterProps) {
           </FooterGroup>
 
           <FooterGroup title="Contact">
+            <li className="text-xs text-[#8f8170]">
+              MontrÃ©al, QuÃ©bec, Canada
+            </li>
             <li>
               <Link
                 href="/prendre-rendez-vous"
@@ -114,6 +124,26 @@ export function SeoFooter({ compact = false }: SeoFooterProps) {
                 contact@vistaire.ca
               </a>
             </li>
+            <li>
+              <a
+                href={`tel:${CONTACT_PHONE_TEL}`}
+                className="text-xs text-[#8f8170] transition hover:text-[#cdbfa9] focus:outline-none focus-visible:text-cream focus-visible:ring-2 focus-visible:ring-champagne"
+              >
+                {CONTACT_PHONE_DISPLAY}
+              </a>
+            </li>
+            {socialProfiles.map((profile) => (
+              <li key={profile.url}>
+                <a
+                  href={profile.url}
+                  rel="me noopener noreferrer"
+                  target="_blank"
+                  className="text-xs text-[#8f8170] transition hover:text-[#cdbfa9] focus:outline-none focus-visible:text-cream focus-visible:ring-2 focus-visible:ring-champagne"
+                >
+                  {profile.label}
+                </a>
+              </li>
+            ))}
           </FooterGroup>
         </div>
 

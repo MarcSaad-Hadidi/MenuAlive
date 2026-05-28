@@ -24,8 +24,11 @@ export function VistaireSeoProductionSections({
             Guide complet pour choisir une carte digitale premium
           </h2>
           <p className="mt-5 text-sm leading-7 text-[#d8c9b2] sm:text-base">
-            Des reperes visibles pour les restaurateurs, avec les reponses, les
-            sections de fond, les questions frequentes et les guides relies.
+            Des repères visibles pour les restaurateurs, avec les réponses, les
+            sections de fond, les questions fréquentes et les guides reliés.
+            Vistaire parle ici aux restaurants haut de gamme de Montréal, du
+            Québec et du Canada qui veulent remplacer un PDF ou un QR basique
+            par une vraie expérience mobile.
           </p>
         </div>
 

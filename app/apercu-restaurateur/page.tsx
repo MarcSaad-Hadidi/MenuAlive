@@ -10,9 +10,9 @@ import {
 } from "@/lib/seo";
 
 const canonicalPath = "/apercu-restaurateur";
-const title = "Apercu restaurateur Vistaire";
+const title = "Aperçu restaurateur Vistaire";
 const description =
-  "Decouvrez l'interface restaurateur Vistaire : menu actif, QR code, plats populaires, readiness et signaux d'attention pour une carte premium.";
+  "Découvrez l'interface restaurateur Vistaire : menu actif, QR code, plats populaires, readiness et signaux d'attention pour une carte premium.";
 
 export const metadata: Metadata = {
   title,
@@ -58,12 +58,12 @@ export default async function RestaurateurDashboardPreviewPage() {
           buildPageServiceJsonLd({
             path: canonicalPath,
             name: "Interface restaurateur Vistaire",
-            serviceType: "Apercu restaurateur pour menu digital premium",
+            serviceType: "Aperçu restaurateur pour menu digital premium",
             description
           }),
           buildBreadcrumbJsonLd([
             { name: "Accueil", path: "/" },
-            { name: "Apercu restaurateur", path: canonicalPath }
+            { name: "Aperçu restaurateur", path: canonicalPath }
           ])
         ]}
       />

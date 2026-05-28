@@ -1,17 +1,27 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/JsonLd";
 import { VistaireRendezVousPreview } from "@/components/vistaire-preview/VistaireRendezVousPreview";
-import { absoluteUrl } from "@/lib/seo";
+import {
+  absoluteUrl,
+  buildBreadcrumbJsonLd,
+  buildPageServiceJsonLd,
+  buildWebPageJsonLd
+} from "@/lib/seo";
+
+const canonicalPath = "/prendre-rendez-vous";
+const title = "Prendre rendez-vous avec Vistaire";
+const description =
+  "Planifiez un rendez-vous avec Vistaire pour présenter votre restaurant avec une carte digitale premium.";
 
 export const metadata: Metadata = {
-  title: "Prendre rendez-vous avec Vistaire",
-  description:
-    "Planifiez un rendez-vous avec Vistaire pour présenter votre restaurant avec une carte digitale premium.",
+  title,
+  description,
   alternates: {
-    canonical: "/prendre-rendez-vous"
+    canonical: canonicalPath
   },
   openGraph: {
-    url: absoluteUrl("/prendre-rendez-vous"),
-    title: "Prendre rendez-vous avec Vistaire",
+    url: absoluteUrl(canonicalPath),
+    title,
     description:
       "Parlez-nous de votre restaurant, de votre carte et de l'expérience que vous souhaitez offrir.",
     type: "website"
@@ -25,5 +35,28 @@ export const metadata: Metadata = {
 };
 
 export default function PrendreRendezVousPage() {
-  return <VistaireRendezVousPreview routeMode="production" />;
+  return (
+    <>
+      <JsonLd
+        data={[
+          buildWebPageJsonLd({
+            path: canonicalPath,
+            name: title,
+            description
+          }),
+          buildPageServiceJsonLd({
+            path: canonicalPath,
+            name: "Rendez-vous Vistaire",
+            serviceType: "Diagnostic de carte digitale QR pour restaurant",
+            description
+          }),
+          buildBreadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Prendre rendez-vous", path: canonicalPath }
+          ])
+        ]}
+      />
+      <VistaireRendezVousPreview routeMode="production" />
+    </>
+  );
 }

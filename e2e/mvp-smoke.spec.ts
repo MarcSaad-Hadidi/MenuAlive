@@ -123,7 +123,7 @@ async function expectPromotedLanding(page: Page) {
   const video = page.locator("main video").first();
 
   await expect(
-    page.getByRole("heading", { exact: true, name: "VISTAIRE" })
+    page.getByRole("heading", { level: 1, name: /VISTAIRE/ })
   ).toBeVisible();
   await expect(video).toBeVisible();
   await expect
@@ -299,7 +299,9 @@ test.describe("Vistaire MVP smoke", () => {
 
     await expect(page).toHaveURL(/\/admin(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByText(/Lecture rapide du service/i)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Les signaux essentiels/i })
+    ).toBeVisible();
     await expect(page.getByText(/Assistant Vistaire/i)).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Explorer le menu client/i })
@@ -354,7 +356,11 @@ test.describe("Vistaire MVP smoke", () => {
     const sitemapText = await sitemap.text();
 
     expect(robots.status()).toBe(200);
-    expect(await robots.text()).toContain("Sitemap:");
+    const robotsText = await robots.text();
+    expect(robotsText).toContain("Sitemap:");
+    expect(robotsText).toContain("Content-Signal: search=yes,ai-input=yes,ai-train=yes");
+    expect(robotsText).toContain("User-agent: GPTBot");
+    expect(robotsText).toContain("Disallow: /admin");
     expect(sitemap.status()).toBe(200);
     expect(sitemapText).toContain("<urlset");
     expect(sitemapText).toContain("/prendre-rendez-vous");
