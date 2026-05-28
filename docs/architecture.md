@@ -15,7 +15,8 @@ Vistaire is a Next.js App Router application for a premium restaurant menu exper
 - `/demo`: public demo restaurant menu.
 - `/demo/dishes/[slug]`: public dish detail page.
 - `/admin`: public restaurant preview/admin demo surface.
-- `/owner`: protected internal owner area.
+- `/apercu-restaurateur`: public marketing page that presents the restaurateur dashboard value proposition.
+- `/owner`: protected internal Vistaire owner cockpit.
 - `/sign-in`: Clerk sign-in.
 - `/todos`: protected starter route, outside the Vistaire product surface.
 - `/api/analytics/events`: public event ingestion with validation.
@@ -23,12 +24,13 @@ Vistaire is a Next.js App Router application for a premium restaurant menu exper
 - `/api/admin/assistant`: same-origin admin preview assistant endpoint.
 
 ## Auth Boundary
-`proxy.ts` protects `/owner`, `/api/analytics/summary`, `/api/restaurants`, `/api/owner`, and `/todos`. Do not treat `/admin` as protected; it is a public preview surface unless the code is intentionally changed in a separate PR.
+`proxy.ts` protects page routes such as `/owner` and `/todos` with Clerk. Owner API routes call `requireVistaireOwnerApi()` and owner pages call `getVistaireOwnerAuthorization()` after Clerk sign-in, then check `VISTAIRE_OWNER_EMAILS`, `VISTAIRE_OWNER_USER_IDS`, and `VISTAIRE_OWNER_CLERK_USER_IDS` server-side. Do not treat `/admin` as protected; it remains a public noindex preview surface unless the code is intentionally changed in a separate PR.
 
 ## Product Boundaries
 - Landing: `app/page.tsx`, `components/landing/*`, `components/Header.tsx`, `components/DemoRequestSection.tsx`.
 - Demo menu: `app/demo/*`, `components/menu/*`, `lib/demoMenuData.ts`, `lib/menuQuery.ts`.
 - Dish detail and 3D/AR: `app/demo/dishes/[slug]/page.tsx`, `components/dish/*`, `lib/dishAssetWarmup.ts`, `lib/quickLookAssets.ts`, `lib/arEnvironment.ts`.
+- Public restaurateur dashboard marketing: `app/apercu-restaurateur/page.tsx`.
 - Admin preview: `app/admin/*`, `components/admin/*`, `lib/admin/*`, `lib/demoAdminInsights.ts`.
 - Owner/internal: `app/owner/*`, `components/owner/*`, `lib/owner/*`.
 - Analytics: `lib/analytics/*`, `app/api/analytics/*`.

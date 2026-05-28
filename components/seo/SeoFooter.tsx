@@ -4,7 +4,7 @@ import { SEO_PAGES } from "@/lib/seoPages";
 const experienceLinks = [
   { href: "/demo", label: "Menu client exemple" },
   { href: "/demo/dishes/homard-bisque", label: "Fiche plat immersive" },
-  { href: "/admin", label: "Aperçu restaurateur" }
+  { href: "/apercu-restaurateur", label: "Aperçu restaurateur" }
 ] as const;
 
 const whyLinks = [

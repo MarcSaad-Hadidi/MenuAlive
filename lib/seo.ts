@@ -68,6 +68,11 @@ export const PUBLIC_PRODUCT_SITEMAP_ENTRIES = [
     path: "/prendre-rendez-vous",
     changeFrequency: "monthly",
     priority: 0.74
+  },
+  {
+    path: "/apercu-restaurateur",
+    changeFrequency: "monthly",
+    priority: 0.76
   }
 ] as const;
 

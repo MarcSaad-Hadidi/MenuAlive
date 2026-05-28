@@ -7,7 +7,12 @@ const seoPages = [
   "/menu-pdf-vs-menu-digital"
 ];
 
-const publicProductPages = ["/a-propos", "/contact", "/prendre-rendez-vous"];
+const publicProductPages = [
+  "/a-propos",
+  "/contact",
+  "/prendre-rendez-vous",
+  "/apercu-restaurateur"
+];
 
 const forbiddenJsonLdTypes = [
   "Restaurant",
@@ -145,7 +150,7 @@ test.describe("Vistaire SEO smoke", () => {
       await expect(page.getByRole("link", { name: "Carte" }).first()).toBeVisible();
 
       const videoSource = await page.locator("video source").first().getAttribute("src");
-      expect(videoSource).toBe("/vistaire-preview/video");
+      expect(videoSource).toBe("/videos/Vistaire2.mp4");
     }
 
     for (const path of ["/demo", ...seoPages]) {

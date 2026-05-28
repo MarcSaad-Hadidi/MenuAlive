@@ -1,15 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import {
   getDemoRestaurantId,
   getRestaurantInsights
 } from "@/lib/analytics/insights";
+import { requireVistaireOwnerApi } from "@/lib/auth/ownerApi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  await auth.protect();
+  const owner = await requireVistaireOwnerApi();
+  if (!owner.ok) return owner.response;
 
   const restaurantId =
     request.nextUrl.searchParams.get("restaurantId") ?? getDemoRestaurantId();

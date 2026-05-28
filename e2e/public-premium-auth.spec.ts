@@ -65,8 +65,21 @@ test.describe("Premium public auth boundaries", () => {
       request.get("/api/owner/insights", { maxRedirects: 0 })
     ]);
 
-    expect(restaurants.status()).toBe(307);
-    expect(summary.status()).toBe(307);
-    expect(ownerInsights.status()).toBe(307);
+    expect(restaurants.status()).toBe(401);
+    expect(summary.status()).toBe(401);
+    expect(ownerInsights.status()).toBe(401);
+
+    await expect(restaurants.json()).resolves.toEqual({
+      ok: false,
+      error: "Authentification requise."
+    });
+    await expect(summary.json()).resolves.toEqual({
+      ok: false,
+      error: "Authentification requise."
+    });
+    await expect(ownerInsights.json()).resolves.toEqual({
+      ok: false,
+      error: "Authentification requise."
+    });
   });
 });

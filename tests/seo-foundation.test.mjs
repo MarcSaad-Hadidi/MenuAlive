@@ -46,6 +46,7 @@ test("builds a focused sitemap for public Vistaire surfaces", () => {
     "https://www.vistaire.ca/a-propos",
     "https://www.vistaire.ca/contact",
     "https://www.vistaire.ca/prendre-rendez-vous",
+    "https://www.vistaire.ca/apercu-restaurateur",
     "https://www.vistaire.ca/menu-digital-restaurant",
     "https://www.vistaire.ca/menu-qr-code-restaurant",
     "https://www.vistaire.ca/menu-3d-ar-restaurant",
@@ -72,6 +73,46 @@ test("keeps demo admin and dish detail pages out of search indexes", () => {
 
   assert.match(adminLayout, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true/s);
   assert.match(dishPage, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true/s);
+});
+
+test("declares an indexable public restaurateur dashboard page", () => {
+  const page = readFileSync(
+    join(process.cwd(), "app", "apercu-restaurateur", "page.tsx"),
+    "utf8"
+  );
+  const header = readFileSync(join(process.cwd(), "components", "Header.tsx"), "utf8");
+  const footer = readFileSync(
+    join(process.cwd(), "components", "seo", "SeoFooter.tsx"),
+    "utf8"
+  );
+
+  assert.match(page, /canonical:\s*"\/apercu-restaurateur"/);
+  assert.match(page, /openGraph:/);
+  assert.match(page, /twitter:/);
+  assert.match(page, /buildWebPageJsonLd/);
+  assert.match(page, /buildPageServiceJsonLd/);
+  assert.doesNotMatch(page, /index:\s*false/);
+  assert.match(header, /href="\/apercu-restaurateur"/);
+  assert.match(footer, /href:\s*"\/apercu-restaurateur"/);
+});
+
+test("landing preview footer routes restaurateur preview to the public dashboard page", () => {
+  const previewChrome = readFileSync(
+    join(process.cwd(), "components", "vistaire-preview", "VistairePreviewChrome.tsx"),
+    "utf8"
+  );
+
+  assert.match(previewChrome, /restaurateurDashboard:\s*"\/apercu-restaurateur"/);
+  assert.match(previewChrome, /\{\s*label:\s*"Dashboard exemple",\s*href:\s*"\/admin"\s*\}/);
+  assert.match(previewChrome, /href="\/owner"/);
+  assert.doesNotMatch(
+    previewChrome,
+    /footerUtilityLinks[\s\S]{0,220}Dashboard exemple/
+  );
+  assert.doesNotMatch(
+    previewChrome,
+    /\{\s*label:\s*"Aperçu restaurateur",\s*href:\s*routes\.about\s*\}/
+  );
 });
 
 test("declares the focused SEO page inventory without generic scale pages", async () => {

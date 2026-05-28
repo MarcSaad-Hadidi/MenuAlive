@@ -24,8 +24,8 @@ export function AdminTopDishes({ dishes }: AdminTopDishesProps) {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-white/10 bg-[#090705]/88 shadow-[0_16px_52px_rgba(0,0,0,0.24)]">
-        <div className="hidden grid-cols-[minmax(0,1.8fr)_0.45fr_0.6fr_0.55fr] gap-4 border-b border-white/10 bg-black/22 px-5 py-4 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9e8f7c] md:grid">
+      <div className="overflow-hidden rounded-[13px] border border-white/[0.14] bg-black/[0.08] shadow-[inset_0_1px_0_rgba(255,250,240,0.12)] backdrop-blur-sm">
+        <div className="hidden grid-cols-[minmax(0,1.8fr)_0.45fr_0.6fr_0.55fr] gap-4 border-b border-white/[0.12] bg-black/10 px-5 py-4 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#9e8f7c] md:grid">
           <span>Plat</span>
           <span>Vues</span>
           <span>Vues immersives</span>

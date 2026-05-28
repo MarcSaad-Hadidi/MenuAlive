@@ -67,7 +67,7 @@ export function ProductJourneySection() {
             Voir une fiche plat 3D
           </Link>
           <Link
-            href="/admin"
+            href="/apercu-restaurateur"
             className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-sm font-semibold text-[#cdbfa9] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
           >
             Aperçu restaurateur

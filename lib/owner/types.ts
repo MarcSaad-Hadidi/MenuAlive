@@ -5,20 +5,48 @@ export type OwnerRestaurantStatus =
   | "paused"
   | "archived";
 
+export type OwnerReadinessStatus =
+  | "ready"
+  | "needs_setup"
+  | "missing"
+  | "demo";
+
+export type OwnerQrStatus = "ready" | "generable" | "missing";
+
+export type OwnerReadinessItem = {
+  id: "profile" | "menu" | "photos" | "immersive" | "qr";
+  label: string;
+  detail: string;
+  status: OwnerReadinessStatus;
+};
+
 export type OwnerRestaurant = {
   id: string;
   name: string;
   slug: string;
+  isDemo: boolean;
   location: string;
   cuisineType: string;
   status: OwnerRestaurantStatus;
   statusLabel: string;
   dishCount: number;
+  photoDishCount: number;
+  immersiveDishCount: number;
+  incompleteDishCount: number;
   openingsToday: number;
   interactionsToday: number;
   lastActivity: string;
   clientMenuHref: string;
+  menuUrl: string;
+  menuUrlSource: "column" | "derived_preview" | "demo";
   dashboardHref: string;
+  qrTargetUrl: string;
+  qrCodeUrl: string | null;
+  qrStatus: OwnerQrStatus;
+  qrStatusLabel: string;
+  readinessScore: number;
+  readinessItems: OwnerReadinessItem[];
+  nextAction: string;
 };
 
 export type OwnerStats = {
@@ -26,6 +54,12 @@ export type OwnerStats = {
   activeRestaurants: number;
   demoRestaurants: number;
   setupNeededRestaurants: number;
+  menuReadyRestaurants: number;
+  qrReadyRestaurants: number;
+  totalDishes: number;
+  dishesWithPhotos: number;
+  dishesWithImmersive: number;
+  actionsToTreat: number;
   menuOpensToday: number;
   dishViewsToday: number;
   immersiveInteractionsToday: number;
@@ -41,9 +75,20 @@ export type OwnerRecommendation = {
   source: "stored" | "mistral" | "rules";
 };
 
+export type OwnerAction = {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  title: string;
+  body: string;
+  href: string;
+  priority: "high" | "medium" | "low";
+};
+
 export type OwnerDashboardData = {
   stats: OwnerStats;
   restaurants: OwnerRestaurant[];
+  actions: OwnerAction[];
   recommendations: OwnerRecommendation[];
   source: "supabase" | "fallback";
   recommendationSource: "stored" | "mistral" | "rules";

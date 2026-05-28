@@ -101,7 +101,7 @@ export function AdminAssistant({
   return (
     <section
       aria-labelledby="admin-assistant-heading"
-      className="rounded-xl border border-champagne/18 bg-gradient-to-br from-[#15100d]/96 via-[#0c0907]/98 to-[#050403] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.28)] sm:p-6"
+      className="rounded-[13px] border border-white/[0.14] bg-black/[0.08] p-5 shadow-[inset_0_1px_0_rgba(255,250,240,0.12)] backdrop-blur-sm sm:p-6"
     >
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
         <div>
@@ -133,12 +133,12 @@ export function AdminAssistant({
               value={question}
               onChange={(event) => setQuestion(event.target.value.slice(0, 160))}
               placeholder="Question sur le service..."
-              className="min-h-11 w-full min-w-0 rounded-full border border-white/10 bg-[#070504] px-4 text-sm text-cream outline-none transition placeholder:text-[#756856] focus:border-champagne/45 focus:ring-2 focus:ring-champagne/20"
+              className="min-h-11 w-full min-w-0 rounded-full border border-white/14 bg-black/15 px-4 text-sm text-cream outline-none transition placeholder:text-[#756856] focus:border-champagne/45 focus:ring-2 focus:ring-champagne/20"
             />
             <button
               type="submit"
               disabled={isPending}
-              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-5 text-sm font-semibold text-[#17100a] shadow-[0_12px_34px_rgba(217,184,121,0.14)] transition hover:bg-[#e3c785] disabled:cursor-wait disabled:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-white/25 bg-transparent px-5 text-sm font-semibold text-cream shadow-[inset_0_1px_0_rgba(255,250,240,0.16)] transition hover:border-white/50 hover:bg-black/10 disabled:cursor-wait disabled:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
             >
               {isPending ? "Lecture" : "Lire les signaux"}
             </button>
@@ -177,7 +177,7 @@ export function AdminAssistant({
           {visibleRecommendations.map((recommendation, index) => (
             <article
               key={`${recommendation.type}-${recommendation.title}`}
-              className="rounded-lg border border-white/[0.08] bg-white/[0.025] p-4"
+              className="rounded-[12px] border border-white/[0.12] bg-black/[0.08] p-4"
             >
               <div className="flex items-start gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-champagne/30 bg-champagne/10 font-display text-sm text-champagne">

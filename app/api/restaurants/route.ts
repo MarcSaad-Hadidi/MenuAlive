@@ -1,16 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import {
   createRestaurant,
   getOwnerDashboardData,
   validateCreateRestaurantInput
 } from "@/lib/owner/data";
+import { requireVistaireOwnerApi } from "@/lib/auth/ownerApi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  await auth.protect();
+  const owner = await requireVistaireOwnerApi();
+  if (!owner.ok) return owner.response;
 
   const data = await getOwnerDashboardData();
 
@@ -23,7 +24,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  await auth.protect();
+  const owner = await requireVistaireOwnerApi();
+  if (!owner.ok) return owner.response;
 
   let body: unknown;
   try {

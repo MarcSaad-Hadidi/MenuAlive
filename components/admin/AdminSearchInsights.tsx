@@ -6,7 +6,7 @@ type AdminSearchInsightsProps = {
 
 export function AdminSearchInsights({ searches }: AdminSearchInsightsProps) {
   return (
-    <div className="rounded-xl border border-white/10 bg-[#090705]/88 p-5 shadow-[0_16px_52px_rgba(0,0,0,0.24)] sm:p-6">
+    <div className="rounded-[13px] border border-white/[0.14] bg-black/[0.08] p-5 shadow-[inset_0_1px_0_rgba(255,250,240,0.12)] backdrop-blur-sm sm:p-6">
       <h3 className="font-display text-xl text-cream">Recherches clients</h3>
       <p className="mt-2 text-sm leading-relaxed text-[#a99a86]">
         Les mots qui reviennent quand les clients explorent la carte.
@@ -16,7 +16,7 @@ export function AdminSearchInsights({ searches }: AdminSearchInsightsProps) {
         {searches.map((search) => (
           <article
             key={search.term}
-            className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
+            className="rounded-[12px] border border-white/[0.12] bg-black/[0.08] p-4"
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
