@@ -126,10 +126,25 @@ test("PDF to Vistaire preview reveal uses hover mask, keyboard focus, finger hov
   assert.match(component, /aria-pressed=\{revealed \|\| fingerActive\}/);
   assert.match(component, /const onPointerMove = \(event: PointerEvent<HTMLDivElement>\)/);
   assert.match(component, /onPointerMove=\{onPointerMove\}/);
+  const pointerMoveHandler = component.match(
+    /const onPointerMove = \(event: PointerEvent<HTMLDivElement>\) => \{[\s\S]*?\n  \};/
+  );
+  assert.ok(pointerMoveHandler, "pointer move handler should stay explicit");
+  assert.doesNotMatch(
+    pointerMoveHandler[0],
+    /setFingerActive/,
+    "touch movement should update CSS variables without scheduling React state"
+  );
   assert.match(component, /onKeyDown=\{onKeyDown\}/);
   assert.match(component, /data-touching=\{fingerActive \? "true" : "false"\}/);
   assert.match(component, /onPointerDown=\{onPointerDown\}/);
   assert.match(component, /onPointerCancel=\{onPointerCancel\}/);
+  assert.match(component, /onPointerLeave=\{onPointerLeave\}/);
+  assert.doesNotMatch(
+    component,
+    /\.setPointerCapture\(/,
+    "touch reveal should not capture the pointer and trap native page scrolling"
+  );
   assert.match(component, /VistairePreviewMenuLayer/);
   assert.match(component, /VistairePreviewPdfLayer/);
   assert.match(component, /VistairePreviewPdfCompareSlider\.module\.css/);
@@ -139,7 +154,12 @@ test("PDF to Vistaire preview reveal uses hover mask, keyboard focus, finger hov
   assert.match(css, /\.frame\[data-touching="true"\] \.vistaireLayer/);
   assert.match(css, /@media \(hover: none\), \(pointer: coarse\), \(max-width: 640px\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(css, /touch-action:\s*none/);
+  assert.match(css, /touch-action:\s*pan-y/);
+  assert.match(
+    css,
+    /\.frame\[data-touching="true"\] \.vistaireLayer\s*\{[\s\S]*transition:\s*none/,
+    "the mobile reveal mask must not animate toward the finger while dragging"
+  );
 });
 
 test("preview topbar is sharp glass without asymmetric color halos", async () => {
