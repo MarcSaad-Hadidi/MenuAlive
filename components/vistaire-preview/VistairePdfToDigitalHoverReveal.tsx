@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import type { PdfComparePreviewData } from "@/lib/pdfComparePreviewData";
 import {
   VistairePreviewMenuLayer,
@@ -13,38 +13,54 @@ type VistairePdfToDigitalHoverRevealProps = {
   preview: PdfComparePreviewData;
 };
 
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(100, value));
+}
+
 export function VistairePdfToDigitalHoverReveal({
   preview
 }: VistairePdfToDigitalHoverRevealProps) {
   const captionId = useId();
   const frameId = useId();
+  const activeTouchRectRef = useRef<DOMRect | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [fingerActive, setFingerActive] = useState(false);
 
   const updateRevealPosition = (event: PointerEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
+    const rect =
+      activeTouchRectRef.current ?? event.currentTarget.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
 
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    const x = clampPercent(((event.clientX - rect.left) / rect.width) * 100);
+    const y = clampPercent(((event.clientY - rect.top) / rect.height) * 100);
     event.currentTarget.style.setProperty("--reveal-x", `${x}%`);
     event.currentTarget.style.setProperty("--reveal-y", `${y}%`);
   };
 
+  const clearTouchInteraction = (event: PointerEvent<HTMLDivElement>) => {
+    setFingerActive(false);
+    activeTouchRectRef.current = null;
+
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // The browser may already have released the pointer.
+    }
+  };
+
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") {
+      activeTouchRectRef.current = event.currentTarget.getBoundingClientRect();
+    }
+
     updateRevealPosition(event);
 
     if (event.pointerType !== "touch") return;
     setFingerActive(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     updateRevealPosition(event);
-
-    if (event.pointerType === "touch") {
-      setFingerActive(true);
-    }
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -55,12 +71,7 @@ export function VistairePdfToDigitalHoverReveal({
 
   const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "touch") {
-      setFingerActive(false);
-      try {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {
-        // The browser may already have released the pointer.
-      }
+      clearTouchInteraction(event);
       return;
     }
 
@@ -70,7 +81,12 @@ export function VistairePdfToDigitalHoverReveal({
 
   const onPointerCancel = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== "touch") return;
-    setFingerActive(false);
+    clearTouchInteraction(event);
+  };
+
+  const onPointerLeave = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "touch") return;
+    clearTouchInteraction(event);
   };
 
   return (
@@ -93,6 +109,7 @@ export function VistairePdfToDigitalHoverReveal({
             onKeyDown={onKeyDown}
             onPointerCancel={onPointerCancel}
             onPointerDown={onPointerDown}
+            onPointerLeave={onPointerLeave}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             role="button"

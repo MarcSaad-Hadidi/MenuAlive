@@ -111,7 +111,7 @@
 @media (hover: none), (pointer: coarse), (max-width: 640px) {
   .frame {
     cursor: crosshair;
-    touch-action: none;
+    touch-action: pan-y;
   }
 
   .hint {
@@ -128,6 +128,7 @@
   .frame[data-touching="true"] .vistaireLayer {
     clip-path: circle(38% at var(--reveal-x) var(--reveal-y));
     opacity: 1;
+    transition: none;
   }
 
   .frame[data-revealed="true"] .vistaireLayer {
