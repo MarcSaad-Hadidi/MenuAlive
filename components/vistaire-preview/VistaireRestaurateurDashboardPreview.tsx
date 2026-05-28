@@ -53,11 +53,9 @@ function ArrowIcon() {
 }
 
 export function VistaireRestaurateurDashboardPreview({
-  demoMenuUrl,
   demoQrSvg,
   routeMode = "production"
 }: {
-  demoMenuUrl: string;
   demoQrSvg: string;
   routeMode?: VistaireRouteMode;
 }) {
@@ -169,7 +167,6 @@ export function VistaireRestaurateurDashboardPreview({
                 générés dans le cockpit owner et pointent vers le menu du
                 restaurant, pas vers une route interne.
               </p>
-              <p className={styles.menuUrl}>{demoMenuUrl}</p>
             </div>
             <div className={styles.qrMark}>
               <span

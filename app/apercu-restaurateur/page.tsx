@@ -68,7 +68,6 @@ export default async function RestaurateurDashboardPreviewPage() {
         ]}
       />
       <VistaireRestaurateurDashboardPreview
-        demoMenuUrl={demoMenuUrl}
         demoQrSvg={demoQrSvg}
         routeMode="production"
       />
