@@ -143,7 +143,7 @@ test("PDF to Vistaire preview reveal uses hover mask, keyboard focus, finger hov
   assert.doesNotMatch(
     component,
     /\.setPointerCapture\(/,
-    "touch reveal should not capture the pointer and trap native page scrolling"
+    "touch reveal should keep the gesture scoped without pointer capture"
   );
   assert.match(component, /VistairePreviewMenuLayer/);
   assert.match(component, /VistairePreviewPdfLayer/);
@@ -154,7 +154,13 @@ test("PDF to Vistaire preview reveal uses hover mask, keyboard focus, finger hov
   assert.match(css, /\.frame\[data-touching="true"\] \.vistaireLayer/);
   assert.match(css, /@media \(hover: none\), \(pointer: coarse\), \(max-width: 640px\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(css, /touch-action:\s*pan-y/);
+  assert.match(css, /touch-action:\s*none/);
+  assert.match(css, /touch-action:\s*pinch-zoom/);
+  assert.doesNotMatch(
+    css,
+    /touch-action:\s*pan-y/,
+    "the reveal surface must not hand vertical drags to native page scroll"
+  );
   assert.match(
     css,
     /\.frame\[data-touching="true"\] \.vistaireLayer\s*\{[\s\S]*transition:\s*none/,
