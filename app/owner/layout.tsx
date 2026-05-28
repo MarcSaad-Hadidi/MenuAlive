@@ -42,29 +42,31 @@ export default async function OwnerLayout({
       signUpUrl="/sign-in"
       afterSignOutUrl="/"
     >
-      <div className={styles.topbarWrap}>
-        <header className={styles.topbar}>
-          <Link className={styles.brand} href="/owner" prefetch={false}>
-            <span className={styles.brandName}>Vistaire</span>
-            <span className={styles.brandMeta}>Cockpit owner</span>
-          </Link>
-          <nav className={styles.topLinks} aria-label="Navigation owner">
-            <Link href="/owner" prefetch={false}>
-              Cockpit
+      <div className={styles.ownerTheme}>
+        <div className={styles.topbarWrap}>
+          <header className={styles.topbar}>
+            <Link className={styles.brand} href="/owner" prefetch={false}>
+              <span className={styles.brandName}>Vistaire</span>
+              <span className={styles.brandMeta}>Cockpit owner</span>
             </Link>
-            <Link href="/apercu-restaurateur" prefetch={false}>
-              Aperçu public
-            </Link>
-            <Link href="/admin" prefetch={false}>
-              Dashboard exemple
-            </Link>
-          </nav>
-          <div className={styles.userSlot}>
-            <UserButton />
-          </div>
-        </header>
+            <nav className={styles.topLinks} aria-label="Navigation owner">
+              <Link href="/owner" prefetch={false}>
+                Cockpit
+              </Link>
+              <Link href="/apercu-restaurateur" prefetch={false}>
+                Aperçu public
+              </Link>
+              <Link href="/admin" prefetch={false}>
+                Dashboard exemple
+              </Link>
+            </nav>
+            <div className={styles.userSlot}>
+              <UserButton />
+            </div>
+          </header>
+        </div>
+        {children}
       </div>
-      {children}
     </ClerkProvider>
   );
 }

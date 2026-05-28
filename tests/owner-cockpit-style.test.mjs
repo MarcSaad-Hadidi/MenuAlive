@@ -18,6 +18,7 @@ test("owner cockpit uses the Vistaire premium owner shell", () => {
   assert.match(layout, /OwnerCockpit\.module\.css/);
   assert.doesNotMatch(layout, /Header/);
   assert.match(layout, /Cockpit owner/);
+  assert.match(layout, /className=\{styles\.ownerTheme\}[\s\S]*className=\{styles\.topbarWrap\}[\s\S]*\{children\}/);
 
   assert.match(page, /PhotoRestoComplet5\.png/);
   assert.match(page, /className=\{styles\.page\}/);
@@ -29,6 +30,8 @@ test("owner cockpit uses the Vistaire premium owner shell", () => {
     assert.match(source, /OwnerCockpit\.module\.css/);
   }
 
+  assert.match(css, /\.ownerTheme[\s\S]*--owner-cream/);
+  assert.match(css, /\.ownerTheme[\s\S]*font-family:\s*var\(--owner-body\)/);
   assert.match(css, /\.backgroundImage/);
   assert.match(css, /\.topbar/);
   assert.match(css, /\.heroPanel/);

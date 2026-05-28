@@ -22,7 +22,7 @@
   src: url("/fonts/vistaire-preview/NeueMontreal-Bold.otf") format("opentype");
 }
 
-.page {
+.ownerTheme {
   --owner-cream: #fff7ea;
   --owner-champagne: #e8cf9b;
   --owner-muted: rgba(255, 250, 240, 0.72);
@@ -30,6 +30,14 @@
   --owner-display: "BT Suave";
   --owner-body: "Neue Montreal";
 
+  min-height: 100svh;
+  overflow-x: clip;
+  background: #0d0805;
+  color: var(--owner-cream);
+  font-family: var(--owner-body);
+}
+
+.page {
   position: relative;
   min-height: 100svh;
   overflow-x: clip;
