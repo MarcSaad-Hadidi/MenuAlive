@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { MenuQrCode } from "@/components/owner/MenuQrCode";
+import styles from "@/components/owner/OwnerCockpit.module.css";
 import { buildRestaurantMenuPath, slugifyRestaurantSlug } from "@/lib/owner/menuUrlCore";
 import type { OwnerRestaurant } from "@/lib/owner/types";
 
@@ -16,8 +17,8 @@ type RestaurantCreateFormProps = {
 };
 
 const statusOptions = [
-  { value: "setup_needed", label: "A configurer" },
-  { value: "demo", label: "Presentation" },
+  { value: "setup_needed", label: "À configurer" },
+  { value: "demo", label: "Présentation" },
   { value: "active", label: "Actif" }
 ];
 
@@ -94,12 +95,12 @@ export function RestaurantCreateForm({ siteOrigin }: RestaurantCreateFormProps) 
       };
 
       if (!response.ok || !result.ok || !result.restaurant) {
-        throw new Error(result.error ?? "Creation impossible.");
+        throw new Error(result.error ?? "Création impossible.");
       }
 
       setState({
         status: "success",
-        message: "Restaurant cree. QR et liens prets pour la prochaine etape.",
+        message: "Restaurant créé. QR et liens prêts pour la prochaine étape.",
         restaurant: result.restaurant
       });
       router.refresh();
@@ -109,7 +110,7 @@ export function RestaurantCreateForm({ siteOrigin }: RestaurantCreateFormProps) 
         message:
           error instanceof Error
             ? error.message
-            : "Le restaurant n'a pas pu etre cree."
+            : "Le restaurant n'a pas pu être créé."
       });
     } finally {
       setIsSubmitting(false);
@@ -117,12 +118,9 @@ export function RestaurantCreateForm({ siteOrigin }: RestaurantCreateFormProps) 
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,0.62fr)_minmax(320px,0.38fr)]">
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-xl border border-white/10 bg-[#090705]/88 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.28)] sm:p-6"
-      >
-        <div className="grid gap-4 md:grid-cols-2">
+    <div className={styles.createGrid}>
+      <form onSubmit={handleSubmit} className={styles.formPanel}>
+        <div className={styles.formGrid}>
           <Field
             label="Nom du restaurant"
             name="name"
@@ -151,13 +149,13 @@ export function RestaurantCreateForm({ siteOrigin }: RestaurantCreateFormProps) 
             value={cuisineType}
             onChange={setCuisineType}
           />
-          <label className="block">
-            <span className="mb-2 block text-sm text-[#ded0bb]">Statut</span>
+          <label className={styles.formField}>
+            <span className={styles.filterLabel}>Statut</span>
             <select
               name="status"
               value={status}
               onChange={(event) => setStatus(event.target.value)}
-              className="h-12 w-full rounded-[6px] border border-white/14 bg-black/38 px-4 text-base text-cream outline-none transition focus:border-champagne focus:ring-2 focus:ring-champagne/25"
+              className={styles.control}
             >
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -182,7 +180,7 @@ export function RestaurantCreateForm({ siteOrigin }: RestaurantCreateFormProps) 
             onChange={setContactEmail}
           />
           <Field
-            label="Telephone optionnel"
+            label="Téléphone optionnel"
             name="contactPhone"
             type="tel"
             value={contactPhone}
@@ -190,49 +188,43 @@ export function RestaurantCreateForm({ siteOrigin }: RestaurantCreateFormProps) 
           />
         </div>
 
-        <label className="mt-4 block">
-          <span className="mb-2 block text-sm text-[#ded0bb]">
-            Notes internes optionnelles
-          </span>
+        <label className={styles.formField}>
+          <span className={styles.filterLabel}>Notes internes optionnelles</span>
           <textarea
             name="notes"
             rows={4}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            className="w-full resize-none rounded-[6px] border border-white/14 bg-black/38 px-4 py-3 text-base text-cream outline-none transition focus:border-champagne focus:ring-2 focus:ring-champagne/25"
+            className={styles.textarea}
           />
         </label>
 
-        <div className="mt-6 rounded-lg border border-champagne/18 bg-champagne/[0.055] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-champagne/85">
-            URL menu preview
-          </p>
-          <p className="mt-2 break-all text-sm leading-relaxed text-[#e4d4b8]">
-            {previewMenuUrl}
-          </p>
-          <p className="mt-2 text-xs leading-relaxed text-[#9f907d]">
-            Lien derive depuis le domaine configure du site, jamais hardcode sur
+        <div className={styles.urlPreview}>
+          <p className={styles.metricLabel}>URL menu preview</p>
+          <p className={`${styles.bodyText} ${styles.breakText}`}>{previewMenuUrl}</p>
+          <p className={styles.sourceNote}>
+            Lien dérivé depuis le domaine configuré du site, jamais hardcodé sur
             localhost.
           </p>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className={styles.submitRow}>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex min-h-12 items-center justify-center rounded-full border border-champagne/50 bg-champagne px-6 py-3 text-base font-semibold text-charcoal shadow-[0_18px_48px_rgba(217,184,121,0.2)] transition hover:bg-[#f0d396] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne focus-visible:ring-offset-2 focus-visible:ring-offset-charcoal disabled:cursor-wait disabled:opacity-60"
+            className={styles.submitButton}
           >
-            {isSubmitting ? "Creation..." : "Creer le restaurant"}
+            {isSubmitting ? "Création..." : "Créer le restaurant"}
           </button>
           {state.status === "error" ? (
-            <p role="status" className="text-sm leading-6 text-[#e8b9a4]">
+            <p role="status" className={styles.errorText}>
               {state.message}
             </p>
           ) : null}
         </div>
       </form>
 
-      <aside className="rounded-xl border border-white/10 bg-[#0d0906]/88 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.28)] sm:p-6">
+      <aside className={styles.asidePanel}>
         {state.status === "success" ? (
           <SuccessPanel state={state} />
         ) : (
@@ -258,25 +250,21 @@ function PreviewPanel({
 }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-champagne/80">
-        Avant creation
-      </p>
-      <h3 className="mt-3 font-display text-2xl leading-tight text-cream">
-        {name}
-      </h3>
-      <dl className="mt-5 space-y-3 text-sm">
+      <p className={styles.badge}>Avant création</p>
+      <h3 className={styles.panelTitle}>{name}</h3>
+      <dl className={styles.definitionList}>
         <div>
-          <dt className="text-[#7f705f]">Slug</dt>
-          <dd className="mt-1 break-all text-[#e2d2b8]">{slug}</dd>
+          <dt>Slug</dt>
+          <dd>{slug}</dd>
         </div>
         <div>
-          <dt className="text-[#7f705f]">Menu public</dt>
-          <dd className="mt-1 break-all text-[#e2d2b8]">{menuUrl}</dd>
+          <dt>Menu public</dt>
+          <dd>{menuUrl}</dd>
         </div>
       </dl>
-      <p className="mt-5 text-sm leading-relaxed text-[#a99a86]">
-        Apres creation, Vistaire affichera le QR scannable et les prochaines
-        etapes de setup.
+      <p className={styles.bodyText}>
+        Après création, Vistaire affichera le QR scannable et les prochaines
+        étapes de setup.
       </p>
     </div>
   );
@@ -291,45 +279,35 @@ function SuccessPanel({
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-champagne/80">
-        Creation terminee
-      </p>
-      <h3 className="mt-3 font-display text-2xl leading-tight text-cream">
-        {restaurant.name}
-      </h3>
-      <p className="mt-2 text-sm leading-relaxed text-[#d9ccb8]">
-        {state.message}
-      </p>
+      <p className={styles.badge}>Création terminée</p>
+      <h3 className={styles.panelTitle}>{restaurant.name}</h3>
+      <p className={styles.bodyText}>{state.message}</p>
 
-      <dl className="mt-5 space-y-3 text-sm">
+      <dl className={styles.definitionList}>
         <div>
-          <dt className="text-[#7f705f]">Slug</dt>
-          <dd className="mt-1 break-all text-[#e2d2b8]">{restaurant.slug}</dd>
+          <dt>Slug</dt>
+          <dd>{restaurant.slug}</dd>
         </div>
         <div>
-          <dt className="text-[#7f705f]">Menu public</dt>
-          <dd className="mt-1 break-all text-[#e2d2b8]">{restaurant.menuUrl}</dd>
+          <dt>Menu public</dt>
+          <dd>{restaurant.menuUrl}</dd>
         </div>
         <div>
-          <dt className="text-[#7f705f]">Dashboard restaurateur</dt>
-          <dd className="mt-1 break-all text-[#e2d2b8]">
-            {restaurant.dashboardHref}
-          </dd>
+          <dt>Dashboard restaurateur</dt>
+          <dd>{restaurant.dashboardHref}</dd>
         </div>
       </dl>
 
       <MenuQrCode
         menuUrl={restaurant.qrTargetUrl}
         restaurantName={restaurant.name}
-        className="mt-5"
+        className={styles.successQr}
       />
 
-      <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.025] p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#cdbb9f]">
-          Prochaines etapes
-        </p>
-        <ul className="mt-3 space-y-2 text-sm leading-relaxed text-[#a99a86]">
-          <li>Completer les plats et photos du menu.</li>
+      <div className={styles.nextSteps}>
+        <p className={styles.metricLabel}>Prochaines étapes</p>
+        <ul>
+          <li>Compléter les plats et photos du menu.</li>
           <li>Choisir les plats signatures pour 3D / AR.</li>
           <li>Tester le QR sur mobile avant impression.</li>
         </ul>
@@ -354,15 +332,15 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label className="block">
-      <span className="mb-2 block text-sm text-[#ded0bb]">{label}</span>
+    <label className={styles.formField}>
+      <span className={styles.filterLabel}>{label}</span>
       <input
         name={name}
         type={type}
         required={required}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full rounded-[6px] border border-white/14 bg-black/38 px-4 text-base text-cream outline-none transition placeholder:text-white/30 focus:border-champagne focus:ring-2 focus:ring-champagne/25"
+        className={styles.control}
       />
     </label>
   );

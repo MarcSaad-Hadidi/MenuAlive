@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { ClerkProvider, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/Header";
+import styles from "@/components/owner/OwnerCockpit.module.css";
 import {
   vistaireClerkAppearance,
   vistaireClerkLocalization
@@ -41,8 +42,31 @@ export default async function OwnerLayout({
       signUpUrl="/sign-in"
       afterSignOutUrl="/"
     >
-      <Header userSlot={<UserButton />} />
-      <main className="min-h-screen">{children}</main>
+      <div className={styles.ownerTheme}>
+        <div className={styles.topbarWrap}>
+          <header className={styles.topbar}>
+            <Link className={styles.brand} href="/owner" prefetch={false}>
+              <span className={styles.brandName}>Vistaire</span>
+              <span className={styles.brandMeta}>Cockpit owner</span>
+            </Link>
+            <nav className={styles.topLinks} aria-label="Navigation owner">
+              <Link href="/owner" prefetch={false}>
+                Cockpit
+              </Link>
+              <Link href="/apercu-restaurateur" prefetch={false}>
+                Aperçu public
+              </Link>
+              <Link href="/admin" prefetch={false}>
+                Dashboard exemple
+              </Link>
+            </nav>
+            <div className={styles.userSlot}>
+              <UserButton />
+            </div>
+          </header>
+        </div>
+        {children}
+      </div>
     </ClerkProvider>
   );
 }

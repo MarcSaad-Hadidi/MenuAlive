@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
+import restaurantBackground from "@/Framer/PhotoRestoComplet5.png";
 import { OwnerRestaurantTable } from "@/components/owner/OwnerRestaurantTable";
+import styles from "@/components/owner/OwnerCockpit.module.css";
 import { RestaurantCreateForm } from "@/components/owner/RestaurantCreateForm";
-import { PrimaryButton } from "@/components/PrimaryButton";
 import { getOwnerDashboardData } from "@/lib/owner/data";
 import { getSiteUrl } from "@/lib/seo";
 import type { OwnerAction, OwnerRecommendation } from "@/lib/owner/types";
@@ -9,16 +11,16 @@ import type { OwnerAction, OwnerRecommendation } from "@/lib/owner/types";
 export const dynamic = "force-dynamic";
 
 const RECOMMENDATION_STYLES: Record<OwnerRecommendation["type"], string> = {
-  opportunity: "border-champagne/35 bg-champagne/10 text-champagne",
-  watch: "border-[#c9a46f]/28 bg-[#c9a46f]/8 text-[#e3c99b]",
-  setup: "border-white/12 bg-white/[0.04] text-[#d9ccb8]",
-  upsell: "border-emerald-300/25 bg-emerald-300/10 text-emerald-100"
+  opportunity: styles.recommendationOpportunity,
+  watch: styles.recommendationWatch,
+  setup: styles.recommendationSetup,
+  upsell: styles.recommendationUpsell
 };
 
 const ACTION_STYLES: Record<OwnerAction["priority"], string> = {
-  high: "border-[#e8b9a4]/35 bg-[#e8b9a4]/10 text-[#ffd7c5]",
-  medium: "border-champagne/35 bg-champagne/10 text-champagne",
-  low: "border-white/12 bg-white/[0.04] text-[#d9ccb8]"
+  high: styles.priorityHigh,
+  medium: styles.priorityMedium,
+  low: styles.priorityLow
 };
 
 function formatNumber(value: number): string {
@@ -30,207 +32,209 @@ export default async function OwnerPage() {
   const siteOrigin = getSiteUrl().origin;
 
   return (
-    <div className="bg-[#080706] px-4 pb-24 pt-28 text-cream sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-7xl">
-        <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#090705]/92 px-5 py-8 shadow-[0_24px_90px_rgba(0,0,0,0.34)] sm:px-8 sm:py-10 lg:px-10">
-          <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne/80">
-                Cockpit owner Vistaire
-              </p>
-              <h1 className="mt-4 font-display text-[clamp(2.3rem,6vw,5.2rem)] font-normal leading-[0.98] text-cream">
-                Pilotage restaurant, menu et QR.
-              </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-[#cdbfa9] sm:text-lg">
+    <main className={styles.page}>
+      <Image
+        alt=""
+        aria-hidden="true"
+        className={styles.backgroundImage}
+        fill
+        priority
+        quality={100}
+        sizes="100vw"
+        src={restaurantBackground}
+        unoptimized
+      />
+
+      <div className={styles.shell}>
+        <div className={styles.frame}>
+          <section className={`${styles.card} ${styles.heroPanel}`}>
+            <div className={styles.heroCopy}>
+              <p className={styles.eyebrow}>Cockpit owner Vistaire</p>
+              <h1>Pilotage restaurant, menu et QR.</h1>
+              <p className={styles.heroLead}>
                 Vue interne owner-only pour savoir quels restaurants sont
                 montrables, lesquels demandent une action, et quels QR pointent
                 vers un menu public exploitable.
               </p>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8f806e]">
-                Source cockpit
-              </p>
-              <p className="mt-3 text-sm leading-relaxed text-[#d9ccb8]">
-                {data.note}
-              </p>
-              <div className="mt-5 grid gap-2 min-[430px]:grid-cols-2 lg:grid-cols-1">
-                <PrimaryButton href="#create-restaurant" className="justify-center">
-                  Creer restaurant
-                </PrimaryButton>
+              <div className={styles.heroActions}>
                 <Link
+                  className={styles.buttonPrimary}
+                  href="#create-restaurant"
+                  prefetch={false}
+                >
+                  Créer restaurant
+                </Link>
+                <Link
+                  className={styles.buttonSecondary}
                   href="/apercu-restaurateur"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-5 text-center text-sm font-semibold text-[#d9ccb8] transition hover:border-champagne/35 hover:text-cream focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  prefetch={false}
                 >
                   Page publique
                 </Link>
+                <Link
+                  className={styles.buttonGhost}
+                  href="#restaurants"
+                  prefetch={false}
+                >
+                  Voir restaurants
+                </Link>
               </div>
             </div>
-          </div>
-        </section>
 
-        <section className="mt-10" aria-labelledby="owner-stats-heading">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 id="owner-stats-heading" className="font-display text-2xl text-cream">
-                Vue globale
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
-                Les chiffres de setup restent derives des donnees disponibles.
+            <aside className={`${styles.card} ${styles.sourcePanel}`}>
+              <div>
+                <p className={styles.badge}>Source cockpit</p>
+                <p className={styles.bodyText}>{data.note}</p>
+              </div>
+              <p className={styles.sourceBadge}>
+                {data.source === "fallback" ? "Données demo" : "Données Supabase"}
               </p>
-            </div>
-            <p className="text-sm text-[#8f806e]">
-              {data.source === "fallback" ? "Donnees demo" : "Donnees Supabase"}
-            </p>
-          </div>
+            </aside>
+          </section>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Restaurants total" value={data.stats.totalRestaurants} />
-            <StatCard label="Actifs" value={data.stats.activeRestaurants} />
-            <StatCard label="En setup" value={data.stats.setupNeededRestaurants} />
-            <StatCard label="Menus prets" value={data.stats.menuReadyRestaurants} />
-            <StatCard label="QR marques prets" value={data.stats.qrReadyRestaurants} />
-            <StatCard label="Plats total" value={data.stats.totalDishes} />
-            <StatCard label="Plats avec photos" value={data.stats.dishesWithPhotos} />
-            <StatCard label="Plats avec 3D / AR" value={data.stats.dishesWithImmersive} />
-            <StatCard label="Actions a traiter" value={data.stats.actionsToTreat} />
-            <StatCard label="Ouvertures menu" value={data.stats.menuOpensToday} />
-            <StatCard label="Plats consultes" value={data.stats.dishViewsToday} />
-            <article className="rounded-xl border border-white/10 bg-gradient-to-br from-[#14100d]/96 via-[#0d0a08]/98 to-[#070504] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.28)]">
-              <p className="text-[0.68rem] font-semibold uppercase leading-relaxed tracking-[0.18em] text-champagne/80">
-                Restaurant le plus actif
-              </p>
-              <p className="mt-4 font-display text-2xl leading-tight text-cream">
-                {data.stats.mostActiveRestaurant}
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section className="mt-12" aria-labelledby="owner-actions-heading">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 id="owner-actions-heading" className="font-display text-2xl text-cream">
-                Priorites owner
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
-                Actions derivees des menus, QR, photos et assets immersifs.
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {data.actions.length > 0 ? (
-              data.actions.map((action) => (
-                <ActionCard key={action.id} action={action} />
-              ))
-            ) : (
-              <article className="rounded-xl border border-white/10 bg-[#090705]/88 p-5 text-sm leading-relaxed text-[#a99a86]">
-                Aucun signal urgent dans les donnees disponibles.
-              </article>
-            )}
-          </div>
-        </section>
-
-        <section id="restaurants" className="mt-12" aria-labelledby="owner-restaurants-heading">
-          <div className="mb-6">
-            <h2 id="owner-restaurants-heading" className="font-display text-2xl text-cream">
-              Restaurants
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
-              Recherche, filtres, readiness, liens menu et QR generables par
-              restaurant.
-            </p>
-          </div>
-          <OwnerRestaurantTable restaurants={data.restaurants} />
-        </section>
-
-        <section className="mt-12" aria-labelledby="owner-recommendations-heading">
-          <div>
-            <h2 id="owner-recommendations-heading" className="font-display text-2xl text-cream">
-              Recommandations automatiques
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
-              Priorites proposees a partir des signaux agreges des restaurants.
-            </p>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {data.recommendations.map((recommendation) => (
-              <article
-                key={recommendation.id}
-                className="rounded-xl border border-white/10 bg-gradient-to-br from-[#14100d]/96 to-[#080604] p-5 shadow-[0_16px_52px_rgba(0,0,0,0.24)]"
-              >
-                <span
-                  className={`inline-flex min-h-8 items-center rounded-full border px-3 text-xs font-semibold ${RECOMMENDATION_STYLES[recommendation.type]}`}
-                >
-                  {recommendation.restaurantName || "Vistaire"}
-                </span>
-                <h3 className="mt-4 font-display text-xl leading-snug text-cream">
-                  {recommendation.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-[#a99a86]">
-                  {recommendation.body}
+          <section className={`${styles.card} ${styles.section}`} aria-labelledby="owner-stats-heading">
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 id="owner-stats-heading" className={styles.sectionTitle}>
+                  Vue globale
+                </h2>
+                <p className={styles.sectionText}>
+                  Les chiffres de setup restent dérivés des données disponibles.
                 </p>
-              </article>
-            ))}
-          </div>
-          <p className="mt-4 text-xs leading-relaxed text-[#7f705f]">
-            Source : recommandations automatiques
-            {data.recommendationSource === "rules"
-              ? " avec logique de secours."
-              : "."}
-          </p>
-        </section>
+              </div>
+            </div>
 
-        <section
-          id="create-restaurant"
-          className="mt-12 scroll-mt-28"
-          aria-labelledby="create-restaurant-heading"
-        >
-          <div className="mb-6">
-            <h2 id="create-restaurant-heading" className="font-display text-2xl text-cream">
-              Creer un restaurant
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
-              Creation owner-only avec slug, URL menu preview et QR relie au
-              menu public.
+            <div className={styles.statsGrid}>
+              <StatCard label="Restaurants total" value={data.stats.totalRestaurants} />
+              <StatCard label="Actifs" value={data.stats.activeRestaurants} />
+              <StatCard label="En setup" value={data.stats.setupNeededRestaurants} />
+              <StatCard label="Menus prêts" value={data.stats.menuReadyRestaurants} />
+              <StatCard label="QR prêts" value={data.stats.qrReadyRestaurants} />
+              <StatCard label="Plats total" value={data.stats.totalDishes} />
+              <StatCard label="Plats avec photos" value={data.stats.dishesWithPhotos} />
+              <StatCard label="Plats avec 3D / AR" value={data.stats.dishesWithImmersive} />
+              <StatCard label="Actions à traiter" value={data.stats.actionsToTreat} />
+              <StatCard label="Ouvertures menu" value={data.stats.menuOpensToday} />
+              <StatCard label="Plats consultés" value={data.stats.dishViewsToday} />
+              <article className={styles.statCard}>
+                <p className={styles.metricLabel}>Restaurant le plus actif</p>
+                <strong>{data.stats.mostActiveRestaurant}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section className={`${styles.card} ${styles.section}`} aria-labelledby="owner-actions-heading">
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 id="owner-actions-heading" className={styles.sectionTitle}>
+                  Priorités owner
+                </h2>
+                <p className={styles.sectionText}>
+                  Actions dérivées des menus, QR, photos et assets immersifs.
+                </p>
+              </div>
+            </div>
+            <div className={styles.actionGrid}>
+              {data.actions.length > 0 ? (
+                data.actions.map((action) => (
+                  <ActionCard key={action.id} action={action} />
+                ))
+              ) : (
+                <article className={styles.empty}>
+                  Aucun signal urgent dans les données disponibles.
+                </article>
+              )}
+            </div>
+          </section>
+
+          <section id="restaurants" className={`${styles.card} ${styles.section}`} aria-labelledby="owner-restaurants-heading">
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 id="owner-restaurants-heading" className={styles.sectionTitle}>
+                  Restaurants
+                </h2>
+                <p className={styles.sectionText}>
+                  Recherche, filtres, readiness, liens menu et QR générables par
+                  restaurant.
+                </p>
+              </div>
+            </div>
+            <OwnerRestaurantTable restaurants={data.restaurants} />
+          </section>
+
+          <section className={`${styles.card} ${styles.section}`} aria-labelledby="owner-recommendations-heading">
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 id="owner-recommendations-heading" className={styles.sectionTitle}>
+                  Recommandations automatiques
+                </h2>
+                <p className={styles.sectionText}>
+                  Priorités proposées à partir des signaux agrégés des restaurants.
+                </p>
+              </div>
+            </div>
+            <div className={styles.recommendationGrid}>
+              {data.recommendations.map((recommendation) => (
+                <article key={recommendation.id} className={styles.recommendationCard}>
+                  <span
+                    className={`${styles.pill} ${RECOMMENDATION_STYLES[recommendation.type]}`}
+                  >
+                    {recommendation.restaurantName || "Vistaire"}
+                  </span>
+                  <h3>{recommendation.title}</h3>
+                  <p>{recommendation.body}</p>
+                </article>
+              ))}
+            </div>
+            <p className={styles.sourceNote}>
+              Source : recommandations automatiques
+              {data.recommendationSource === "rules"
+                ? " avec logique de secours."
+                : "."}
             </p>
-          </div>
-          <RestaurantCreateForm siteOrigin={siteOrigin} />
-        </section>
+          </section>
+
+          <section
+            id="create-restaurant"
+            className={`${styles.card} ${styles.section}`}
+            aria-labelledby="create-restaurant-heading"
+          >
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2 id="create-restaurant-heading" className={styles.sectionTitle}>
+                  Créer un restaurant
+                </h2>
+                <p className={styles.sectionText}>
+                  Création owner-only avec slug, URL menu preview et QR relié au
+                  menu public.
+                </p>
+              </div>
+            </div>
+            <RestaurantCreateForm siteOrigin={siteOrigin} />
+          </section>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <article className="rounded-xl border border-white/10 bg-gradient-to-br from-[#14100d]/96 via-[#0d0a08]/98 to-[#070504] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.28)]">
-      <p className="text-[0.68rem] font-semibold uppercase leading-relaxed tracking-[0.18em] text-champagne/80">
-        {label}
-      </p>
-      <p className="mt-4 font-display text-[2rem] leading-none text-cream sm:text-[2.35rem]">
-        {formatNumber(value)}
-      </p>
+    <article className={styles.statCard}>
+      <p className={styles.metricLabel}>{label}</p>
+      <strong>{formatNumber(value)}</strong>
     </article>
   );
 }
 
 function ActionCard({ action }: { action: OwnerAction }) {
   return (
-    <Link
-      href={action.href}
-      className="rounded-xl border border-white/10 bg-[#090705]/88 p-5 shadow-[0_16px_52px_rgba(0,0,0,0.24)] transition hover:border-champagne/28 hover:bg-white/[0.025] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-    >
-      <span
-        className={`inline-flex min-h-8 items-center rounded-full border px-3 text-xs font-semibold ${ACTION_STYLES[action.priority]}`}
-      >
+    <Link href={action.href} className={styles.actionCard} prefetch={false}>
+      <span className={`${styles.pill} ${ACTION_STYLES[action.priority]}`}>
         {action.restaurantName}
       </span>
-      <h3 className="mt-4 font-display text-xl leading-snug text-cream">
-        {action.title}
-      </h3>
-      <p className="mt-3 text-sm leading-relaxed text-[#a99a86]">{action.body}</p>
+      <h3>{action.title}</h3>
+      <p>{action.body}</p>
     </Link>
   );
 }
