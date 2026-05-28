@@ -19,6 +19,7 @@ import {
   buildSitemapEntries,
   buildVistaireServiceJsonLd,
   buildWebsiteJsonLd,
+  getVistaireSocialProfiles,
   getSiteUrl,
   resolveSiteUrl
 } from "../lib/seo.ts";
@@ -309,6 +310,35 @@ test("emits honest global JSON-LD without fictional restaurant markup", () => {
   assert.equal(serialized.includes("AggregateRating"), false);
   assert.equal(serialized.includes("Review"), false);
   assert.equal(serialized.includes("FAQPage"), false);
+});
+
+test("reads public social profile env vars in a Next client-bundle compatible way", () => {
+  const socialEnv = {
+    NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL: "",
+    NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL: "",
+    NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL:
+      "https://example.com/vistaire-public-profile",
+    NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL: "not-a-url",
+    NEXT_PUBLIC_VISTAIRE_X_URL: ""
+  };
+
+  assert.deepEqual(getVistaireSocialProfiles(socialEnv), [
+    {
+      label: "Google Business Profile",
+      url: "https://example.com/vistaire-public-profile"
+    }
+  ]);
+
+  const seoSource = readFileSync(join(process.cwd(), "lib/seo.ts"), "utf8");
+  assert.match(
+    seoSource,
+    /process\.env\.NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL/
+  );
+  assert.match(
+    seoSource,
+    /process\.env\.NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL/
+  );
+  assert.doesNotMatch(seoSource, /env\[[^\]]+profile\.key[^\]]*\]/);
 });
 
 test("guide cards use hand-written descriptions without truncation", () => {

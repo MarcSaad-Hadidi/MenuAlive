@@ -138,29 +138,6 @@ const PUBLIC_AI_CRAWLERS = [
 
 const ROBOTS_CONTENT_SIGNAL = "search=yes,ai-input=yes,ai-train=yes";
 
-const SOCIAL_PROFILE_ENV_KEYS = [
-  {
-    key: "NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL",
-    label: "LinkedIn"
-  },
-  {
-    key: "NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL",
-    label: "Instagram"
-  },
-  {
-    key: "NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL",
-    label: "Google Business Profile"
-  },
-  {
-    key: "NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL",
-    label: "Facebook"
-  },
-  {
-    key: "NEXT_PUBLIC_VISTAIRE_X_URL",
-    label: "X"
-  }
-] as const;
-
 const AREA_SERVED_JSON_LD: JsonLdObject[] = [
   {
     "@type": "City",
@@ -231,6 +208,14 @@ export type JsonLdValue =
 
 export type JsonLdObject = {
   [key: string]: JsonLdValue;
+};
+
+type SocialProfileEnv = SiteUrlEnv & {
+  NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL?: string;
+  NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL?: string;
+  NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL?: string;
+  NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL?: string;
+  NEXT_PUBLIC_VISTAIRE_X_URL?: string;
 };
 
 export function resolveSiteUrl(value?: string | null): URL {
@@ -343,13 +328,16 @@ function resolvePublicUrl(value?: string): string | null {
   }
 }
 
-export function getVistaireSocialProfiles(
-  env: SiteUrlEnv = process.env
+function buildSocialProfiles(
+  candidates: ReadonlyArray<{
+    label: string;
+    url: string | undefined;
+  }>
 ): SocialProfile[] {
   const profiles: SocialProfile[] = [];
 
-  for (const profile of SOCIAL_PROFILE_ENV_KEYS) {
-    const url = resolvePublicUrl(env[profile.key]);
+  for (const profile of candidates) {
+    const url = resolvePublicUrl(profile.url);
     if (url && !profiles.some((candidate) => candidate.url === url)) {
       profiles.push({
         label: profile.label,
@@ -359,6 +347,41 @@ export function getVistaireSocialProfiles(
   }
 
   return profiles;
+}
+
+export function getVistaireSocialProfiles(env?: SocialProfileEnv): SocialProfile[] {
+  if (env) {
+    return buildSocialProfiles([
+      { label: "LinkedIn", url: env.NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL },
+      { label: "Instagram", url: env.NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL },
+      {
+        label: "Google Business Profile",
+        url: env.NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL
+      },
+      { label: "Facebook", url: env.NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL },
+      { label: "X", url: env.NEXT_PUBLIC_VISTAIRE_X_URL }
+    ]);
+  }
+
+  return buildSocialProfiles([
+    {
+      label: "LinkedIn",
+      url: process.env.NEXT_PUBLIC_VISTAIRE_LINKEDIN_URL
+    },
+    {
+      label: "Instagram",
+      url: process.env.NEXT_PUBLIC_VISTAIRE_INSTAGRAM_URL
+    },
+    {
+      label: "Google Business Profile",
+      url: process.env.NEXT_PUBLIC_VISTAIRE_GOOGLE_BUSINESS_URL
+    },
+    {
+      label: "Facebook",
+      url: process.env.NEXT_PUBLIC_VISTAIRE_FACEBOOK_URL
+    },
+    { label: "X", url: process.env.NEXT_PUBLIC_VISTAIRE_X_URL }
+  ]);
 }
 
 export function buildOrganizationJsonLd(env?: SiteUrlEnv): JsonLdObject {
