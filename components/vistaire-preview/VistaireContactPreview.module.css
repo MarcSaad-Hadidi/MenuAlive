@@ -287,7 +287,7 @@
 
 .contactContent > p {
   max-width: 324px;
-  margin: 64px 0 0;
+  margin: 36px 0 0;
   color: rgba(255, 250, 240, 0.96);
   font-size: 14px;
   font-weight: 700;
@@ -298,9 +298,9 @@
 .contactMeta {
   display: grid;
   width: 100%;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  margin: 35px 0 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 26px 0 0;
 }
 
 .contactMeta div {
@@ -425,7 +425,7 @@
   }
 
   .contactContent > p {
-    margin-top: 42px;
+    margin-top: 28px;
     font-size: 14px;
   }
 }
@@ -513,15 +513,15 @@
   }
 
   .contactContent > p {
-    margin-top: 37px;
+    margin-top: 24px;
     font-size: 13.5px;
     line-height: 1.2;
   }
 
   .contactMeta {
     grid-template-columns: 1fr;
-    gap: 12px;
-    margin-top: 29px;
+    gap: 8px;
+    margin-top: 22px;
   }
 
   .contactMeta dd {

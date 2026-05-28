@@ -95,7 +95,7 @@ test.describe("Landing production experience", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
     await expect(
-      page.getByRole("heading", { exact: true, name: "VISTAIRE" })
+      page.getByRole("heading", { level: 1, name: /VISTAIRE/ })
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Explorer" })).toHaveAttribute(
       "href",
@@ -137,7 +137,7 @@ test.describe("Landing production experience", () => {
 
     await expect(page).toHaveURL(/\/prendre-rendez-vous$/);
     await expect(
-      page.getByRole("heading", { name: "Prendre rendez-vous" })
+      page.getByRole("heading", { name: /Prendre rendez-vous/ })
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Retour au contact" })).toHaveAttribute(
       "href",

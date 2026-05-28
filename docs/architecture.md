@@ -24,7 +24,7 @@ Vistaire is a Next.js App Router application for a premium restaurant menu exper
 - `/api/admin/assistant`: same-origin admin preview assistant endpoint.
 
 ## Auth Boundary
-`proxy.ts` protects page routes such as `/owner` and `/todos` with Clerk. Owner API routes call `requireVistaireOwnerApi()` and owner pages call `getVistaireOwnerAuthorization()` after Clerk sign-in, then check `VISTAIRE_OWNER_EMAILS`, `VISTAIRE_OWNER_USER_IDS`, and `VISTAIRE_OWNER_CLERK_USER_IDS` server-side. Do not treat `/admin` as protected; it remains a public noindex preview surface unless the code is intentionally changed in a separate PR.
+`proxy.ts` protects page routes such as `/owner` and `/todos` with Clerk. Owner API routes call `requireVistaireOwnerApi()` and owner pages call `getVistaireOwnerAuthorization()` after Clerk sign-in, then check `VISTAIRE_OWNER_EMAILS`, `VISTAIRE_OWNER_USER_IDS`, and `VISTAIRE_OWNER_CLERK_USER_IDS` server-side. Do not treat `/admin` as authenticated owner tooling; it remains a public noindex preview surface, but robots now disallows `/admin` so crawlers do not treat it as a public marketing page.
 
 ## Product Boundaries
 - Landing: `app/page.tsx`, `components/landing/*`, `components/Header.tsx`, `components/DemoRequestSection.tsx`.
@@ -34,7 +34,7 @@ Vistaire is a Next.js App Router application for a premium restaurant menu exper
 - Admin preview: `app/admin/*`, `components/admin/*`, `lib/admin/*`, `lib/demoAdminInsights.ts`.
 - Owner/internal: `app/owner/*`, `components/owner/*`, `lib/owner/*`.
 - Analytics: `lib/analytics/*`, `app/api/analytics/*`.
-- SEO metadata: `lib/seo.ts`, `app/robots.ts`, `app/sitemap.ts`, page metadata exports.
+- SEO metadata: `lib/seo.ts`, `app/robots.txt/route.ts`, `app/sitemap.ts`, page metadata exports.
 
 ## 3D/AR Flow
 Dish detail pages render food content first. The 3D viewer is lazy-loaded after user intent, then `model-viewer` chooses the appropriate GLB/USDZ path for the environment. iOS Quick Look must use approved production USDZ URLs, and unsupported devices need clear fallback UI.

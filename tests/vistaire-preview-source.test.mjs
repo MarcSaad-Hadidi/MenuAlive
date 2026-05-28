@@ -321,7 +321,8 @@ test("vistaire PDF vs menu digital preview is premium, SEO-readable, and convers
     "/vistaire-preview/a-propos",
     "/vistaire-preview/contact",
     "/vistaire-preview/prendre-rendez-vous",
-    "contact@vistaire.ca"
+    "contact@vistaire.ca",
+    "CONTACT_PHONE_DISPLAY"
   ]) {
     assert.match(source, literalPattern(requiredCopy));
   }
@@ -447,6 +448,7 @@ test("vistaire landing preview keeps the corrected Framer visual system", async 
     "Restaurants haut de gamme",
     "Montréal, Québec",
     "contact@vistaire.ca",
+    "CONTACT_PHONE_DISPLAY",
     "Prendre rendez-vous",
     "© 2026 Vistaire. Tous droits réservés."
   ]) {
@@ -546,7 +548,8 @@ test("vistaire about preview matches the Framer bento story", async () => {
 
   for (const requiredCopy of [
     "Vistaire preview | À propos",
-    "Vistaire transforme le QR code en expérience.",
+    "Vistaire transforme le QR code restaurant en carte digitale",
+    "Une maison montréalaise dédiée aux restaurants haut de gamme",
     "Vistaire aide les restaurants haut de gamme à présenter leur",
     "CARTE MOBILE",
     "PREMIUM",
@@ -558,7 +561,8 @@ test("vistaire about preview matches the Framer bento story", async () => {
     "Application",
     "Découvrir Vistaire",
     "Prendre rendez-vous",
-    "contact@vistaire.ca"
+    "contact@vistaire.ca",
+    "CONTACT_PHONE_DISPLAY"
   ]) {
     assert.match(`${route}\n${sharedSource}`, literalPattern(requiredCopy));
   }
@@ -609,6 +613,7 @@ test("vistaire contact preview stays a premium contact page", async () => {
     "Prendre rendez-vous",
     "routes.appointment",
     "contact@vistaire.ca",
+    "CONTACT_PHONE_DISPLAY",
     "Accueil",
     "Carte",
     "Contact"
@@ -678,6 +683,7 @@ test("vistaire rendez-vous preview owns the contact form", async () => {
     "Retour au contact",
     "Aucun message n&apos;est envoy&eacute;",
     "contact@vistaire.ca",
+    "CONTACT_PHONE_DISPLAY",
     "Montr&eacute;al",
     "Qu&eacute;bec"
   ]) {
@@ -688,7 +694,7 @@ test("vistaire rendez-vous preview owns the contact form", async () => {
   assert.match(component, /VistaireContactForm/);
   assert.match(
     component,
-    /<h1 id="rendez-vous-preview-title">Prendre rendez-vous<\/h1>/
+    /<h1 id="rendez-vous-preview-title">[\s\S]*Prendre rendez-vous pour une carte digitale Vistaire[\s\S]*<\/h1>/
   );
   assert.match(component, /href=\{routes\.contact\}/);
   assert.match(component, /PhotoRestoComplet\.png/);
@@ -780,6 +786,7 @@ test("vistaire menu preview is a real filtered menu, not a static screenshot", a
     "Menu digital restaurant",
     "Montréal, Québec",
     "contact@vistaire.ca",
+    "CONTACT_PHONE_DISPLAY",
     "Prendre rendez-vous",
     "© 2026 Vistaire. Tous droits réservés."
   ]) {
@@ -905,7 +912,8 @@ test("vistaire preview dish detail is universal, premium, and honest about 3D", 
     "Vue 3D bientôt disponible pour ce plat",
     "Les informations de ce plat sont fictives",
     "Prendre rendez-vous",
-    "contact@vistaire.ca"
+    "contact@vistaire.ca",
+    "CONTACT_PHONE_DISPLAY"
   ]) {
     assert.match(source, literalPattern(requiredSource));
   }

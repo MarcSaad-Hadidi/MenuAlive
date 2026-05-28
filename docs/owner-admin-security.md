@@ -3,7 +3,7 @@
 Vistaire has three separate surfaces:
 
 - `/apercu-restaurateur`: public, indexable marketing page that explains the restaurateur dashboard.
-- `/admin`: public, noindex restaurateur preview kept for compatibility and demos.
+- `/admin`: public, noindex restaurateur preview kept for compatibility and demos; robots disallows it so it is not treated as public SEO/marketing content.
 - `/owner`: internal Vistaire cockpit for owner operations across restaurants.
 
 ## Owner allowlist

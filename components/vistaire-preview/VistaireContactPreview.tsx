@@ -7,6 +7,7 @@ import pageContactImage from "@/Framer/PageContact.png";
 import lobsterPlate from "@/Framer/PlatHomard.png";
 import dessertImage from "@/Framer/Desert.png";
 import tableImage from "@/Framer/Photo table.png";
+import { CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL } from "@/lib/seo";
 import {
   getVistaireChromeRoutes,
   PreviewFooter,
@@ -103,6 +104,9 @@ export function VistaireContactPreview({
               <h1 id="contact-preview-title">
                 CONTACT
                 <span>VISTAIRE</span>
+                <span className={styles.srOnly}>
+                  pour votre carte digitale restaurant
+                </span>
               </h1>
             </div>
           </article>
@@ -180,14 +184,26 @@ export function VistaireContactPreview({
                 </p>
                 <dl className={styles.contactMeta}>
                   <div>
-                    <dt>Region</dt>
-                    <dd>R&eacute;gion de Montr&eacute;al</dd>
+                    <dt>Entreprise</dt>
+                    <dd>Vistaire</dd>
+                  </div>
+                  <div>
+                    <dt>R&eacute;gion</dt>
+                    <dd>Montr&eacute;al, Qu&eacute;bec, Canada</dd>
                   </div>
                   <div>
                     <dt>Email</dt>
                     <dd>
                       <a href="mailto:contact@vistaire.ca">
                         contact@vistaire.ca
+                      </a>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>T&eacute;l&eacute;phone</dt>
+                    <dd>
+                      <a href={`tel:${CONTACT_PHONE_TEL}`}>
+                        {CONTACT_PHONE_DISPLAY}
                       </a>
                     </dd>
                   </div>

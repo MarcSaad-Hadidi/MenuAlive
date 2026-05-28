@@ -87,11 +87,45 @@ test.describe("Vistaire SEO smoke", () => {
     const robotsText = await robots.text();
 
     expect(robotsText).toContain("Sitemap:");
-    for (const path of ["/api/", "/owner", "/sign-in", "/todos"]) {
+    expect(robotsText).toContain(
+      "Content-Signal: search=yes,ai-input=yes,ai-train=yes"
+    );
+    for (const userAgent of [
+      "GPTBot",
+      "ClaudeBot",
+      "CCBot",
+      "Google-Extended",
+      "OAI-SearchBot",
+      "ChatGPT-User",
+      "PerplexityBot"
+    ]) {
+      expect(robotsText).toContain(`User-agent: ${userAgent}`);
+    }
+    for (const path of [
+      "/api",
+      "/api/",
+      "/api/*",
+      "/owner",
+      "/owner/",
+      "/admin",
+      "/admin/",
+      "/sign-in",
+      "/sign-in/",
+      "/todos",
+      "/todos/"
+    ]) {
       expect(robotsText).toContain(`Disallow: ${path}`);
     }
-    expect(robotsText).not.toContain("Disallow: /admin");
     expect(robotsText).not.toContain("Disallow: /demo");
+
+    const llms = await request.get("/llms.txt");
+    expect(llms.status()).toBe(200);
+    expect(llms.headers()["content-type"]).toContain("text/plain");
+    const llmsText = await llms.text();
+    expect(llmsText).toContain("# Vistaire");
+    expect(llmsText).toContain("contact@vistaire.ca");
+    expect(llmsText).toContain("514-715-2421");
+    expect(llmsText).toContain("https://www.vistaire.ca/menu-digital-restaurant");
 
     const sitemap = await request.get("/sitemap.xml");
     expect(sitemap.status()).toBe(200);

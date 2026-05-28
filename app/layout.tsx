@@ -4,6 +4,7 @@ import {
   DEFAULT_SITE_DESCRIPTION,
   SITE_NAME,
   buildOrganizationJsonLd,
+  buildProfessionalServiceJsonLd,
   buildWebsiteJsonLd,
   getSiteUrl
 } from "@/lib/seo";
@@ -53,12 +54,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" data-scroll-behavior="smooth">
+    <html lang="fr-CA" data-scroll-behavior="smooth">
       <body>
         <a className="skip-link" href="#contenu">
           Aller au contenu
         </a>
-        <JsonLd data={[buildOrganizationJsonLd(), buildWebsiteJsonLd()]} />
+        <JsonLd
+          data={[
+            buildOrganizationJsonLd(),
+            buildProfessionalServiceJsonLd(),
+            buildWebsiteJsonLd()
+          ]}
+        />
         <div id="contenu">{children}</div>
       </body>
     </html>
