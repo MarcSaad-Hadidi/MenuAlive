@@ -1,0 +1,929 @@
+@font-face {
+  font-family: "BT Suave";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/vistaire-preview/btsuave-regular.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Neue Montreal";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/vistaire-preview/NeueMontreal-Regular.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Neue Montreal";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("/fonts/vistaire-preview/NeueMontreal-Bold.otf") format("opentype");
+}
+
+.page {
+  --owner-cream: #fff7ea;
+  --owner-champagne: #e8cf9b;
+  --owner-muted: rgba(255, 250, 240, 0.72);
+  --owner-soft: rgba(232, 207, 155, 0.78);
+  --owner-display: "BT Suave";
+  --owner-body: "Neue Montreal";
+
+  position: relative;
+  min-height: 100svh;
+  overflow-x: clip;
+  background: #0d0805;
+  color: var(--owner-cream);
+  font-family: var(--owner-body);
+}
+
+.backgroundImage {
+  position: fixed !important;
+  z-index: 0;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.topbarWrap,
+.shell {
+  position: relative;
+  z-index: 2;
+}
+
+.topbarWrap {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding: 14px 24px 8px;
+}
+
+.topbar {
+  display: grid;
+  width: min(1520px, calc(100vw - 48px));
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(255, 250, 240, 0.26);
+  border-radius: 22px;
+  background: transparent;
+  padding: 10px 12px 10px 20px;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 250, 240, 0.18),
+    inset 0 -1px 0 rgba(255, 250, 240, 0.1);
+  -webkit-backdrop-filter: blur(9px) saturate(112%);
+  backdrop-filter: blur(9px) saturate(112%);
+}
+
+.brand {
+  color: var(--owner-cream);
+  text-decoration: none;
+}
+
+.brandName {
+  display: block;
+  font-family: var(--owner-display);
+  font-size: 24px;
+  line-height: 0.95;
+}
+
+.brandMeta {
+  display: block;
+  margin-top: 2px;
+  color: rgba(232, 207, 155, 0.78);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.topLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.topLinks a,
+.userSlot {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 250, 240, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0 14px;
+  color: rgba(255, 250, 240, 0.82);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.userSlot {
+  width: 42px;
+  padding: 0;
+}
+
+.shell {
+  display: grid;
+  width: min(1520px, calc(100vw - 48px));
+  gap: 12px;
+  margin: 0 auto;
+  padding: 8px 0 24px;
+}
+
+.frame {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(255, 250, 240, 0.26);
+  border-radius: 22px;
+  background: transparent;
+  padding: 14px;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 250, 240, 0.18),
+    inset 0 -1px 0 rgba(255, 250, 240, 0.1);
+  -webkit-backdrop-filter: blur(9px) saturate(112%);
+  backdrop-filter: blur(9px) saturate(112%);
+}
+
+.card,
+.statCard,
+.actionCard,
+.recommendationCard,
+.restaurantTable,
+.restaurantCard,
+.formPanel,
+.asidePanel,
+.qrRoot,
+.empty {
+  border: 1px solid rgba(255, 250, 240, 0.2);
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 250, 240, 0.13);
+  -webkit-backdrop-filter: blur(5px) saturate(110%);
+  backdrop-filter: blur(5px) saturate(110%);
+}
+
+.heroPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.34fr);
+  gap: 12px;
+  align-items: stretch;
+  padding: 14px;
+}
+
+.heroCopy,
+.sourcePanel {
+  padding: clamp(22px, 4vw, 48px);
+}
+
+.heroCopy {
+  display: flex;
+  min-height: 420px;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.eyebrow,
+.badge,
+.field span,
+.filterLabel,
+.metricLabel {
+  color: rgba(232, 207, 155, 0.8);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.eyebrow,
+.badge {
+  display: inline-flex;
+  width: max-content;
+  max-width: 100%;
+  min-height: 32px;
+  align-items: center;
+  border: 1px solid rgba(232, 207, 155, 0.48);
+  border-radius: 999px;
+  padding: 0 16px;
+}
+
+.heroCopy h1,
+.sectionTitle,
+.statCard strong,
+.restaurantName,
+.recommendationCard h3,
+.actionCard h3,
+.panelTitle,
+.formTitle {
+  margin: 0;
+  color: #fffaf0;
+  font-family: var(--owner-display);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.heroCopy h1 {
+  max-width: 860px;
+  margin-top: 22px;
+  font-size: clamp(42px, 6vw, 84px);
+  line-height: 0.94;
+  text-wrap: balance;
+  text-shadow: 0 12px 32px rgba(0, 0, 0, 0.58);
+}
+
+.heroLead,
+.sectionText,
+.bodyText,
+.recommendationCard p,
+.actionCard p {
+  color: var(--owner-muted);
+  font-size: 15px;
+  line-height: 1.58;
+}
+
+.bodyText {
+  margin: 14px 0 0;
+}
+
+.heroLead {
+  max-width: 720px;
+  margin: 22px 0 0;
+  font-size: 16px;
+}
+
+.sourcePanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.heroActions,
+.buttonRow,
+.actionButtons,
+.qrActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.heroActions {
+  margin-top: 30px;
+}
+
+.buttonPrimary,
+.buttonSecondary,
+.buttonGhost,
+.submitButton,
+.qrButton {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0 18px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.buttonPrimary,
+.submitButton {
+  border: 1px solid rgba(255, 246, 225, 0.56);
+  background: transparent;
+  color: #fffaf0;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 250, 240, 0.18);
+}
+
+.buttonSecondary,
+.qrButton {
+  border: 1px solid rgba(232, 207, 155, 0.42);
+  background: transparent;
+  color: rgba(232, 207, 155, 0.92);
+}
+
+.buttonGhost {
+  border: 1px solid rgba(255, 250, 240, 0.14);
+  background: transparent;
+  color: rgba(255, 250, 240, 0.72);
+}
+
+.buttonPrimary:hover,
+.buttonSecondary:hover,
+.buttonGhost:hover,
+.submitButton:hover,
+.qrButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 250, 240, 0.72);
+  background: rgba(0, 0, 0, 0.12);
+  color: #fffaf0;
+}
+
+.submitButton:disabled,
+.qrButton:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.section {
+  padding: clamp(20px, 2.6vw, 30px);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.sectionTitle {
+  font-size: clamp(30px, 4vw, 52px);
+  line-height: 0.98;
+}
+
+.sectionText {
+  max-width: 760px;
+  margin: 10px 0 0;
+}
+
+.sourceBadge {
+  border: 1px solid rgba(255, 250, 240, 0.14);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: rgba(255, 250, 240, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.statCard {
+  min-height: 138px;
+  padding: 16px;
+}
+
+.statCard strong {
+  display: block;
+  margin-top: 16px;
+  font-size: clamp(30px, 3.2vw, 44px);
+  line-height: 0.95;
+  overflow-wrap: anywhere;
+}
+
+.actionGrid,
+.recommendationGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.actionGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.recommendationGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.actionCard,
+.recommendationCard {
+  display: block;
+  padding: 18px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.actionCard h3,
+.recommendationCard h3 {
+  margin-top: 18px;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.pill,
+.statusPill {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid rgba(255, 250, 240, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.035);
+  padding: 0 11px;
+  color: rgba(255, 250, 240, 0.74);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.priorityHigh {
+  border-color: rgba(232, 185, 164, 0.38);
+  color: #ffd7c5;
+}
+
+.priorityMedium,
+.recommendationOpportunity {
+  border-color: rgba(232, 207, 155, 0.42);
+  color: var(--owner-champagne);
+}
+
+.priorityLow,
+.recommendationSetup {
+  border-color: rgba(255, 250, 240, 0.14);
+  color: rgba(255, 250, 240, 0.76);
+}
+
+.recommendationWatch {
+  border-color: rgba(201, 164, 111, 0.32);
+  color: #e3c99b;
+}
+
+.recommendationUpsell {
+  border-color: rgba(134, 239, 172, 0.28);
+  color: #d2f8d8;
+}
+
+.sourceNote {
+  margin: 16px 0 0;
+  color: rgba(255, 250, 240, 0.48);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.restaurantTable {
+  padding: 14px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(6, minmax(130px, 0.4fr));
+  gap: 10px;
+}
+
+.field,
+.filterField {
+  display: grid;
+  gap: 8px;
+}
+
+.control,
+.textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 250, 240, 0.16);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--owner-cream);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.control {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.textarea {
+  min-height: 110px;
+  resize: vertical;
+  padding: 12px;
+}
+
+.control:focus,
+.textarea:focus {
+  border-color: rgba(232, 207, 155, 0.58);
+  box-shadow: 0 0 0 2px rgba(232, 207, 155, 0.16);
+}
+
+.control::placeholder {
+  color: rgba(255, 250, 240, 0.34);
+}
+
+.restaurantList {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.restaurantCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.28fr);
+  gap: 14px;
+  padding: 16px;
+}
+
+.restaurantHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.restaurantSlug,
+.mutedLabel {
+  color: rgba(232, 207, 155, 0.72);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.restaurantName {
+  margin-top: 8px;
+  font-size: 32px;
+  line-height: 0.98;
+}
+
+.restaurantMeta,
+.nextAction,
+.lastActivity,
+.readinessDetail {
+  color: rgba(255, 250, 240, 0.66);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.miniGrid,
+.readinessGrid {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.miniGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.readinessGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.miniMetric,
+.readinessItem,
+.urlPreview,
+.nextSteps {
+  border: 1px solid rgba(255, 250, 240, 0.14);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 13px;
+}
+
+.miniMetric strong {
+  display: block;
+  margin-top: 8px;
+  color: #fffaf0;
+  font-family: var(--owner-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 0.95;
+}
+
+.readinessHeader {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.readinessHeader strong {
+  color: rgba(255, 250, 240, 0.9);
+  font-size: 14px;
+}
+
+.nextAction {
+  margin-top: 16px;
+  color: rgba(232, 207, 155, 0.86);
+}
+
+.lastActivity {
+  margin-top: 8px;
+  color: rgba(255, 250, 240, 0.46);
+}
+
+.actionButtons {
+  margin-top: 16px;
+}
+
+.createGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.62fr) minmax(320px, 0.38fr);
+  gap: 12px;
+}
+
+.formPanel,
+.asidePanel {
+  padding: clamp(18px, 2.2vw, 26px);
+}
+
+.formPanel > .formField {
+  margin-top: 14px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.formField {
+  display: grid;
+  gap: 8px;
+}
+
+.urlPreview {
+  margin-top: 14px;
+}
+
+.breakText {
+  overflow-wrap: anywhere;
+}
+
+.submitRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.errorText {
+  color: #ffd7c5;
+  font-size: 13px;
+}
+
+.panelTitle {
+  margin-top: 14px;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.definitionList {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  font-size: 13px;
+}
+
+.definitionList dt {
+  color: rgba(255, 250, 240, 0.44);
+}
+
+.definitionList dd {
+  margin: 4px 0 0;
+  color: rgba(255, 250, 240, 0.8);
+  overflow-wrap: anywhere;
+}
+
+.successQr {
+  margin-top: 18px;
+}
+
+.nextSteps {
+  margin-top: 18px;
+}
+
+.nextSteps ul {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: rgba(255, 250, 240, 0.66);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.qrRoot {
+  padding: 14px;
+}
+
+.qrBox {
+  border: 1px solid rgba(232, 207, 155, 0.42);
+  border-radius: 13px;
+  background: #fff8ea;
+  padding: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+}
+
+.qrCanvas {
+  display: flex;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 236px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff8ea;
+  color: #080706;
+}
+
+.qrCanvas span,
+.qrCanvas svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.qrUrl {
+  margin: 12px 0 0;
+  color: rgba(255, 250, 240, 0.58);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.qrActions {
+  margin-top: 14px;
+}
+
+.qrStatus {
+  min-height: 20px;
+  margin: 10px 0 0;
+  color: rgba(232, 207, 155, 0.82);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.empty {
+  padding: 20px;
+  color: rgba(255, 250, 240, 0.7);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buttonPrimary,
+  .buttonSecondary,
+  .buttonGhost,
+  .submitButton,
+  .qrButton {
+    transition: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .statsGrid,
+  .actionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .restaurantCard,
+  .createGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 920px) {
+  .topbarWrap {
+    padding: 10px 14px 8px;
+  }
+
+  .topbar {
+    width: min(560px, calc(100vw - 28px));
+    grid-template-columns: 1fr auto;
+  }
+
+  .topLinks {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    order: 3;
+  }
+
+  .shell {
+    width: min(560px, calc(100vw - 28px));
+  }
+
+  .frame {
+    border-radius: 21px;
+    padding: 10px;
+  }
+
+  .heroPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .heroCopy {
+    min-height: 0;
+  }
+
+  .recommendationGrid,
+  .miniGrid,
+  .readinessGrid,
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pills {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbarWrap {
+    padding: 8px 10px;
+  }
+
+  .topbar,
+  .shell {
+    width: calc(100vw - 20px);
+  }
+
+  .topbar {
+    border-radius: 19px;
+    padding: 10px;
+  }
+
+  .frame {
+    gap: 8px;
+    border-radius: 19px;
+    padding: 8px;
+  }
+
+  .card,
+  .statCard,
+  .actionCard,
+  .recommendationCard,
+  .restaurantTable,
+  .restaurantCard,
+  .formPanel,
+  .asidePanel,
+  .qrRoot {
+    border-radius: 13px;
+  }
+
+  .heroPanel,
+  .section,
+  .restaurantTable,
+  .restaurantCard,
+  .formPanel,
+  .asidePanel {
+    padding: 16px;
+  }
+
+  .heroCopy,
+  .sourcePanel {
+    padding: 4px;
+  }
+
+  .heroCopy h1 {
+    font-size: 39px;
+    line-height: 1;
+  }
+
+  .statsGrid,
+  .actionGrid,
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .buttonRow,
+  .heroActions,
+  .actionButtons,
+  .qrActions,
+  .submitRow {
+    flex-direction: column;
+  }
+
+  .buttonPrimary,
+  .buttonSecondary,
+  .buttonGhost,
+  .submitButton,
+  .qrButton {
+    width: 100%;
+    min-height: 46px;
+  }
+}
