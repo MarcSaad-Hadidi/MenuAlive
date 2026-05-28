@@ -400,29 +400,38 @@
   text-transform: uppercase;
 }
 
+.qrMarkWrap > small {
+  max-width: min(270px, 74vw);
+  color: rgba(255, 250, 240, 0.62);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
 .qrCodeMark {
-  display: grid;
-  width: min(210px, 62vw);
+  display: block;
+  width: min(232px, 62vw);
   aspect-ratio: 1;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  border: 1px solid rgba(255, 250, 240, 0.22);
+  border: 1px solid rgba(232, 207, 155, 0.5);
   border-radius: 18px;
-  background: transparent;
-  padding: 14px;
+  background: #fff7ea;
+  padding: 12px;
   box-shadow:
     0 18px 42px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 250, 240, 0.14);
 }
 
-.qrCodeMark span {
-  border-radius: 5px;
-  background: rgba(255, 250, 240, 0.12);
+.qrCodeMark span,
+.qrCodeMark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.qrCodeMark .qrCellOn {
-  background: rgba(255, 250, 240, 0.82);
-  box-shadow: 0 0 16px rgba(232, 207, 155, 0.16);
+.qrCodeMark svg {
+  border-radius: 10px;
 }
 
 .qrScanCopy {
