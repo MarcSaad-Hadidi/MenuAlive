@@ -69,6 +69,8 @@ test("menu QR code restaurant preview has a distinct glass SEO page", async () =
   assert.match(component, /dangerouslySetInnerHTML=\{\{\s*__html:\s*qrSvgMarkup\s*\}\}/);
   assert.doesNotMatch(component, /qrCells/);
   assert.doesNotMatch(component, /Array\.from\(\{\s*length:\s*49\s*\}/);
+  assert.doesNotMatch(component, /Table 12/);
+  assert.doesNotMatch(component, /<small>\{qrTargetUrl\}<\/small>/);
   assert.match(css, /\.previewFrame[\s\S]*background:\s*transparent/);
   assert.match(css, /\.previewFrame[\s\S]*backdrop-filter:\s*blur\(9px\) saturate\(112%\)/);
   assert.match(css, /\.card[\s\S]*background:\s*transparent/);

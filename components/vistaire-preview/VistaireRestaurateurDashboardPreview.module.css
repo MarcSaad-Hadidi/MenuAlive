@@ -372,12 +372,6 @@
   line-height: 0.98;
 }
 
-.menuUrl {
-  overflow-wrap: anywhere;
-  color: rgba(232, 207, 155, 0.82) !important;
-  font-size: 12px !important;
-}
-
 .qrMark {
   border: 1px solid rgba(232, 207, 155, 0.42);
   border-radius: 13px;

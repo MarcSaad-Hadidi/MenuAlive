@@ -216,8 +216,6 @@ export async function VistaireMenuQrCodeRestaurantPreview({
           >
             <div className={styles.qrMarkWrap}>
               <QrCodeMark qrSvgMarkup={qrSvgMarkup} targetUrl={qrTargetUrl} />
-              <span>Table 12 · Vistaire</span>
-              <small>{qrTargetUrl}</small>
             </div>
             <div className={styles.qrScanCopy}>
               <p className={styles.badge}>Après le scan</p>
