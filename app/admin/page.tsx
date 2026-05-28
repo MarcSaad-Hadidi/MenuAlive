@@ -1,10 +1,16 @@
+import Image from "next/image";
 import Link from "next/link";
+import restaurantBackground from "@/Framer/PhotoRestoComplet5.png";
+import lobsterPlate from "@/Framer/PlatHomard.png";
 import { AdminAssistant } from "@/components/admin/AdminAssistant";
-import { AdminInsightCard } from "@/components/admin/AdminInsightCard";
 import { AdminSearchInsights } from "@/components/admin/AdminSearchInsights";
 import { AdminServiceActivity } from "@/components/admin/AdminServiceActivity";
 import { AdminTopDishes } from "@/components/admin/AdminTopDishes";
-import { PrimaryButton } from "@/components/PrimaryButton";
+import {
+  PreviewFooter,
+  PreviewNav
+} from "@/components/vistaire-preview/VistairePreviewChrome";
+import styles from "@/components/vistaire-preview/VistaireRestaurateurDashboardPreview.module.css";
 import {
   getDemoRestaurantId,
   getRestaurantInsights
@@ -38,103 +44,160 @@ export default async function AdminPage({
   const summaryMetrics = insights.summary.filter((metric) =>
     SUMMARY_METRIC_IDS.includes(metric.id)
   );
+  const primaryMetrics = summaryMetrics.slice(0, 4);
+  const secondaryMetrics = summaryMetrics.slice(4);
+  const visibleRecommendations = insights.recommendations.slice(0, 3);
 
   return (
-    <div className="px-4 pb-20 pt-24 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-6xl">
-        <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#090705]/92 px-5 py-7 shadow-[0_24px_90px_rgba(0,0,0,0.32)] sm:px-8 sm:py-9">
-          <div
-            className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_42%)]"
-            aria-hidden
-          />
-          <div className="relative max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-champagne/85">
-              Aperçu restaurateur · {insights.serviceLabel}
-            </p>
-            <h1 className="mt-4 font-display text-4xl font-normal leading-[1] text-cream [overflow-wrap:anywhere] sm:text-5xl lg:text-6xl">
-              Lecture restaurateur : {insights.generatedFor}
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-[#cdbfa9] sm:text-lg">
-              Cet aperçu de présentation révèle les comportements anonymes autour
-              du menu client : plats consultés, recherches, vues immersives et
-              tendances d’attention.
-            </p>
-          </div>
+    <main className={styles.page}>
+      <Image
+        alt=""
+        aria-hidden="true"
+        className={styles.backgroundImage}
+        fill
+        priority
+        quality={100}
+        sizes="100vw"
+        src={restaurantBackground}
+        unoptimized
+      />
 
-          <div className="relative mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <PrimaryButton href="/demo" className="justify-center sm:w-auto">
-              Explorer le menu client
-            </PrimaryButton>
-            {popularDish ? (
-              <Link
-                href={`/demo/dishes/${popularDish.slug}`}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 px-6 text-center text-sm font-semibold text-cream transition hover:border-champagne/35 hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
-              >
-                Ouvrir une fiche populaire
-              </Link>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="mt-9" aria-labelledby="quick-view-heading">
-          <div>
-            <h2 id="quick-view-heading" className="font-display text-2xl text-cream">
-              Lecture rapide du service
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
-              Les signaux essentiels pour comprendre l&apos;activité du menu en moins
-              de 30 secondes.
-            </p>
-          </div>
-
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {summaryMetrics.map((metric) => (
-              <AdminInsightCard key={metric.id} metric={metric} />
-            ))}
-          </div>
-        </section>
-
-        <div className="mt-10">
-          <AdminAssistant
-            restaurantId={restaurantId}
-            dailySummary={insights.dailySummary}
-            recommendations={insights.recommendations}
-          />
-        </div>
-
-        <div className="mt-10">
-          <AdminTopDishes dishes={insights.topDishes.slice(0, 5)} />
-        </div>
-
-        <section className="mt-10" aria-labelledby="key-moments-heading">
-          <div>
-            <h2
-              id="key-moments-heading"
-              className="font-display text-2xl text-cream"
-            >
-              Recherches et moments clés
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#a99a86]">
-              Les intentions les plus fréquentes et les moments où les clients
-              consultent le plus le menu.
-            </p>
-          </div>
-
-          <div className="mt-5 grid gap-6 lg:grid-cols-2">
-            <AdminSearchInsights searches={insights.searchInsights.slice(0, 5)} />
-            <AdminServiceActivity activity={insights.serviceActivity} />
-          </div>
-
-          <p className="mt-5 rounded-xl border border-white/[0.07] bg-black/18 px-4 py-3 text-sm leading-relaxed text-[#b9aa94]">
-            Le souper concentre la majorité de l&apos;activité. Les clients
-            explorent davantage les plats signatures et les desserts à ce moment.
-          </p>
-        </section>
-
-        <p className="mt-8 text-xs leading-relaxed text-[#7f705f]">
-          {result.note}
-        </p>
+      <div className={styles.topNav}>
+        <PreviewNav activeSection="home" routeMode="production" />
       </div>
-    </div>
+
+      <section aria-labelledby="admin-dashboard-title" className={styles.hero}>
+        <div className={`${styles.previewFrame} ${styles.adminFrame}`}>
+          <section
+            className={`${styles.card} ${styles.heroPanel} ${styles.adminHeroPanel}`}
+          >
+            <div className={styles.heroCopy}>
+              <p className={styles.badge}>
+                Dashboard exemple - {insights.serviceLabel}
+              </p>
+              <h1 id="admin-dashboard-title">
+                Le restaurateur voit ce que la carte provoque.
+              </h1>
+              <p className={styles.heroLead}>
+                Cet exemple noindex montre comment Vistaire lit les signaux
+                anonymes du menu client : plats consultés, recherches, vues
+                immersives et prochaines actions utiles.
+              </p>
+              <div className={styles.heroActions}>
+                <Link className={styles.primaryButton} href="/demo" prefetch={false}>
+                  Explorer le menu client
+                </Link>
+                {popularDish ? (
+                  <Link
+                    className={styles.secondaryButton}
+                    href={`/demo/dishes/${popularDish.slug}`}
+                    prefetch={false}
+                  >
+                    Ouvrir une fiche populaire
+                  </Link>
+                ) : null}
+                <Link
+                  className={styles.secondaryButton}
+                  href="/apercu-restaurateur"
+                  prefetch={false}
+                >
+                  Retour à la page restaurateur
+                </Link>
+              </div>
+            </div>
+
+            <div className={`${styles.dashboardShell} ${styles.adminDashboardShell}`}>
+              <div className={styles.dashboardTopline}>
+                <span>{insights.generatedFor}</span>
+                <span>Données démonstratives</span>
+              </div>
+              <div className={styles.statsGrid}>
+                {primaryMetrics.map((metric) => (
+                  <article key={metric.id}>
+                    <span>{metric.label}</span>
+                    <strong>{metric.value}</strong>
+                  </article>
+                ))}
+              </div>
+              <div className={styles.dashboardBody}>
+                <div className={styles.signatureDish}>
+                  <Image
+                    alt="Plat signature homard Vistaire"
+                    fill
+                    quality={100}
+                    sizes="260px"
+                    src={lobsterPlate}
+                    unoptimized
+                  />
+                  <div>
+                    <span>Plat le plus suivi</span>
+                    <strong>{popularDish?.name.split(",")[0] ?? "Homard bleu"}</strong>
+                  </div>
+                </div>
+                <div className={styles.signalList}>
+                  {visibleRecommendations.map((recommendation) => (
+                    <p key={`${recommendation.type}-${recommendation.title}`}>
+                      <strong>{recommendation.type}</strong>
+                      {recommendation.title}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className={`${styles.card} ${styles.adminFullPanel}`}>
+            <div className={styles.adminPanelHeader}>
+              <p className={styles.badge}>Lecture rapide</p>
+              <h2>Les signaux essentiels restent visibles en premier.</h2>
+              <p>
+                Le dashboard exemple garde une lecture restaurant : attention,
+                désirabilité des plats, recherches clients et usage immersif.
+              </p>
+            </div>
+            <div className={styles.adminMetricGrid}>
+              {secondaryMetrics.map((metric) => (
+                <article key={metric.id}>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                  <p>{metric.helper}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className={`${styles.card} ${styles.adminFullPanel}`}>
+            <AdminAssistant
+              restaurantId={restaurantId}
+              dailySummary={insights.dailySummary}
+              recommendations={insights.recommendations}
+            />
+          </section>
+
+          <section className={`${styles.card} ${styles.adminFullPanel}`}>
+            <AdminTopDishes dishes={insights.topDishes.slice(0, 5)} />
+          </section>
+
+          <section className={`${styles.card} ${styles.adminFullPanel}`}>
+            <div className={styles.adminPanelHeader}>
+              <p className={styles.badge}>Moments clés</p>
+              <h2>Ce que les clients cherchent pendant le service.</h2>
+            </div>
+            <div className={styles.adminSplitGrid}>
+              <AdminSearchInsights searches={insights.searchInsights.slice(0, 5)} />
+              <AdminServiceActivity activity={insights.serviceActivity} />
+            </div>
+            <p className={styles.adminNote}>
+              Le souper concentre la majorité de l&apos;activité. Les clients
+              explorent davantage les plats signatures et les desserts à ce moment.
+            </p>
+          </section>
+
+          <p className={styles.adminSourceNote}>{result.note}</p>
+        </div>
+      </section>
+
+      <PreviewFooter routeMode="production" width="wide" />
+    </main>
   );
 }

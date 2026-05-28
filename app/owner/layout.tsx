@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { ClerkProvider, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import {
   vistaireClerkAppearance,
   vistaireClerkLocalization
 } from "@/lib/clerkAppearance";
+import { getVistaireOwnerAuthorization } from "@/lib/auth/owner";
 
 export const metadata: Metadata = {
   title: "Pilotage Vistaire",
@@ -25,6 +27,10 @@ export default async function OwnerLayout({
   children: React.ReactNode;
 }>) {
   await auth.protect();
+  const ownerAuthorization = await getVistaireOwnerAuthorization();
+  if (!ownerAuthorization.ok) {
+    notFound();
+  }
 
   return (
     <ClerkProvider

@@ -22,6 +22,7 @@ type VistaireChromeRoutes = {
   menuDigital: string;
   menuQrCode: string;
   pdfVsDigital: string;
+  restaurateurDashboard: string;
 };
 
 export function getVistaireChromeRoutes(
@@ -38,7 +39,8 @@ export function getVistaireChromeRoutes(
       menu3dAr: "/menu-3d-ar-restaurant",
       menuDigital: "/menu-digital-restaurant",
       menuQrCode: "/menu-qr-code-restaurant",
-      pdfVsDigital: "/menu-pdf-vs-menu-digital"
+      pdfVsDigital: "/menu-pdf-vs-menu-digital",
+      restaurateurDashboard: "/apercu-restaurateur"
     };
   }
 
@@ -52,7 +54,8 @@ export function getVistaireChromeRoutes(
     menu3dAr: "/vistaire-preview/menu-3d-ar-restaurant",
     menuDigital: "/vistaire-preview/menu-digital-restaurant",
     menuQrCode: "/vistaire-preview/menu-qr-code-restaurant",
-    pdfVsDigital: "/vistaire-preview/pdf-vs-menu-digital"
+    pdfVsDigital: "/vistaire-preview/pdf-vs-menu-digital",
+    restaurateurDashboard: "/apercu-restaurateur"
   };
 }
 
@@ -67,7 +70,8 @@ const footerProduct = [
   { label: "Carte digitale", href: "/vistaire-preview/demo" },
   { label: "Fiches plats", href: "/vistaire-preview/demo/dishes/homard-bisque" },
   { label: "3D / AR sélective", href: "/vistaire-preview/menu-3d-ar-restaurant" },
-  { label: "Aperçu restaurateur", href: "/vistaire-preview/a-propos" }
+  { label: "Aperçu restaurateur", href: "/apercu-restaurateur" },
+  { label: "Dashboard exemple", href: "/admin" }
 ] as const;
 
 const footerResources = [
@@ -183,7 +187,8 @@ export function PreviewFooter({
           { label: "Carte digitale", href: routes.menu },
           { label: "Fiches plats", href: routes.dish },
           { label: "3D / AR sélective", href: routes.menu3dAr },
-          { label: "Aperçu restaurateur", href: routes.about }
+          { label: "Aperçu restaurateur", href: routes.restaurateurDashboard },
+          { label: "Dashboard exemple", href: "/admin" }
         ];
   const resourceLinks =
     routeMode === "preview"
@@ -254,6 +259,11 @@ export function PreviewFooter({
         <p className={styles.footerCopyright}>
           © 2026 Vistaire. Tous droits réservés.
         </p>
+        <nav className={styles.footerUtilityLinks} aria-label="Acces Vistaire">
+          <Link href="/owner" prefetch={false}>
+            Accès interne
+          </Link>
+        </nav>
       </div>
     </footer>
   );

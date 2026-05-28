@@ -23,7 +23,7 @@ export const videoChapters: VideoChapter[] = [
     cta: "Explorer l'expérience",
     ctaHref: "/demo",
     secondaryCta: "Aperçu restaurateur",
-    secondaryCtaHref: "/admin"
+    secondaryCtaHref: "/apercu-restaurateur"
   },
   {
     id: "menu",
@@ -35,7 +35,7 @@ export const videoChapters: VideoChapter[] = [
     cta: "Voir le menu client",
     ctaHref: "/demo",
     secondaryCta: "Aperçu restaurateur",
-    secondaryCtaHref: "/admin"
+    secondaryCtaHref: "/apercu-restaurateur"
   },
   {
     id: "ar",
@@ -59,7 +59,7 @@ export const videoChapters: VideoChapter[] = [
     cta: "Explorer Maison Élyse",
     ctaHref: "/demo",
     secondaryCta: "Voir l’aperçu restaurateur",
-    secondaryCtaHref: "/admin"
+    secondaryCtaHref: "/apercu-restaurateur"
   }
 ];
 

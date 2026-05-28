@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Header } from "@/components/Header";
 import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -34,10 +33,5 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <>
-      <Header />
-      <main className="min-h-screen">{children}</main>
-    </>
-  );
+  return children;
 }

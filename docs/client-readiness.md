@@ -79,16 +79,17 @@ premium sales demo and first pilot if the manual boundaries below are respected.
 | Public landing | Public, indexable | Marketing and value proposition for Vistaire. |
 | Public demo Maison Elyse | Public, indexable at `/demo` | Demo restaurant only; not a real customer claim. |
 | Public admin preview demo | Public, noindex at `/admin` | Sales preview of restaurateur insights; not private admin. |
-| Protected owner internal | Clerk-protected at `/owner` | Vistaire internal pilot operations; not client self-service. |
+| Protected owner internal | Clerk + owner allowlist at `/owner` | Vistaire internal pilot operations; not client self-service. |
 | Future client dashboard | Not built | Requires tenant auth, restaurant scoping, production data contracts, and client UX. |
 | Public APIs | Public ingestion/preview only | `/api/analytics/events`, `/api/admin/assistant`; constrained but not authenticated. |
-| Protected APIs | Clerk-protected | `/api/restaurants`, `/api/owner/*`, `/api/analytics/summary`; authentication only, not tenant authorization. |
+| Protected APIs | Clerk + owner allowlist | `/api/restaurants`, `/api/owner/*`, `/api/analytics/summary`; owner-only internal operations, not tenant client authorization. |
 
 ## Routes and indexing
 
 Public routes:
 
 - `/`
+- `/apercu-restaurateur`
 - `/demo`
 - `/demo/dishes/[slug]`
 - `/admin`
@@ -117,8 +118,8 @@ Routes that should not be indexed:
 Security and auth risks to verify:
 
 - Noindex and robots rules are SEO hygiene, not security.
-- `/owner` is protected by Clerk, but any signed-in access must be reviewed
-  before giving clients credentials.
+- `/owner` is protected by Clerk and server-side owner allowlists; it should
+  still never be presented as a client portal.
 - Protected APIs should not be treated as tenant-safe until role/org checks and
   restaurant ownership filters exist.
 - Public analytics ingestion needs abuse/rate-limit review before production

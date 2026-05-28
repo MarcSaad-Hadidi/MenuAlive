@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const LANDING_VIDEO_ROUTE = "/vistaire-preview/video";
+const LANDING_VIDEO_ROUTE = "/videos/Vistaire2.mp4";
 const MODEL_ASSET_REQUEST_RE =
   /\.(?:glb|usdz)(?:$|\?)|raw\.githubusercontent\.com|githubusercontent/i;
 

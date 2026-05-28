@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 
 const DEMO_RESTAURANT_ID = "11111111-1111-1111-1111-111111111111";
 const MODEL_ASSET_RE = /\.(?:glb|usdz)(?:$|[?#])/i;
-const LANDING_VIDEO_ROUTE = "/vistaire-preview/video";
+const LANDING_VIDEO_ROUTE = "/videos/Vistaire2.mp4";
 
 type PageHealth = {
   expectClean: () => void;

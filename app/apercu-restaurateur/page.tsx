@@ -1,0 +1,77 @@
+import type { Metadata } from "next";
+import QRCode from "qrcode";
+import { JsonLd } from "@/components/JsonLd";
+import { VistaireRestaurateurDashboardPreview } from "@/components/vistaire-preview/VistaireRestaurateurDashboardPreview";
+import {
+  absoluteUrl,
+  buildBreadcrumbJsonLd,
+  buildPageServiceJsonLd,
+  buildWebPageJsonLd
+} from "@/lib/seo";
+
+const canonicalPath = "/apercu-restaurateur";
+const title = "Apercu restaurateur Vistaire";
+const description =
+  "Decouvrez l'interface restaurateur Vistaire : menu actif, QR code, plats populaires, readiness et signaux d'attention pour une carte premium.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: "/apercu-restaurateur"
+  },
+  openGraph: {
+    url: absoluteUrl(canonicalPath),
+    title: `${title} | Vistaire`,
+    description,
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${title} | Vistaire`,
+    description
+  }
+};
+
+export default async function RestaurateurDashboardPreviewPage() {
+  const demoMenuUrl = absoluteUrl("/demo");
+  const demoQrSvg = await QRCode.toString(demoMenuUrl, {
+    type: "svg",
+    errorCorrectionLevel: "M",
+    margin: 3,
+    width: 172,
+    color: {
+      dark: "#0d0805",
+      light: "#fff7ea"
+    }
+  });
+
+  return (
+    <>
+      <JsonLd
+        data={[
+          buildWebPageJsonLd({
+            path: canonicalPath,
+            name: title,
+            description
+          }),
+          buildPageServiceJsonLd({
+            path: canonicalPath,
+            name: "Interface restaurateur Vistaire",
+            serviceType: "Apercu restaurateur pour menu digital premium",
+            description
+          }),
+          buildBreadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Apercu restaurateur", path: canonicalPath }
+          ])
+        ]}
+      />
+      <VistaireRestaurateurDashboardPreview
+        demoMenuUrl={demoMenuUrl}
+        demoQrSvg={demoQrSvg}
+        routeMode="production"
+      />
+    </>
+  );
+}

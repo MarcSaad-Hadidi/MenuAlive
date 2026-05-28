@@ -3,6 +3,7 @@ import "server-only";
 import { getAllDishes, getRestaurant } from "@/lib/demoMenuData";
 import {
   filterRowsByRestaurantId,
+  getBoolean,
   getDateLabel,
   getNumber,
   getString,
@@ -14,9 +15,19 @@ import {
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 import { getDemoRestaurantId } from "@/lib/analytics/insights";
 import { getAutomaticOwnerRecommendations } from "@/lib/owner/recommendations";
+import {
+  buildRestaurantDashboardPath,
+  buildRestaurantMenuPath,
+  buildRestaurantMenuUrl,
+  slugifyRestaurantSlug
+} from "@/lib/owner/menuUrls";
+import { absoluteUrl } from "@/lib/seo";
 import type {
   CreateRestaurantInput,
+  OwnerAction,
   OwnerDashboardData,
+  OwnerQrStatus,
+  OwnerReadinessItem,
   OwnerRecommendation,
   OwnerRestaurant,
   OwnerRestaurantStatus,
@@ -24,11 +35,11 @@ import type {
 } from "@/lib/owner/types";
 
 const STATUS_LABELS: Record<OwnerRestaurantStatus, string> = {
-  demo: "Présentation",
+  demo: "Presentation",
   active: "Actif",
-  setup_needed: "À configurer",
-  paused: "Pausé",
-  archived: "Archivé"
+  setup_needed: "A configurer",
+  paused: "Pause",
+  archived: "Archive"
 };
 
 const STATUS_VALUES = new Set<OwnerRestaurantStatus>([
@@ -43,6 +54,12 @@ type CreateRestaurantResult =
   | { ok: true; restaurant: OwnerRestaurant }
   | { ok: false; error: string };
 
+type DishMetrics = {
+  dishCount: number;
+  photoDishCount: number;
+  immersiveDishCount: number;
+};
+
 function normalizeStatus(value: string): OwnerRestaurantStatus {
   if (STATUS_VALUES.has(value as OwnerRestaurantStatus)) {
     return value as OwnerRestaurantStatus;
@@ -51,17 +68,11 @@ function normalizeStatus(value: string): OwnerRestaurantStatus {
   return "demo";
 }
 
-function slugify(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-}
-
-function todayEventCount(rows: AnyRow[], restaurantId: string, eventNames: string[]): number {
+function todayEventCount(
+  rows: AnyRow[],
+  restaurantId: string,
+  eventNames: string[]
+): number {
   const today = new Date().toISOString().slice(0, 10);
   return filterRowsByRestaurantId(rows, restaurantId).filter((row) => {
     const eventName = getString(row, ["event_name", "eventName", "event_type"], "");
@@ -70,55 +81,392 @@ function todayEventCount(rows: AnyRow[], restaurantId: string, eventNames: strin
   }).length;
 }
 
+function normalizeMenuUrl(href: string, fallbackPath: string): string {
+  const target = href || fallbackPath;
+  if (!target) return absoluteUrl("/");
+
+  try {
+    if (/^https?:\/\//i.test(target)) {
+      return new URL(target).toString();
+    }
+  } catch {
+    return absoluteUrl(fallbackPath || "/");
+  }
+
+  return absoluteUrl(target.startsWith("/") ? target : `/${target}`);
+}
+
+function getQrStatus(args: {
+  row: AnyRow;
+  isDemo: boolean;
+  menuUrl: string;
+}): {
+  qrCodeUrl: string | null;
+  qrStatus: OwnerQrStatus;
+  qrStatusLabel: string;
+} {
+  const qrCodeUrl =
+    getString(args.row, ["qr_code_url", "qr_url", "menu_qr_url"], "") || null;
+  const hasGeneratedQr =
+    Boolean(qrCodeUrl) ||
+    getBoolean(args.row, ["qr_ready", "qrReady"], false) ||
+    Boolean(getString(args.row, ["qr_generated_at", "qr_deployed_at"], ""));
+
+  if (args.isDemo || hasGeneratedQr) {
+    return {
+      qrCodeUrl,
+      qrStatus: "ready",
+      qrStatusLabel: args.isDemo ? "QR demo pret" : "QR pret"
+    };
+  }
+
+  if (args.menuUrl) {
+    return {
+      qrCodeUrl,
+      qrStatus: "generable",
+      qrStatusLabel: "QR generable"
+    };
+  }
+
+  return {
+    qrCodeUrl,
+    qrStatus: "missing",
+    qrStatusLabel: "Lien menu manquant"
+  };
+}
+
+function buildReadinessItems(args: {
+  isDemo: boolean;
+  status: OwnerRestaurantStatus;
+  dishCount: number;
+  photoDishCount: number;
+  immersiveDishCount: number;
+  qrStatus: OwnerQrStatus;
+}): OwnerReadinessItem[] {
+  if (args.isDemo) {
+    return [
+      {
+        id: "profile",
+        label: "Restaurant",
+        detail: "Restaurant de presentation Vistaire.",
+        status: "demo"
+      },
+      {
+        id: "menu",
+        label: "Menu actif",
+        detail: "Carte exemple visible cote client.",
+        status: "demo"
+      },
+      {
+        id: "photos",
+        label: "Photos",
+        detail: "Visuels de demonstration disponibles.",
+        status: "demo"
+      },
+      {
+        id: "immersive",
+        label: "3D / AR",
+        detail: "Plats signatures avec assets immersifs de demo.",
+        status: "demo"
+      },
+      {
+        id: "qr",
+        label: "QR",
+        detail: "QR demo genere depuis le lien public.",
+        status: "demo"
+      }
+    ];
+  }
+
+  const hasMenu = args.dishCount > 0;
+  const allPhotosReady =
+    args.dishCount > 0 && args.photoDishCount >= args.dishCount;
+
+  return [
+    {
+      id: "profile",
+      label: "Restaurant",
+      detail:
+        args.status === "setup_needed"
+          ? "Profil encore en setup."
+          : "Profil restaurant exploitable.",
+      status: args.status === "setup_needed" ? "needs_setup" : "ready"
+    },
+    {
+      id: "menu",
+      label: "Menu actif",
+      detail: hasMenu
+        ? `${args.dishCount} plats relies au restaurant.`
+        : "Aucun plat detecte pour ce restaurant.",
+      status: hasMenu ? "ready" : "missing"
+    },
+    {
+      id: "photos",
+      label: "Photos",
+      detail: `${args.photoDishCount}/${Math.max(args.dishCount, 1)} plats avec photo.`,
+      status: allPhotosReady
+        ? "ready"
+        : args.photoDishCount > 0
+          ? "needs_setup"
+          : "missing"
+    },
+    {
+      id: "immersive",
+      label: "3D / AR",
+      detail:
+        args.immersiveDishCount > 0
+          ? `${args.immersiveDishCount} plats avec media immersif.`
+          : "Aucun asset 3D / AR detecte.",
+      status: args.immersiveDishCount > 0 ? "ready" : "needs_setup"
+    },
+    {
+      id: "qr",
+      label: "QR menu",
+      detail:
+        args.qrStatus === "ready"
+          ? "QR deja marque comme pret."
+          : args.qrStatus === "generable"
+            ? "QR generable depuis le lien menu."
+            : "Lien menu requis avant QR.",
+      status:
+        args.qrStatus === "ready"
+          ? "ready"
+          : args.qrStatus === "generable"
+            ? "needs_setup"
+            : "missing"
+    }
+  ];
+}
+
+function readinessScore(items: OwnerReadinessItem[]): number {
+  const ready = items.filter(
+    (item) => item.status === "ready" || item.status === "demo"
+  ).length;
+  return Math.round((ready / Math.max(items.length, 1)) * 100);
+}
+
+function getNextAction(restaurant: {
+  status: OwnerRestaurantStatus;
+  dishCount: number;
+  incompleteDishCount: number;
+  immersiveDishCount: number;
+  qrStatus: OwnerQrStatus;
+}): string {
+  if (restaurant.qrStatus !== "ready") return "Generer le QR du menu";
+  if (restaurant.dishCount === 0) return "Ajouter les plats du menu";
+  if (restaurant.incompleteDishCount > 0) return "Completer les photos des plats";
+  if (restaurant.immersiveDishCount === 0) {
+    return "Choisir un plat signature pour la 3D / AR";
+  }
+  if (restaurant.status === "setup_needed") return "Valider la mise en ligne";
+  return "Pret pour demonstration";
+}
+
+function dishRowsForRestaurant(
+  rows: AnyRow[],
+  restaurantId: string,
+  slug: string
+): AnyRow[] {
+  const byId = filterRowsByRestaurantId(rows, restaurantId);
+  if (byId.length > 0 || !slug) return byId;
+
+  return rows.filter((row) =>
+    ["restaurant_slug", "restaurantSlug", "restaurant"].some(
+      (key) => String(row[key] ?? "") === slug
+    )
+  );
+}
+
+function rowHasPhoto(row: AnyRow): boolean {
+  return (
+    getBoolean(row, ["has_photo", "hasPhoto", "photo_ready"], false) ||
+    Boolean(
+      getString(row, [
+        "image",
+        "image_url",
+        "imageUrl",
+        "photo_url",
+        "photoUrl",
+        "thumbnail_url"
+      ])
+    )
+  );
+}
+
+function rowHasImmersiveAsset(row: AnyRow): boolean {
+  return (
+    getBoolean(row, ["has_3d", "has3d", "has_ar", "hasAr"], false) ||
+    Boolean(
+      getString(row, [
+        "model3d_url",
+        "model3dUrl",
+        "web_model_3d_url",
+        "webModel3dUrl",
+        "ar_model_3d_url",
+        "arModel3dUrl",
+        "usdz_url",
+        "usdzUrl"
+      ])
+    )
+  );
+}
+
+function getDishMetrics(args: {
+  rows: AnyRow[];
+  restaurantId: string;
+  slug: string;
+  isDemo: boolean;
+}): DishMetrics {
+  if (args.isDemo) {
+    const dishes = getAllDishes();
+    return {
+      dishCount: dishes.length,
+      photoDishCount: dishes.filter((dish) => Boolean(dish.image)).length,
+      immersiveDishCount: dishes.filter(
+        (dish) =>
+          Boolean(dish.model3dUrl) ||
+          Boolean(dish.webModel3dUrl) ||
+          Boolean(dish.arModel3dUrl) ||
+          Boolean(dish.usdzUrl) ||
+          Boolean(dish.arUsdzUrl)
+      ).length
+    };
+  }
+
+  const rows = dishRowsForRestaurant(args.rows, args.restaurantId, args.slug);
+
+  return {
+    dishCount: rows.length,
+    photoDishCount: rows.filter(rowHasPhoto).length,
+    immersiveDishCount: rows.filter(rowHasImmersiveAsset).length
+  };
+}
+
 function mapRestaurantRow(args: {
   row: AnyRow;
-  dishCount: number;
+  dishMetrics: DishMetrics;
   openingsToday: number;
   interactionsToday: number;
 }): OwnerRestaurant {
   const id = getString(args.row, ["id", "restaurant_id"], "");
-  const slug = getString(args.row, ["slug", "restaurant_slug"], slugify(getString(args.row, ["name"], "restaurant")));
   const name = getString(args.row, ["name", "restaurant_name"], "Restaurant");
+  const slug = getString(
+    args.row,
+    ["slug", "restaurant_slug"],
+    slugifyRestaurantSlug(name)
+  );
   const status = normalizeStatus(getString(args.row, ["status"], "demo"));
   const isDemo = id === getDemoRestaurantId() || slug === "maison-elyse";
+  const effectiveStatus = isDemo ? "demo" : status;
+  const menuHrefColumn = getString(args.row, [
+    "public_menu_url",
+    "menu_url",
+    "menu_href",
+    "client_menu_url",
+    "website_menu_url"
+  ]);
+  const fallbackMenuPath = isDemo ? "/demo" : buildRestaurantMenuPath(slug);
+  const clientMenuHref = menuHrefColumn || fallbackMenuPath;
+  const menuUrl = isDemo
+    ? absoluteUrl("/demo")
+    : menuHrefColumn
+      ? normalizeMenuUrl(menuHrefColumn, fallbackMenuPath)
+      : buildRestaurantMenuUrl(slug);
+  const qr = getQrStatus({ row: args.row, isDemo, menuUrl });
+  const incompleteDishCount = Math.max(
+    0,
+    args.dishMetrics.dishCount - args.dishMetrics.photoDishCount
+  );
+  const readinessItems = buildReadinessItems({
+    isDemo,
+    status: effectiveStatus,
+    dishCount: args.dishMetrics.dishCount,
+    photoDishCount: args.dishMetrics.photoDishCount,
+    immersiveDishCount: args.dishMetrics.immersiveDishCount,
+    qrStatus: qr.qrStatus
+  });
 
   return {
     id: id || slug,
     name,
     slug,
-    location: getString(args.row, ["location", "city", "address"], "Emplacement à préciser"),
-    cuisineType: getString(args.row, ["cuisine_type", "cuisineType"], "Cuisine à préciser"),
-    status: isDemo ? "demo" : status,
-    statusLabel: STATUS_LABELS[isDemo ? "demo" : status],
-    dishCount: args.dishCount,
+    isDemo,
+    location: getString(
+      args.row,
+      ["location", "city", "address"],
+      "Emplacement a preciser"
+    ),
+    cuisineType: getString(
+      args.row,
+      ["cuisine_type", "cuisineType"],
+      "Cuisine a preciser"
+    ),
+    status: effectiveStatus,
+    statusLabel: STATUS_LABELS[effectiveStatus],
+    dishCount: args.dishMetrics.dishCount,
+    photoDishCount: args.dishMetrics.photoDishCount,
+    immersiveDishCount: args.dishMetrics.immersiveDishCount,
+    incompleteDishCount,
     openingsToday: args.openingsToday,
     interactionsToday: args.interactionsToday,
-    lastActivity: getDateLabel(args.row, ["last_activity_at", "updated_at", "created_at"]),
-    clientMenuHref: isDemo ? "/demo" : `/demo?restaurant=${encodeURIComponent(slug)}`,
-    dashboardHref: isDemo ? "/admin" : `/admin?restaurantId=${encodeURIComponent(id || slug)}`
+    lastActivity: getDateLabel(args.row, [
+      "last_activity_at",
+      "updated_at",
+      "created_at"
+    ]),
+    clientMenuHref,
+    menuUrl,
+    menuUrlSource: isDemo
+      ? "demo"
+      : menuHrefColumn
+        ? "column"
+        : "derived_preview",
+    dashboardHref: isDemo ? "/admin" : buildRestaurantDashboardPath(id || slug),
+    qrTargetUrl: menuUrl,
+    qrCodeUrl: qr.qrCodeUrl,
+    qrStatus: qr.qrStatus,
+    qrStatusLabel: qr.qrStatusLabel,
+    readinessScore: readinessScore(readinessItems),
+    readinessItems,
+    nextAction: getNextAction({
+      status: effectiveStatus,
+      dishCount: args.dishMetrics.dishCount,
+      incompleteDishCount,
+      immersiveDishCount: args.dishMetrics.immersiveDishCount,
+      qrStatus: qr.qrStatus
+    })
   };
 }
 
 function fallbackOwnerRestaurant(): OwnerRestaurant {
   const restaurant = getRestaurant();
-  return {
-    id: getDemoRestaurantId(),
-    name: restaurant.name,
-    slug: restaurant.slug,
-    location: restaurant.location,
-    cuisineType: restaurant.cuisineType,
-    status: "demo",
-    statusLabel: STATUS_LABELS.demo,
-    dishCount: getAllDishes().length,
+  return mapRestaurantRow({
+    row: {
+      id: getDemoRestaurantId(),
+      name: restaurant.name,
+      slug: restaurant.slug,
+      location: restaurant.location,
+      cuisine_type: restaurant.cuisineType,
+      status: "demo",
+      updated_at: new Date().toISOString(),
+      qr_ready: true
+    },
+    dishMetrics: getDishMetrics({
+      rows: [],
+      restaurantId: getDemoRestaurantId(),
+      slug: restaurant.slug,
+      isDemo: true
+    }),
     openingsToday: 248,
-    interactionsToday: 118,
-    lastActivity: "Aujourd'hui",
-    clientMenuHref: "/demo",
-    dashboardHref: "/admin"
-  };
+    interactionsToday: 118
+  });
 }
 
-function buildStats(restaurants: OwnerRestaurant[], dailyRows: AnyRow[]): OwnerStats {
+function buildStats(
+  restaurants: OwnerRestaurant[],
+  dailyRows: AnyRow[],
+  actionCount: number
+): OwnerStats {
   const menuOpensToday =
     dailyRows.reduce(
       (sum, row) =>
@@ -156,23 +504,108 @@ function buildStats(restaurants: OwnerRestaurant[], dailyRows: AnyRow[]): OwnerS
           "ar_clicks"
         ]),
       0
-    ) || restaurants.reduce((sum, restaurant) => sum + restaurant.interactionsToday, 0);
+    ) ||
+    restaurants.reduce(
+      (sum, restaurant) => sum + restaurant.interactionsToday,
+      0
+    );
   const mostActive = [...restaurants].sort(
-    (a, b) => b.openingsToday + b.interactionsToday - (a.openingsToday + a.interactionsToday)
+    (a, b) =>
+      b.openingsToday +
+      b.interactionsToday -
+      (a.openingsToday + a.interactionsToday)
   )[0];
 
   return {
     totalRestaurants: restaurants.length,
-    activeRestaurants: restaurants.filter((restaurant) => restaurant.status === "active").length,
-    demoRestaurants: restaurants.filter((restaurant) => restaurant.status === "demo").length,
+    activeRestaurants: restaurants.filter(
+      (restaurant) => restaurant.status === "active"
+    ).length,
+    demoRestaurants: restaurants.filter((restaurant) => restaurant.status === "demo")
+      .length,
     setupNeededRestaurants: restaurants.filter(
       (restaurant) => restaurant.status === "setup_needed"
     ).length,
+    menuReadyRestaurants: restaurants.filter((restaurant) => restaurant.dishCount > 0)
+      .length,
+    qrReadyRestaurants: restaurants.filter(
+      (restaurant) => restaurant.qrStatus === "ready"
+    ).length,
+    totalDishes: restaurants.reduce(
+      (sum, restaurant) => sum + restaurant.dishCount,
+      0
+    ),
+    dishesWithPhotos: restaurants.reduce(
+      (sum, restaurant) => sum + restaurant.photoDishCount,
+      0
+    ),
+    dishesWithImmersive: restaurants.reduce(
+      (sum, restaurant) => sum + restaurant.immersiveDishCount,
+      0
+    ),
+    actionsToTreat: actionCount,
     menuOpensToday,
     dishViewsToday,
     immersiveInteractionsToday,
     mostActiveRestaurant: mostActive?.name ?? "Aucun signal"
   };
+}
+
+function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
+  const actions: OwnerAction[] = [];
+
+  for (const restaurant of restaurants) {
+    if (restaurant.qrStatus !== "ready") {
+      actions.push({
+        id: `${restaurant.id}-qr`,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        title: "QR menu a generer",
+        body: `${restaurant.name} a un lien menu, mais aucun QR marque comme pret.`,
+        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        priority: "high"
+      });
+    }
+
+    if (restaurant.dishCount === 0) {
+      actions.push({
+        id: `${restaurant.id}-menu`,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        title: "Menu incomplet",
+        body: "Aucun plat relie a ce restaurant dans les donnees disponibles.",
+        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        priority: "high"
+      });
+    }
+
+    if (restaurant.incompleteDishCount > 0) {
+      actions.push({
+        id: `${restaurant.id}-photos`,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        title: "Photos a completer",
+        body: `${restaurant.incompleteDishCount} plats restent sans photo detectee.`,
+        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        priority: "medium"
+      });
+    }
+
+    if (restaurant.immersiveDishCount === 0 && restaurant.dishCount > 0) {
+      actions.push({
+        id: `${restaurant.id}-immersive`,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        title: "Plat signature sans 3D / AR",
+        body: "Aucun asset immersif n'est detecte pour ce menu.",
+        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        priority: "low"
+      });
+    }
+  }
+
+  const rank = { high: 0, medium: 1, low: 2 } as const;
+  return actions.sort((a, b) => rank[a.priority] - rank[b.priority]).slice(0, 8);
 }
 
 function mapStoredRecommendations(rows: AnyRow[]): OwnerRecommendation[] {
@@ -185,7 +618,7 @@ function mapStoredRecommendations(rows: AnyRow[]): OwnerRecommendation[] {
 
     return {
       id: getString(row, ["id"], `stored-${index}`),
-      title: getString(row, ["title"], "Recommandation à traiter"),
+      title: getString(row, ["title"], "Recommandation a traiter"),
       body: getString(row, ["body", "description", "recommendation"], ""),
       restaurantName: getString(row, ["restaurant_name", "restaurantName"], ""),
       type: normalizedType,
@@ -204,16 +637,18 @@ export async function getOwnerDashboardData(): Promise<OwnerDashboardData> {
       readSupabaseRows("owner_ai_recommendations", 100)
     ]);
 
+  const dishRows = dishesResult.ok ? dishesResult.rows : [];
   const restaurants =
     restaurantsResult.ok && restaurantsResult.rows.length
       ? restaurantsResult.rows.map((row) => {
           const restaurantId = getString(row, ["id", "restaurant_id"], "");
-          const dishCount = dishesResult.ok
-            ? filterRowsByRestaurantId(dishesResult.rows, restaurantId).length ||
-              (restaurantId === getDemoRestaurantId() ? getAllDishes().length : 0)
-            : restaurantId === getDemoRestaurantId()
-              ? getAllDishes().length
-              : 0;
+          const name = getString(row, ["name", "restaurant_name"], "Restaurant");
+          const slug = getString(
+            row,
+            ["slug", "restaurant_slug"],
+            slugifyRestaurantSlug(name)
+          );
+          const isDemo = restaurantId === getDemoRestaurantId() || slug === "maison-elyse";
           const openingsToday = eventsResult.ok
             ? todayEventCount(eventsResult.rows, restaurantId, [
                 "menu_opened",
@@ -231,16 +666,23 @@ export async function getOwnerDashboardData(): Promise<OwnerDashboardData> {
 
           return mapRestaurantRow({
             row,
-            dishCount,
+            dishMetrics: getDishMetrics({
+              rows: dishRows,
+              restaurantId,
+              slug,
+              isDemo
+            }),
             openingsToday,
             interactionsToday
           });
         })
       : [fallbackOwnerRestaurant()];
 
+  const actions = buildOwnerActions(restaurants);
   const stats = buildStats(
     restaurants,
-    dailyResult.ok ? dailyResult.rows : []
+    dailyResult.ok ? dailyResult.rows : [],
+    actions.length
   );
   const storedRecommendations = storedResult.ok
     ? mapStoredRecommendations(storedResult.rows)
@@ -254,14 +696,15 @@ export async function getOwnerDashboardData(): Promise<OwnerDashboardData> {
   return {
     stats,
     restaurants,
+    actions,
     recommendations: automatic.recommendations,
     recommendationSource: automatic.source,
     source:
       restaurantsResult.ok && restaurantsResult.rows.length ? "supabase" : "fallback",
     note:
       restaurantsResult.ok && restaurantsResult.rows.length
-        ? "Données restaurants connectées à Supabase."
-        : "Données de présentation affichées tant que Supabase ne répond pas."
+        ? "Donnees restaurants connectees a Supabase."
+        : "Donnees de presentation affichees tant que Supabase ne repond pas."
   };
 }
 
@@ -274,16 +717,35 @@ export function validateCreateRestaurantInput(
 
   const candidate = input as Record<string, unknown>;
   const name = getString(candidate, ["name"], "").slice(0, 120);
-  const slug = slugify(getString(candidate, ["slug"], name)).slice(0, 80);
+  const slug = slugifyRestaurantSlug(getString(candidate, ["slug"], name)).slice(
+    0,
+    80
+  );
   const location = getString(candidate, ["location"], "").slice(0, 160);
-  const cuisineType = getString(candidate, ["cuisineType", "cuisine_type"], "").slice(0, 120);
+  const cuisineType = getString(candidate, ["cuisineType", "cuisine_type"], "").slice(
+    0,
+    120
+  );
   const status = normalizeStatus(getString(candidate, ["status"], "setup_needed"));
-  const contactName = getString(candidate, ["contactName", "contact_name"], "").slice(0, 120);
-  const contactEmail = getString(candidate, ["contactEmail", "contact_email"], "").slice(0, 160);
-  const contactPhone = getString(candidate, ["contactPhone", "contact_phone"], "").slice(0, 60);
+  const contactName = getString(candidate, ["contactName", "contact_name"], "").slice(
+    0,
+    120
+  );
+  const contactEmail = getString(
+    candidate,
+    ["contactEmail", "contact_email"],
+    ""
+  ).slice(0, 160);
+  const contactPhone = getString(
+    candidate,
+    ["contactPhone", "contact_phone"],
+    ""
+  ).slice(0, 60);
   const notes = getString(candidate, ["notes"], "").slice(0, 800);
 
-  if (!name || name.length < 2) return { ok: false, error: "Nom du restaurant requis." };
+  if (!name || name.length < 2) {
+    return { ok: false, error: "Nom du restaurant requis." };
+  }
   if (!slug || slug.length < 2) return { ok: false, error: "Slug invalide." };
   if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
     return { ok: false, error: "Email contact invalide." };
@@ -347,13 +809,18 @@ export async function createRestaurant(
     console.error("[Vistaire owner] create restaurant failed", error.message);
     return {
       ok: false,
-      error: "Le restaurant n'a pas pu être créé. Vérifiez les champs et la configuration Supabase."
+      error:
+        "Le restaurant n'a pas pu etre cree. Verifiez les champs et la configuration Supabase."
     };
   }
 
   const mapped = mapRestaurantRow({
     row: (data ?? row) as AnyRow,
-    dishCount: 0,
+    dishMetrics: {
+      dishCount: 0,
+      photoDishCount: 0,
+      immersiveDishCount: 0
+    },
     openingsToday: 0,
     interactionsToday: 0
   });

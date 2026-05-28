@@ -8,10 +8,15 @@ import { updateSession } from "@/utils/supabase/middleware";
 
 const isProtectedRoute = createRouteMatcher([
   "/owner(.*)",
-  "/api/analytics/summary(.*)",
+  "/todos(.*)",
+]);
+
+const needsClerkAuthContext = createRouteMatcher([
+  "/owner(.*)",
+  "/todos(.*)",
   "/api/restaurants(.*)",
   "/api/owner(.*)",
-  "/todos(.*)",
+  "/api/analytics/summary(.*)",
 ]);
 
 const needsSupabaseSession = createRouteMatcher(["/todos(.*)"]);
@@ -33,7 +38,7 @@ const handleProtectedRoute = clerkMiddleware(async (auth, request) => {
 }, { signInUrl: "/sign-in" });
 
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
-  if (isProtectedRoute(request)) {
+  if (needsClerkAuthContext(request)) {
     return handleProtectedRoute(request, event);
   }
 

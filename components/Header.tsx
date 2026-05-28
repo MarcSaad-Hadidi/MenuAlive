@@ -130,7 +130,7 @@ export function Header({ userSlot }: { userSlot?: ReactNode }) {
           ) : (
             <>
               <Link
-                href="/admin"
+                href="/apercu-restaurateur"
                 onClick={() =>
                   trackMenuEvent({
                     eventName: "dashboard_demo_opened",

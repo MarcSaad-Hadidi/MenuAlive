@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { getOwnerDashboardData } from "@/lib/owner/data";
+import { requireVistaireOwnerApi } from "@/lib/auth/ownerApi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  await auth.protect();
+  const owner = await requireVistaireOwnerApi();
+  if (!owner.ok) return owner.response;
 
   const data = await getOwnerDashboardData();
 
