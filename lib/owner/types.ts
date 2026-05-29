@@ -39,6 +39,8 @@ export type OwnerRestaurant = {
   clientMenuHref: string;
   menuUrl: string;
   menuUrlSource: "column" | "derived_preview" | "demo";
+  publicMenuPath: string;
+  publicMenuUrl: string;
   dashboardHref: string;
   qrTargetUrl: string;
   qrCodeUrl: string | null;
@@ -47,6 +49,72 @@ export type OwnerRestaurant = {
   readinessScore: number;
   readinessItems: OwnerReadinessItem[];
   nextAction: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  notes: string;
+};
+
+export type OwnerQrLogoMode = "none" | "monogram" | "imageUrl";
+
+export type OwnerQrErrorCorrectionLevel = "M" | "Q" | "H";
+
+export type OwnerQrStyle = {
+  foregroundColor: string;
+  backgroundColor: string;
+  accentColor: string;
+  logoMode: OwnerQrLogoMode;
+  logoText: string;
+  logoImageUrl?: string;
+  logoSizePercent: number;
+  padding: number;
+  errorCorrectionLevel: OwnerQrErrorCorrectionLevel;
+  updatedAt?: string;
+};
+
+export type OwnerQrCodeStatus = "active" | "paused" | "archived";
+
+export type OwnerQrCodeRecord = {
+  id: string;
+  restaurantId: string;
+  label: string;
+  tokenPreview: string;
+  targetPath: string;
+  redirectUrl: string;
+  status: OwnerQrCodeStatus;
+  scanCount: number;
+  lastScannedAt: string | null;
+  style: OwnerQrStyle;
+  persisted: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateOwnerQrCodeResult =
+  | {
+      ok: true;
+      record: OwnerQrCodeRecord;
+      token: string;
+      persisted: boolean;
+    }
+  | { ok: false; error: string };
+
+export type OwnerAiPriority = {
+  id: string;
+  title: string;
+  body: string;
+  priority: "high" | "medium" | "low";
+  restaurantName?: string;
+  action: string;
+  href: string;
+};
+
+export type OwnerAiResult = {
+  priorities: OwnerAiPriority[];
+  recommendations: OwnerRecommendation[];
+  prioritySource: "rules";
+  recommendationSource: "stored" | "mistral" | "rules";
+  note: string;
 };
 
 export type OwnerStats = {

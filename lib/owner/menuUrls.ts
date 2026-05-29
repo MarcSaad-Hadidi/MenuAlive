@@ -1,7 +1,13 @@
 import { absoluteUrl } from "@/lib/seo";
-import { buildRestaurantMenuPath } from "@/lib/owner/menuUrlCore";
+import {
+  buildPublicMenuPath,
+  buildQrRedirectPath,
+  buildRestaurantMenuPath
+} from "@/lib/owner/menuUrlCore";
 
 export {
+  buildPublicMenuPath,
+  buildQrRedirectPath,
   buildRestaurantDashboardPath,
   buildRestaurantMenuPath,
   slugifyRestaurantSlug
@@ -16,4 +22,16 @@ export function buildRestaurantMenuUrl(
   env?: SiteUrlEnv
 ): string {
   return absoluteUrl(buildRestaurantMenuPath(slugOrName), env);
+}
+
+export function buildPublicMenuUrl(
+  slugOrName: string,
+  params?: { table?: string; zone?: string },
+  env?: SiteUrlEnv
+): string {
+  return absoluteUrl(buildPublicMenuPath(slugOrName, params), env);
+}
+
+export function buildQrRedirectUrl(token: string, env?: SiteUrlEnv): string {
+  return absoluteUrl(buildQrRedirectPath(token), env);
 }

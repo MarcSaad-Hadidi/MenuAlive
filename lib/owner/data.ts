@@ -16,9 +16,9 @@ import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 import { getDemoRestaurantId } from "@/lib/analytics/insights";
 import { getAutomaticOwnerRecommendations } from "@/lib/owner/recommendations";
 import {
+  buildPublicMenuPath,
+  buildPublicMenuUrl,
   buildRestaurantDashboardPath,
-  buildRestaurantMenuPath,
-  buildRestaurantMenuUrl,
   slugifyRestaurantSlug
 } from "@/lib/owner/menuUrls";
 import { absoluteUrl } from "@/lib/seo";
@@ -365,13 +365,15 @@ function mapRestaurantRow(args: {
     "client_menu_url",
     "website_menu_url"
   ]);
-  const fallbackMenuPath = isDemo ? "/demo" : buildRestaurantMenuPath(slug);
-  const clientMenuHref = menuHrefColumn || fallbackMenuPath;
+  const publicMenuPath = isDemo ? "/demo" : buildPublicMenuPath(slug);
+  const publicMenuUrl = isDemo ? absoluteUrl("/demo") : buildPublicMenuUrl(slug);
+  const fallbackMenuPath = publicMenuPath;
+  const clientMenuHref = menuHrefColumn || publicMenuPath;
   const menuUrl = isDemo
     ? absoluteUrl("/demo")
     : menuHrefColumn
       ? normalizeMenuUrl(menuHrefColumn, fallbackMenuPath)
-      : buildRestaurantMenuUrl(slug);
+      : publicMenuUrl;
   const qr = getQrStatus({ row: args.row, isDemo, menuUrl });
   const incompleteDishCount = Math.max(
     0,
@@ -421,6 +423,8 @@ function mapRestaurantRow(args: {
       : menuHrefColumn
         ? "column"
         : "derived_preview",
+    publicMenuPath,
+    publicMenuUrl,
     dashboardHref: isDemo ? "/admin" : buildRestaurantDashboardPath(id || slug),
     qrTargetUrl: menuUrl,
     qrCodeUrl: qr.qrCodeUrl,
@@ -434,7 +438,11 @@ function mapRestaurantRow(args: {
       incompleteDishCount,
       immersiveDishCount: args.dishMetrics.immersiveDishCount,
       qrStatus: qr.qrStatus
-    })
+    }),
+    contactName: getString(args.row, ["contact_name", "contactName"], ""),
+    contactEmail: getString(args.row, ["contact_email", "contactEmail"], ""),
+    contactPhone: getString(args.row, ["contact_phone", "contactPhone", "phone"], ""),
+    notes: getString(args.row, ["notes", "internal_notes"], "")
   };
 }
 
@@ -562,7 +570,7 @@ function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
         restaurantName: restaurant.name,
         title: "QR menu a generer",
         body: `${restaurant.name} a un lien menu, mais aucun QR marque comme pret.`,
-        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        href: "/owner/qr-codes",
         priority: "high"
       });
     }
@@ -574,7 +582,7 @@ function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
         restaurantName: restaurant.name,
         title: "Menu incomplet",
         body: "Aucun plat relie a ce restaurant dans les donnees disponibles.",
-        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        href: "/owner/menus",
         priority: "high"
       });
     }
@@ -586,7 +594,7 @@ function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
         restaurantName: restaurant.name,
         title: "Photos a completer",
         body: `${restaurant.incompleteDishCount} plats restent sans photo detectee.`,
-        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        href: "/owner/medias",
         priority: "medium"
       });
     }
@@ -598,7 +606,7 @@ function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
         restaurantName: restaurant.name,
         title: "Plat signature sans 3D / AR",
         body: "Aucun asset immersif n'est detecte pour ce menu.",
-        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        href: "/owner/3d-ar",
         priority: "low"
       });
     }
