@@ -170,7 +170,7 @@ export function VistairePreviewLanding({
                   <FramerImage
                     alt=""
                     className={`${styles.cardImage} ${styles.discoveryTableImage}`}
-                    sizes="(max-width: 920px) calc(50vw - 20px), 260px"
+                    sizes="(max-width: 920px) calc(100vw - 28px), 260px"
                     src={restaurantTable}
                   />
                 </div>
@@ -181,7 +181,7 @@ export function VistairePreviewLanding({
                   <FramerImage
                     alt=""
                     className={`${styles.cardImage} ${styles.discoveryGuestImage}`}
-                    sizes="(max-width: 920px) calc(50vw - 20px), 260px"
+                    sizes="(max-width: 920px) calc(100vw - 28px), 260px"
                     src={restaurantGuest}
                   />
                 </div>
