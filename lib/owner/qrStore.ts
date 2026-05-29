@@ -1,7 +1,14 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
-import { getNumber, getString, type AnyRow } from "@/lib/analytics/serverRows";
+import {
+  getNumber,
+  getString,
+  getSupabaseTableColumns,
+  pickColumn,
+  type AnyRow
+} from "@/lib/analytics/serverRows";
 import { buildQrRedirectUrl } from "@/lib/owner/menuUrls";
 import { DEFAULT_OWNER_QR_STYLE, normalizeOwnerQrStyle } from "@/lib/owner/qrStyle";
 import {
@@ -49,6 +56,50 @@ function sanitizeTargetPath(input: string): string | null {
   // Only allow internal absolute paths to avoid open-redirect abuse.
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return null;
   return trimmed.slice(0, 512);
+}
+
+/** Restaurant ids with at least one active row in qr_codes (dashboard QR status). */
+export function buildActiveQrRestaurantIds(rows: AnyRow[]): Set<string> {
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (normalizeStatus(getString(row, ["status"], "active")) !== "active") continue;
+    const restaurantId = getString(row, ["restaurant_id", "restaurantId"], "");
+    if (restaurantId) ids.add(restaurantId);
+  }
+  return ids;
+}
+
+async function markRestaurantQrReady(
+  client: SupabaseClient,
+  restaurantId: string
+): Promise<void> {
+  if (!restaurantId) return;
+
+  const columns = await getSupabaseTableColumns("restaurants");
+  const update: Record<string, unknown> = {};
+  const now = new Date().toISOString();
+
+  const qrReadyCol = columns.size > 0 ? pickColumn(columns, ["qr_ready", "qrReady"]) : "qr_ready";
+  if (qrReadyCol) update[qrReadyCol] = true;
+
+  const generatedCol = columns.size > 0
+    ? pickColumn(columns, ["qr_generated_at", "qrGeneratedAt", "qr_deployed_at"])
+    : "qr_generated_at";
+  if (generatedCol) update[generatedCol] = now;
+
+  if (Object.keys(update).length === 0) return;
+
+  const idCol = columns.size > 0 ? pickColumn(columns, ["id", "restaurant_id"]) : "id";
+  if (!idCol) return;
+
+  const { error } = await client
+    .from("restaurants")
+    .update(update)
+    .eq(idCol, restaurantId);
+
+  if (error) {
+    console.warn("[Vistaire owner] mark restaurant qr_ready failed", error.message);
+  }
 }
 
 function mapQrRow(row: AnyRow): OwnerQrCodeRecord {
@@ -121,6 +172,7 @@ export async function createOwnerQrCode(args: {
     const record = mapQrRow((data ?? insertRow) as AnyRow);
     record.style = style;
     record.redirectUrl = buildQrRedirectUrl(token);
+    await markRestaurantQrReady(admin.client, args.restaurantId);
     return { ok: true, record, token, persisted: true };
   }
 
@@ -187,8 +239,7 @@ export async function updateOwnerQrCode(
 
 /**
  * Resolves an incoming /q token to an internal redirect target.
- * Hashes the token and matches qr_codes.token_hash; checks status === active;
- * best-effort increments scan_count. Falls back to verifying signed dev tokens.
+ * Uses resolve_qr_code_scan RPC for atomic scan_count increment when available.
  */
 export async function resolveQrToken(
   token: string
@@ -199,37 +250,8 @@ export async function resolveQrToken(
 
   if (admin.ok && !isSignedQrToken(token)) {
     const tokenHash = hashQrToken(token);
-    const { data, error } = await admin.client
-      .from(QR_TABLE)
-      .select("*")
-      .eq("token_hash", tokenHash)
-      .limit(1)
-      .maybeSingle();
-
-    if (!error && data) {
-      const row = data as AnyRow;
-      const status = normalizeStatus(getString(row, ["status"], "active"));
-      if (status !== "active") return { ok: false };
-
-      const targetPath = sanitizeTargetPath(
-        getString(row, ["target_path", "targetPath"], "")
-      );
-      if (!targetPath) return { ok: false };
-
-      const id = getString(row, ["id"], "");
-      if (id) {
-        void admin.client
-          .from(QR_TABLE)
-          .update({
-            scan_count: getNumber(row, ["scan_count", "scanCount"], 0) + 1,
-            last_scanned_at: new Date().toISOString()
-          })
-          .eq("id", id)
-          .then(undefined, () => undefined);
-      }
-
-      return { ok: true, targetPath };
-    }
+    const resolved = await resolvePersistedQrToken(admin.client, tokenHash);
+    if (resolved.ok) return resolved;
   }
 
   // Signed fallback token (dev/build, or when DB lookup missed).
@@ -240,4 +262,43 @@ export async function resolveQrToken(
   }
 
   return { ok: false };
+}
+
+async function resolvePersistedQrToken(
+  client: SupabaseClient,
+  tokenHash: string
+): Promise<{ ok: true; targetPath: string } | { ok: false }> {
+  const { data, error } = await client.rpc("resolve_qr_code_scan", {
+    p_token_hash: tokenHash
+  });
+
+  if (!error && data) {
+    const targetPath = sanitizeTargetPath(String(data));
+    if (targetPath) return { ok: true, targetPath };
+    return { ok: false };
+  }
+
+  // Fallback when RPC migration is not applied yet: redirect without RMW increment.
+  if (error) {
+    console.warn("[Vistaire owner] resolve_qr_code_scan RPC unavailable", error.message);
+  }
+
+  const { data: row, error: selectError } = await client
+    .from(QR_TABLE)
+    .select("target_path, status")
+    .eq("token_hash", tokenHash)
+    .limit(1)
+    .maybeSingle();
+
+  if (selectError || !row) return { ok: false };
+
+  const status = normalizeStatus(getString(row as AnyRow, ["status"], "active"));
+  if (status !== "active") return { ok: false };
+
+  const targetPath = sanitizeTargetPath(
+    getString(row as AnyRow, ["target_path", "targetPath"], "")
+  );
+  if (!targetPath) return { ok: false };
+
+  return { ok: true, targetPath };
 }

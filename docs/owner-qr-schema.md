@@ -12,8 +12,8 @@ points at a **secure, stable, non-guessable** Vistaire URL
 - Only the **hash** of the token is stored (`token_hash`); the raw token is
   returned to the owner once, at creation, to render/download the QR.
 - The public `/q/[token]` route hashes the incoming token, matches `token_hash`,
-  checks `status = 'active'`, increments `scan_count`, and redirects to
-  `target_path`.
+  checks `status = 'active'`, atomically increments `scan_count` via the
+  `resolve_qr_code_scan` RPC, and redirects to `target_path`.
 
 ## Table
 
@@ -39,13 +39,22 @@ This repo has no Supabase CLI wired in, so apply the migration manually:
 
 **Option A — Supabase SQL editor (recommended)**
 1. Open your Supabase project → SQL Editor.
-2. Paste the contents of `supabase/migrations/0001_qr_codes.sql`.
-3. Run it. Re-running is safe (`if not exists` guards).
+2. Paste the contents of `supabase/migrations/0001_qr_codes.sql`, then run.
+3. Paste the contents of `supabase/migrations/0002_qr_resolve_scan_rpc.sql`, then run.
+4. Re-running is safe (`if not exists` / `create or replace` guards).
 
 **Option B — psql**
 ```bash
 psql "$SUPABASE_DB_URL" -f supabase/migrations/0001_qr_codes.sql
+psql "$SUPABASE_DB_URL" -f supabase/migrations/0002_qr_resolve_scan_rpc.sql
 ```
+
+## Atomic scan counts
+
+Concurrent scans of the same QR must not lose events. Apply
+`0002_qr_resolve_scan_rpc.sql`, which defines `resolve_qr_code_scan(token_hash)`:
+a single `UPDATE … SET scan_count = scan_count + 1 … RETURNING target_path`.
+Without this RPC, redirects still work but scan counts are not incremented.
 
 ## Environment
 

@@ -15,6 +15,7 @@ import {
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 import { getDemoRestaurantId } from "@/lib/analytics/insights";
 import { getAutomaticOwnerRecommendations } from "@/lib/owner/recommendations";
+import { buildActiveQrRestaurantIds } from "@/lib/owner/qrStore";
 import {
   buildPublicMenuPath,
   buildPublicMenuUrl,
@@ -100,6 +101,7 @@ function getQrStatus(args: {
   row: AnyRow;
   isDemo: boolean;
   menuUrl: string;
+  hasActiveQrCode?: boolean;
 }): {
   qrCodeUrl: string | null;
   qrStatus: OwnerQrStatus;
@@ -108,6 +110,7 @@ function getQrStatus(args: {
   const qrCodeUrl =
     getString(args.row, ["qr_code_url", "qr_url", "menu_qr_url"], "") || null;
   const hasGeneratedQr =
+    Boolean(args.hasActiveQrCode) ||
     Boolean(qrCodeUrl) ||
     getBoolean(args.row, ["qr_ready", "qrReady"], false) ||
     Boolean(getString(args.row, ["qr_generated_at", "qr_deployed_at"], ""));
@@ -347,6 +350,7 @@ function mapRestaurantRow(args: {
   dishMetrics: DishMetrics;
   openingsToday: number;
   interactionsToday: number;
+  hasActiveQrCode?: boolean;
 }): OwnerRestaurant {
   const id = getString(args.row, ["id", "restaurant_id"], "");
   const name = getString(args.row, ["name", "restaurant_name"], "Restaurant");
@@ -374,7 +378,12 @@ function mapRestaurantRow(args: {
     : menuHrefColumn
       ? normalizeMenuUrl(menuHrefColumn, fallbackMenuPath)
       : publicMenuUrl;
-  const qr = getQrStatus({ row: args.row, isDemo, menuUrl });
+  const qr = getQrStatus({
+    row: args.row,
+    isDemo,
+    menuUrl,
+    hasActiveQrCode: args.hasActiveQrCode
+  });
   const incompleteDishCount = Math.max(
     0,
     args.dishMetrics.dishCount - args.dishMetrics.photoDishCount
@@ -636,14 +645,26 @@ function mapStoredRecommendations(rows: AnyRow[]): OwnerRecommendation[] {
 }
 
 export async function getOwnerDashboardData(): Promise<OwnerDashboardData> {
-  const [restaurantsResult, dishesResult, dailyResult, eventsResult, storedResult] =
-    await Promise.all([
-      readSupabaseRows("restaurants", 200),
-      readSupabaseRows("menu_dishes", 1_000),
-      readSupabaseRows("restaurant_daily_analytics", 300),
-      readSupabaseRows("analytics_events", 1_000),
-      readSupabaseRows("owner_ai_recommendations", 100)
-    ]);
+  const [
+    restaurantsResult,
+    dishesResult,
+    dailyResult,
+    eventsResult,
+    storedResult,
+    qrCodesResult
+  ] = await Promise.all([
+    readSupabaseRows("restaurants", 200),
+    readSupabaseRows("menu_dishes", 1_000),
+    readSupabaseRows("restaurant_daily_analytics", 300),
+    readSupabaseRows("analytics_events", 1_000),
+    readSupabaseRows("owner_ai_recommendations", 100),
+    readSupabaseRows("qr_codes", 500)
+  ]);
+
+  const activeQrRestaurantIds =
+    qrCodesResult.ok && qrCodesResult.rows.length
+      ? buildActiveQrRestaurantIds(qrCodesResult.rows)
+      : new Set<string>();
 
   const dishRows = dishesResult.ok ? dishesResult.rows : [];
   const restaurants =
@@ -681,7 +702,8 @@ export async function getOwnerDashboardData(): Promise<OwnerDashboardData> {
               isDemo
             }),
             openingsToday,
-            interactionsToday
+            interactionsToday,
+            hasActiveQrCode: activeQrRestaurantIds.has(restaurantId)
           });
         })
       : [fallbackOwnerRestaurant()];
