@@ -1,240 +1,107 @@
-import Image from "next/image";
 import Link from "next/link";
-import restaurantBackground from "@/Framer/PhotoRestoComplet5.png";
-import { OwnerRestaurantTable } from "@/components/owner/OwnerRestaurantTable";
 import styles from "@/components/owner/OwnerCockpit.module.css";
-import { RestaurantCreateForm } from "@/components/owner/RestaurantCreateForm";
-import { getOwnerDashboardData } from "@/lib/owner/data";
-import { getSiteUrl } from "@/lib/seo";
-import type { OwnerAction, OwnerRecommendation } from "@/lib/owner/types";
+import { OwnerAiPanel } from "@/components/owner/OwnerAiPanel";
+import { ModuleHeader, StatGroup, StatTile } from "@/components/owner/OwnerUi";
+import { getOwnerDashboard } from "@/lib/owner/dashboard";
+import { buildOwnerAiPriorities } from "@/lib/owner/ai/rules";
 
 export const dynamic = "force-dynamic";
 
-const RECOMMENDATION_STYLES: Record<OwnerRecommendation["type"], string> = {
-  opportunity: styles.recommendationOpportunity,
-  watch: styles.recommendationWatch,
-  setup: styles.recommendationSetup,
-  upsell: styles.recommendationUpsell
-};
+export default async function OwnerOverviewPage() {
+  const data = await getOwnerDashboard();
+  const operational = data.restaurants.filter((restaurant) => !restaurant.isDemo);
 
-const ACTION_STYLES: Record<OwnerAction["priority"], string> = {
-  high: styles.priorityHigh,
-  medium: styles.priorityMedium,
-  low: styles.priorityLow
-};
+  const today = {
+    toComplete: operational.filter((r) => r.status === "setup_needed").length,
+    qrToDo: operational.filter((r) => r.qrStatus !== "ready").length,
+    photosMissing: operational.reduce((sum, r) => sum + r.incompleteDishCount, 0),
+    readyToPublish: operational.filter(
+      (r) =>
+        r.status === "setup_needed" &&
+        r.dishCount > 0 &&
+        r.qrStatus === "ready" &&
+        r.incompleteDishCount === 0
+    ).length,
+    immersiveGaps: operational.filter(
+      (r) => r.dishCount > 0 && r.immersiveDishCount === 0
+    ).length
+  };
 
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("fr-CA").format(value);
-}
-
-export default async function OwnerPage() {
-  const data = await getOwnerDashboardData();
-  const siteOrigin = getSiteUrl().origin;
+  const priorities = buildOwnerAiPriorities(data.restaurants);
 
   return (
-    <main className={styles.page}>
-      <Image
-        alt=""
-        aria-hidden="true"
-        className={styles.backgroundImage}
-        fill
-        priority
-        quality={100}
-        sizes="100vw"
-        src={restaurantBackground}
-        unoptimized
+    <>
+      <ModuleHeader
+        title="Vistaire Owner"
+        description="Gestion restaurants, menus, QR et qualité produit."
+        actions={
+          <>
+            <Link className={styles.btnPrimary + " " + styles.btn} href="/owner/restaurants#create" prefetch={false}>
+              Créer restaurant
+            </Link>
+            <Link className={styles.btn} href="/owner/qr-codes" prefetch={false}>
+              Générer QR
+            </Link>
+            <Link className={styles.btn} href="/owner/restaurants" prefetch={false}>
+              Voir restaurants
+            </Link>
+          </>
+        }
       />
 
-      <div className={styles.shell}>
-        <div className={styles.frame}>
-          <section className={`${styles.card} ${styles.heroPanel}`}>
-            <div className={styles.heroCopy}>
-              <p className={styles.eyebrow}>Cockpit owner Vistaire</p>
-              <h1>Pilotage restaurant, menu et QR.</h1>
-              <p className={styles.heroLead}>
-                Vue interne owner-only pour savoir quels restaurants sont
-                montrables, lesquels demandent une action, et quels QR pointent
-                vers un menu public exploitable.
-              </p>
-              <div className={styles.heroActions}>
-                <Link
-                  className={styles.buttonPrimary}
-                  href="#create-restaurant"
-                  prefetch={false}
-                >
-                  Créer restaurant
-                </Link>
-                <Link
-                  className={styles.buttonSecondary}
-                  href="/apercu-restaurateur"
-                  prefetch={false}
-                >
-                  Page publique
-                </Link>
-                <Link
-                  className={styles.buttonGhost}
-                  href="#restaurants"
-                  prefetch={false}
-                >
-                  Voir restaurants
-                </Link>
-              </div>
-            </div>
+      <section className={styles.todayBanner} aria-label="À traiter aujourd'hui">
+        <Link className={styles.todayItem} href="/owner/restaurants" prefetch={false}>
+          <span className={styles.todayCount}>{today.toComplete}</span>
+          <span className={styles.todayLabel}>Restaurants à compléter</span>
+        </Link>
+        <Link className={styles.todayItem} href="/owner/qr-codes" prefetch={false}>
+          <span className={styles.todayCount}>{today.qrToDo}</span>
+          <span className={styles.todayLabel}>QR à générer / tester</span>
+        </Link>
+        <Link className={styles.todayItem} href="/owner/medias" prefetch={false}>
+          <span className={styles.todayCount}>{today.photosMissing}</span>
+          <span className={styles.todayLabel}>Plats sans photo</span>
+        </Link>
+        <Link className={styles.todayItem} href="/owner/menus" prefetch={false}>
+          <span className={styles.todayCount}>{today.readyToPublish}</span>
+          <span className={styles.todayLabel}>Menus prêts à publier</span>
+        </Link>
+        <Link className={styles.todayItem} href="/owner/3d-ar" prefetch={false}>
+          <span className={styles.todayCount}>{today.immersiveGaps}</span>
+          <span className={styles.todayLabel}>Manques 3D / AR</span>
+        </Link>
+      </section>
 
-            <aside className={`${styles.card} ${styles.sourcePanel}`}>
-              <div>
-                <p className={styles.badge}>Source cockpit</p>
-                <p className={styles.bodyText}>{data.note}</p>
-              </div>
-              <p className={styles.sourceBadge}>
-                {data.source === "fallback" ? "Données demo" : "Données Supabase"}
-              </p>
-            </aside>
-          </section>
+      <StatGroup title="Business">
+        <StatTile label="Restaurants total" value={data.stats.totalRestaurants} primary />
+        <StatTile label="Actifs" value={data.stats.activeRestaurants} />
+        <StatTile label="En setup" value={data.stats.setupNeededRestaurants} />
+        <StatTile label="Actions critiques" value={data.stats.actionsToTreat} />
+      </StatGroup>
 
-          <section className={`${styles.card} ${styles.section}`} aria-labelledby="owner-stats-heading">
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="owner-stats-heading" className={styles.sectionTitle}>
-                  Vue globale
-                </h2>
-                <p className={styles.sectionText}>
-                  Les chiffres de setup restent dérivés des données disponibles.
-                </p>
-              </div>
-            </div>
+      <StatGroup title="Produit">
+        <StatTile label="Menus prêts" value={data.stats.menuReadyRestaurants} />
+        <StatTile label="QR prêts" value={data.stats.qrReadyRestaurants} />
+        <StatTile label="Plats total" value={data.stats.totalDishes} />
+        <StatTile label="Plats avec photos" value={data.stats.dishesWithPhotos} />
+      </StatGroup>
 
-            <div className={styles.statsGrid}>
-              <StatCard label="Restaurants total" value={data.stats.totalRestaurants} />
-              <StatCard label="Actifs" value={data.stats.activeRestaurants} />
-              <StatCard label="En setup" value={data.stats.setupNeededRestaurants} />
-              <StatCard label="Menus prêts" value={data.stats.menuReadyRestaurants} />
-              <StatCard label="QR prêts" value={data.stats.qrReadyRestaurants} />
-              <StatCard label="Plats total" value={data.stats.totalDishes} />
-              <StatCard label="Plats avec photos" value={data.stats.dishesWithPhotos} />
-              <StatCard label="Plats avec 3D / AR" value={data.stats.dishesWithImmersive} />
-              <StatCard label="Actions à traiter" value={data.stats.actionsToTreat} />
-              <StatCard label="Ouvertures menu" value={data.stats.menuOpensToday} />
-              <StatCard label="Plats consultés" value={data.stats.dishViewsToday} />
-              <article className={styles.statCard}>
-                <p className={styles.metricLabel}>Restaurant le plus actif</p>
-                <strong>{data.stats.mostActiveRestaurant}</strong>
-              </article>
-            </div>
-          </section>
+      <StatGroup title="Expérience">
+        <StatTile label="Plats 3D / AR" value={data.stats.dishesWithImmersive} />
+        <StatTile label="Ouvertures menu" value={data.stats.menuOpensToday} />
+        <StatTile label="Plats consultés" value={data.stats.dishViewsToday} />
+        <StatTile label="Plus actif" value={data.stats.mostActiveRestaurant} />
+      </StatGroup>
 
-          <section className={`${styles.card} ${styles.section}`} aria-labelledby="owner-actions-heading">
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="owner-actions-heading" className={styles.sectionTitle}>
-                  Priorités owner
-                </h2>
-                <p className={styles.sectionText}>
-                  Actions dérivées des menus, QR, photos et assets immersifs.
-                </p>
-              </div>
-            </div>
-            <div className={styles.actionGrid}>
-              {data.actions.length > 0 ? (
-                data.actions.map((action) => (
-                  <ActionCard key={action.id} action={action} />
-                ))
-              ) : (
-                <article className={styles.empty}>
-                  Aucun signal urgent dans les données disponibles.
-                </article>
-              )}
-            </div>
-          </section>
-
-          <section id="restaurants" className={`${styles.card} ${styles.section}`} aria-labelledby="owner-restaurants-heading">
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="owner-restaurants-heading" className={styles.sectionTitle}>
-                  Restaurants
-                </h2>
-                <p className={styles.sectionText}>
-                  Recherche, filtres, readiness, liens menu et QR générables par
-                  restaurant.
-                </p>
-              </div>
-            </div>
-            <OwnerRestaurantTable restaurants={data.restaurants} />
-          </section>
-
-          <section className={`${styles.card} ${styles.section}`} aria-labelledby="owner-recommendations-heading">
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="owner-recommendations-heading" className={styles.sectionTitle}>
-                  Recommandations automatiques
-                </h2>
-                <p className={styles.sectionText}>
-                  Priorités proposées à partir des signaux agrégés des restaurants.
-                </p>
-              </div>
-            </div>
-            <div className={styles.recommendationGrid}>
-              {data.recommendations.map((recommendation) => (
-                <article key={recommendation.id} className={styles.recommendationCard}>
-                  <span
-                    className={`${styles.pill} ${RECOMMENDATION_STYLES[recommendation.type]}`}
-                  >
-                    {recommendation.restaurantName || "Vistaire"}
-                  </span>
-                  <h3>{recommendation.title}</h3>
-                  <p>{recommendation.body}</p>
-                </article>
-              ))}
-            </div>
-            <p className={styles.sourceNote}>
-              Source : recommandations automatiques
-              {data.recommendationSource === "rules"
-                ? " avec logique de secours."
-                : "."}
-            </p>
-          </section>
-
-          <section
-            id="create-restaurant"
-            className={`${styles.card} ${styles.section}`}
-            aria-labelledby="create-restaurant-heading"
-          >
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="create-restaurant-heading" className={styles.sectionTitle}>
-                  Créer un restaurant
-                </h2>
-                <p className={styles.sectionText}>
-                  Création owner-only avec slug, URL menu preview et QR relié au
-                  menu public.
-                </p>
-              </div>
-            </div>
-            <RestaurantCreateForm siteOrigin={siteOrigin} />
-          </section>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <article className={styles.statCard}>
-      <p className={styles.metricLabel}>{label}</p>
-      <strong>{formatNumber(value)}</strong>
-    </article>
-  );
-}
-
-function ActionCard({ action }: { action: OwnerAction }) {
-  return (
-    <Link href={action.href} className={styles.actionCard} prefetch={false}>
-      <span className={`${styles.pill} ${ACTION_STYLES[action.priority]}`}>
-        {action.restaurantName}
-      </span>
-      <h3>{action.title}</h3>
-      <p>{action.body}</p>
-    </Link>
+      <OwnerAiPanel
+        initialPriorities={priorities}
+        recommendations={data.recommendations}
+        note={
+          data.source === "fallback"
+            ? "Données de présentation (Supabase non connecté)."
+            : data.note
+        }
+      />
+    </>
   );
 }

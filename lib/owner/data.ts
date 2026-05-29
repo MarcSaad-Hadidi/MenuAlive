@@ -15,10 +15,11 @@ import {
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 import { getDemoRestaurantId } from "@/lib/analytics/insights";
 import { getAutomaticOwnerRecommendations } from "@/lib/owner/recommendations";
+import { buildActiveQrRestaurantIds } from "@/lib/owner/qrStore";
 import {
+  buildPublicMenuPath,
+  buildPublicMenuUrl,
   buildRestaurantDashboardPath,
-  buildRestaurantMenuPath,
-  buildRestaurantMenuUrl,
   slugifyRestaurantSlug
 } from "@/lib/owner/menuUrls";
 import { absoluteUrl } from "@/lib/seo";
@@ -100,6 +101,7 @@ function getQrStatus(args: {
   row: AnyRow;
   isDemo: boolean;
   menuUrl: string;
+  hasActiveQrCode?: boolean;
 }): {
   qrCodeUrl: string | null;
   qrStatus: OwnerQrStatus;
@@ -108,6 +110,7 @@ function getQrStatus(args: {
   const qrCodeUrl =
     getString(args.row, ["qr_code_url", "qr_url", "menu_qr_url"], "") || null;
   const hasGeneratedQr =
+    Boolean(args.hasActiveQrCode) ||
     Boolean(qrCodeUrl) ||
     getBoolean(args.row, ["qr_ready", "qrReady"], false) ||
     Boolean(getString(args.row, ["qr_generated_at", "qr_deployed_at"], ""));
@@ -347,6 +350,7 @@ function mapRestaurantRow(args: {
   dishMetrics: DishMetrics;
   openingsToday: number;
   interactionsToday: number;
+  hasActiveQrCode?: boolean;
 }): OwnerRestaurant {
   const id = getString(args.row, ["id", "restaurant_id"], "");
   const name = getString(args.row, ["name", "restaurant_name"], "Restaurant");
@@ -365,14 +369,21 @@ function mapRestaurantRow(args: {
     "client_menu_url",
     "website_menu_url"
   ]);
-  const fallbackMenuPath = isDemo ? "/demo" : buildRestaurantMenuPath(slug);
-  const clientMenuHref = menuHrefColumn || fallbackMenuPath;
+  const publicMenuPath = isDemo ? "/demo" : buildPublicMenuPath(slug);
+  const publicMenuUrl = isDemo ? absoluteUrl("/demo") : buildPublicMenuUrl(slug);
+  const fallbackMenuPath = publicMenuPath;
+  const clientMenuHref = menuHrefColumn || publicMenuPath;
   const menuUrl = isDemo
     ? absoluteUrl("/demo")
     : menuHrefColumn
       ? normalizeMenuUrl(menuHrefColumn, fallbackMenuPath)
-      : buildRestaurantMenuUrl(slug);
-  const qr = getQrStatus({ row: args.row, isDemo, menuUrl });
+      : publicMenuUrl;
+  const qr = getQrStatus({
+    row: args.row,
+    isDemo,
+    menuUrl,
+    hasActiveQrCode: args.hasActiveQrCode
+  });
   const incompleteDishCount = Math.max(
     0,
     args.dishMetrics.dishCount - args.dishMetrics.photoDishCount
@@ -421,6 +432,8 @@ function mapRestaurantRow(args: {
       : menuHrefColumn
         ? "column"
         : "derived_preview",
+    publicMenuPath,
+    publicMenuUrl,
     dashboardHref: isDemo ? "/admin" : buildRestaurantDashboardPath(id || slug),
     qrTargetUrl: menuUrl,
     qrCodeUrl: qr.qrCodeUrl,
@@ -434,7 +447,11 @@ function mapRestaurantRow(args: {
       incompleteDishCount,
       immersiveDishCount: args.dishMetrics.immersiveDishCount,
       qrStatus: qr.qrStatus
-    })
+    }),
+    contactName: getString(args.row, ["contact_name", "contactName"], ""),
+    contactEmail: getString(args.row, ["contact_email", "contactEmail"], ""),
+    contactPhone: getString(args.row, ["contact_phone", "contactPhone", "phone"], ""),
+    notes: getString(args.row, ["notes", "internal_notes"], "")
   };
 }
 
@@ -562,7 +579,7 @@ function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
         restaurantName: restaurant.name,
         title: "QR menu a generer",
         body: `${restaurant.name} a un lien menu, mais aucun QR marque comme pret.`,
-        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        href: "/owner/qr-codes",
         priority: "high"
       });
     }
@@ -574,7 +591,7 @@ function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
         restaurantName: restaurant.name,
         title: "Menu incomplet",
         body: "Aucun plat relie a ce restaurant dans les donnees disponibles.",
-        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        href: "/owner/menus",
         priority: "high"
       });
     }
@@ -586,7 +603,7 @@ function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
         restaurantName: restaurant.name,
         title: "Photos a completer",
         body: `${restaurant.incompleteDishCount} plats restent sans photo detectee.`,
-        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        href: "/owner/medias",
         priority: "medium"
       });
     }
@@ -598,7 +615,7 @@ function buildOwnerActions(restaurants: OwnerRestaurant[]): OwnerAction[] {
         restaurantName: restaurant.name,
         title: "Plat signature sans 3D / AR",
         body: "Aucun asset immersif n'est detecte pour ce menu.",
-        href: `/owner?restaurant=${encodeURIComponent(restaurant.slug)}#restaurants`,
+        href: "/owner/3d-ar",
         priority: "low"
       });
     }
@@ -628,14 +645,26 @@ function mapStoredRecommendations(rows: AnyRow[]): OwnerRecommendation[] {
 }
 
 export async function getOwnerDashboardData(): Promise<OwnerDashboardData> {
-  const [restaurantsResult, dishesResult, dailyResult, eventsResult, storedResult] =
-    await Promise.all([
-      readSupabaseRows("restaurants", 200),
-      readSupabaseRows("menu_dishes", 1_000),
-      readSupabaseRows("restaurant_daily_analytics", 300),
-      readSupabaseRows("analytics_events", 1_000),
-      readSupabaseRows("owner_ai_recommendations", 100)
-    ]);
+  const [
+    restaurantsResult,
+    dishesResult,
+    dailyResult,
+    eventsResult,
+    storedResult,
+    qrCodesResult
+  ] = await Promise.all([
+    readSupabaseRows("restaurants", 200),
+    readSupabaseRows("menu_dishes", 1_000),
+    readSupabaseRows("restaurant_daily_analytics", 300),
+    readSupabaseRows("analytics_events", 1_000),
+    readSupabaseRows("owner_ai_recommendations", 100),
+    readSupabaseRows("qr_codes", 500)
+  ]);
+
+  const activeQrRestaurantIds =
+    qrCodesResult.ok && qrCodesResult.rows.length
+      ? buildActiveQrRestaurantIds(qrCodesResult.rows)
+      : new Set<string>();
 
   const dishRows = dishesResult.ok ? dishesResult.rows : [];
   const restaurants =
@@ -673,7 +702,8 @@ export async function getOwnerDashboardData(): Promise<OwnerDashboardData> {
               isDemo
             }),
             openingsToday,
-            interactionsToday
+            interactionsToday,
+            hasActiveQrCode: activeQrRestaurantIds.has(restaurantId)
           });
         })
       : [fallbackOwnerRestaurant()];
