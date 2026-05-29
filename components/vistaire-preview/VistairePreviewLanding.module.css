@@ -2,7 +2,7 @@
   font-family: "BT Suave";
   font-style: normal;
   font-weight: 400;
-  font-display: block;
+  font-display: swap;
   src: url("/fonts/vistaire-preview/btsuave-regular.otf") format("opentype");
 }
 
@@ -10,7 +10,7 @@
   font-family: "BT Suave";
   font-style: normal;
   font-weight: 500;
-  font-display: block;
+  font-display: swap;
   src: url("/fonts/vistaire-preview/btsuave-medium.otf") format("opentype");
 }
 
@@ -18,7 +18,7 @@
   font-family: "BT Suave";
   font-style: normal;
   font-weight: 700;
-  font-display: block;
+  font-display: swap;
   src: url("/fonts/vistaire-preview/btsuave-bold.otf") format("opentype");
 }
 
@@ -26,7 +26,7 @@
   font-family: "Neue Montreal";
   font-style: normal;
   font-weight: 300;
-  font-display: block;
+  font-display: swap;
   src: url("/fonts/vistaire-preview/NeueMontreal-Light.otf") format("opentype");
 }
 
@@ -34,7 +34,7 @@
   font-family: "Neue Montreal";
   font-style: normal;
   font-weight: 400;
-  font-display: block;
+  font-display: swap;
   src: url("/fonts/vistaire-preview/NeueMontreal-Regular.otf") format("opentype");
 }
 
@@ -42,7 +42,7 @@
   font-family: "Neue Montreal";
   font-style: normal;
   font-weight: 500;
-  font-display: block;
+  font-display: swap;
   src: url("/fonts/vistaire-preview/NeueMontreal-Medium.otf") format("opentype");
 }
 
@@ -50,7 +50,7 @@
   font-family: "Neue Montreal";
   font-style: normal;
   font-weight: 700;
-  font-display: block;
+  font-display: swap;
   src: url("/fonts/vistaire-preview/NeueMontreal-Bold.otf") format("opentype");
 }
 
