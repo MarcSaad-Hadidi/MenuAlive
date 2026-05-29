@@ -12,16 +12,19 @@ import {
 } from "./VistairePreviewChrome";
 import styles from "./VistairePreviewLanding.module.css";
 
+const heroPosterSrc = "/frames/menualive/frame_0200.webp";
 const landingVideoSrc = "/videos/Vistaire2.mp4";
+const heroCaptionsSrc = "/captions/hero-empty.vtt";
 
 type FramerImageProps = {
   alt: string;
   className?: string;
   priority?: boolean;
+  sizes: string;
   src: StaticImageData;
 };
 
-function FramerImage({ alt, className, priority, src }: FramerImageProps) {
+function FramerImage({ alt, className, priority, sizes, src }: FramerImageProps) {
   return (
     <Image
       alt={alt}
@@ -29,9 +32,8 @@ function FramerImage({ alt, className, priority, src }: FramerImageProps) {
       fill
       priority={priority}
       quality={100}
-      sizes="(max-width: 720px) 100vw, 560px"
+      sizes={sizes}
       src={src}
-      unoptimized
     />
   );
 }
@@ -64,6 +66,14 @@ export function VistairePreviewLanding({
 
   return (
     <main className={styles.page}>
+      {/* Preload hero poster for faster LCP */}
+      <link
+        as="image"
+        href={heroPosterSrc}
+        rel="preload"
+        type="image/webp"
+      />
+
       <Image
         alt=""
         aria-hidden="true"
@@ -73,7 +83,6 @@ export function VistairePreviewLanding({
         quality={100}
         sizes="100vw"
         src={restaurantBackground}
-        unoptimized
       />
 
       <section
@@ -91,10 +100,17 @@ export function VistairePreviewLanding({
               loop
               muted
               playsInline
-              poster="/frames/menualive/frame_0200.webp"
+              poster={heroPosterSrc}
               preload="metadata"
             >
               <source src={landingVideoSrc} type="video/mp4" />
+              <track
+                default
+                kind="captions"
+                label="Français"
+                src={heroCaptionsSrc}
+                srcLang="fr"
+              />
             </video>
             <div aria-hidden="true" className={styles.videoShade} />
             <div className={styles.videoCopy}>
@@ -114,6 +130,7 @@ export function VistairePreviewLanding({
                 alt="Plat de homard premium servi dans une assiette noire"
                 className={styles.cardImage}
                 priority
+                sizes="(max-width: 920px) calc(100vw - 28px), 540px"
                 src={lobsterPlate}
               />
               <div aria-hidden="true" className={styles.menuShade} />
@@ -153,6 +170,7 @@ export function VistairePreviewLanding({
                   <FramerImage
                     alt=""
                     className={`${styles.cardImage} ${styles.discoveryTableImage}`}
+                    sizes="(max-width: 920px) calc(50vw - 20px), 260px"
                     src={restaurantTable}
                   />
                 </div>
@@ -163,6 +181,7 @@ export function VistairePreviewLanding({
                   <FramerImage
                     alt=""
                     className={`${styles.cardImage} ${styles.discoveryGuestImage}`}
+                    sizes="(max-width: 920px) calc(50vw - 20px), 260px"
                     src={restaurantGuest}
                   />
                 </div>
@@ -176,7 +195,7 @@ export function VistairePreviewLanding({
                     Découvrir
                     <ArrowIcon />
                   </a>
-                  <div aria-label="Image active" className={styles.dots}>
+                  <div aria-hidden="true" className={styles.dots}>
                     <span className={styles.dotFirst} />
                     <span className={styles.dotSecond} />
                   </div>

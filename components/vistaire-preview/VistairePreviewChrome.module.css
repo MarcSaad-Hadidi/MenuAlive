@@ -255,6 +255,9 @@
 .footerLinkList span,
 .footerEmail,
 .footerCta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   color: rgba(255, 247, 234, 0.68);
   font-size: 12px;
   font-weight: 500;
