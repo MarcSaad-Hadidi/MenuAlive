@@ -28,6 +28,8 @@ const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
 const ISO_DATE_PATTERN =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const DISH_SCHEMA_VERSIONS = new Set([1, 2]);
+const RESTAURANT_SCHEMA_VERSIONS = new Set([1, 2]);
 
 function pathMessage(path, message) {
   return `${path}: ${message}`;
@@ -41,6 +43,10 @@ function isIsoDateOrNull(value) {
   if (value === null) return true;
   if (typeof value !== "string" || !ISO_DATE_PATTERN.test(value)) return false;
   return !Number.isNaN(Date.parse(value));
+}
+
+function isSchemaV2(manifest) {
+  return manifest?.schemaVersion === 2;
 }
 
 function allowedRootsForContext(context) {
@@ -130,6 +136,14 @@ function validateVariant(result, key, variant, context) {
       )
     );
   }
+
+  if (
+    key === "arLite" &&
+    Array.isArray(variant.extensionsRequired) &&
+    variant.extensionsRequired.length > 0
+  ) {
+    addFail(result, pathMessage(`${path}.extensionsRequired`, "must be empty for Android AR-lite"));
+  }
 }
 
 function validateLifecycleDates(result, manifest, context) {
@@ -174,6 +188,86 @@ function validateValidationBlock(result, manifest, context) {
   }
 }
 
+function validateNumberField(
+  result,
+  value,
+  path,
+  { minExclusive = -Infinity, maxInclusive = Infinity } = {}
+) {
+  if (!Number.isFinite(value)) {
+    addFail(result, pathMessage(path, "must be a finite number"));
+    return;
+  }
+  if (value <= minExclusive || value > maxInclusive) {
+    addFail(result, pathMessage(path, "is outside the allowed production range"));
+  }
+}
+
+function validateVec3(result, value, path) {
+  if (!Array.isArray(value) || value.length !== 3) {
+    addFail(result, pathMessage(path, "must be a 3-number array"));
+    return;
+  }
+  value.forEach((number, index) => {
+    validateNumberField(result, number, `${path}[${index}]`);
+  });
+}
+
+function validateV2Blocks(result, manifest) {
+  if (manifest.kind !== "vistaire.dish-3d-manifest") {
+    addFail(result, pathMessage("kind", "must be vistaire.dish-3d-manifest"));
+  }
+
+  if (!isObject(manifest.physicalScaleMeters)) {
+    addFail(result, pathMessage("physicalScaleMeters", "must be an object"));
+  } else {
+    validateNumberField(result, manifest.physicalScaleMeters.width, "physicalScaleMeters.width", {
+      minExclusive: 0,
+      maxInclusive: 3
+    });
+    validateNumberField(result, manifest.physicalScaleMeters.height, "physicalScaleMeters.height", {
+      minExclusive: 0,
+      maxInclusive: 2
+    });
+    validateNumberField(result, manifest.physicalScaleMeters.depth, "physicalScaleMeters.depth", {
+      minExclusive: 0,
+      maxInclusive: 3
+    });
+  }
+
+  if (!isObject(manifest.bounds)) {
+    addFail(result, pathMessage("bounds", "must be an object"));
+  } else {
+    if (manifest.bounds.centeredXZ !== true) {
+      addFail(result, pathMessage("bounds.centeredXZ", "must be true for production AR"));
+    }
+    if (manifest.bounds.groundedY !== true) {
+      addFail(result, pathMessage("bounds.groundedY", "must be true for production AR"));
+    }
+    validateVec3(result, manifest.bounds.min, "bounds.min");
+    validateVec3(result, manifest.bounds.max, "bounds.max");
+  }
+
+  if (!isObject(manifest.budgets)) {
+    addFail(result, pathMessage("budgets", "must be an object"));
+  } else if (
+    manifest.budgets.profile &&
+    !["simpleDish", "signature"].includes(manifest.budgets.profile)
+  ) {
+    addFail(result, pathMessage("budgets.profile", "must be simpleDish or signature"));
+  }
+
+  if (!isObject(manifest.quality)) {
+    addFail(result, pathMessage("quality", "must be an object"));
+  } else if (
+    manifest.status === "published" &&
+    manifest.quality.manualVisualApprovalRequired !== false &&
+    manifest.quality.manualVisualApproved !== true
+  ) {
+    addFail(result, "quality.manualVisualApproved: is required before publishing production assets");
+  }
+}
+
 function expectedValidationStatusFor(manifest) {
   if (manifest.validation?.fails?.length > 0) return "failed";
   if (manifest.validation?.warnings?.length > 0) return "warning";
@@ -205,7 +299,6 @@ export function validateDishManifestSchema(manifest, options = {}) {
     "status",
     "validationStatus",
     "variants",
-    "bytes",
     "validation",
     "generatedAt",
     "approvedAt",
@@ -214,8 +307,8 @@ export function validateDishManifestSchema(manifest, options = {}) {
     if (!(field in manifest)) addFail(result, pathMessage(field, "is required"));
   }
 
-  if (manifest.schemaVersion !== 1) {
-    addFail(result, pathMessage("schemaVersion", "must be 1"));
+  if (!DISH_SCHEMA_VERSIONS.has(manifest.schemaVersion)) {
+    addFail(result, pathMessage("schemaVersion", "must be 1 or 2"));
   }
   for (const field of ["restaurantSlug", "menuSlug", "dishSlug"]) {
     validateSlug(result, manifest[field], field);
@@ -245,14 +338,19 @@ export function validateDishManifestSchema(manifest, options = {}) {
     }
   }
 
-  if (!isObject(manifest.bytes)) {
+  if (!isSchemaV2(manifest) && !isObject(manifest.bytes)) {
     addFail(result, pathMessage("bytes", "must be an object"));
-  } else if ("total" in manifest.bytes && (!Number.isFinite(manifest.bytes.total) || manifest.bytes.total <= 0)) {
+  } else if (
+    isObject(manifest.bytes) &&
+    "total" in manifest.bytes &&
+    (!Number.isFinite(manifest.bytes.total) || manifest.bytes.total <= 0)
+  ) {
     addFail(result, pathMessage("bytes.total", "must be a positive byte size"));
   }
 
   validateValidationBlock(result, manifest, context);
   validateLifecycleDates(result, manifest, context);
+  if (isSchemaV2(manifest)) validateV2Blocks(result, manifest);
 
   const declaredQualityStatus = manifest.validationStatus;
   const expectedQualityStatus = expectedValidationStatusFor(manifest);
@@ -274,7 +372,11 @@ export function validateDishManifestSchema(manifest, options = {}) {
 
   const budgets = validateBudgets({
     manifest,
-    profile: options.profile ?? manifest.budgetProfile ?? (manifest.isSignature ? "signature" : "simpleDish")
+    profile:
+      options.profile ??
+      manifest.budgets?.profile ??
+      manifest.budgetProfile ??
+      (manifest.isSignature ? "signature" : "simpleDish")
   });
   if (!budgets.ok) result.ok = false;
   result.warnings.push(...budgets.warnings);
@@ -283,6 +385,19 @@ export function validateDishManifestSchema(manifest, options = {}) {
   result.metrics.budgetChecks = budgets.metrics.budgetChecks;
   result.metrics.publicTotalBytes = budgets.metrics.publicTotalBytes;
   result.metrics.validationStatus = result.fails.length > 0 ? "failed" : expectedQualityStatus;
+
+  if (isObject(manifest.bytes) && Number.isFinite(manifest.bytes.total)) {
+    if (manifest.bytes.total !== budgets.metrics.publicTotalBytes) {
+      addFail(
+        result,
+        pathMessage(
+          "bytes.total",
+          `must equal unique public variant bytes (${budgets.metrics.publicTotalBytes})`
+        )
+      );
+      result.metrics.validationStatus = "failed";
+    }
+  }
 
   result.evidence.push({
     restaurantSlug: manifest.restaurantSlug,
@@ -309,7 +424,9 @@ export function validateRestaurantManifestSchema(manifest) {
   for (const field of ["schemaVersion", "restaurantSlug", "menus", "dishes", "activeVersions", "generatedAt", "validationStatus"]) {
     if (!(field in manifest)) addFail(result, pathMessage(field, "is required"));
   }
-  if (manifest.schemaVersion !== 1) addFail(result, pathMessage("schemaVersion", "must be 1"));
+  if (!RESTAURANT_SCHEMA_VERSIONS.has(manifest.schemaVersion)) {
+    addFail(result, pathMessage("schemaVersion", "must be 1 or 2"));
+  }
   validateSlug(result, manifest.restaurantSlug, "restaurantSlug");
   if (!Array.isArray(manifest.menus)) addFail(result, pathMessage("menus", "must be an array"));
   else {

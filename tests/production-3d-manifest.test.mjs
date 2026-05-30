@@ -55,7 +55,7 @@ function validDishManifest(overrides = {}) {
       }
     },
     bytes: {
-      total: 493_744
+      total: 580_124
     },
     validation: {
       warnings: [],
@@ -74,6 +74,115 @@ test("production dish manifest accepts the required multi-variant contract", () 
   assert.equal(result.ok, true);
   assert.deepEqual(result.fails, []);
   assert.equal(result.metrics.validationStatus, "passed");
+});
+
+test("production dish manifest accepts the schema v2 contract with physical scale and quality gates", () => {
+  const result = validateDishManifest(
+    {
+      schemaVersion: 2,
+      kind: "vistaire.dish-3d-manifest",
+      restaurantSlug: "maison-elyse",
+      menuSlug: "main",
+      dishSlug: "homard-bisque",
+      activeVersion: "v1",
+      status: "approved",
+      validationStatus: "passed",
+      generatedAt: stableIso,
+      approvedAt: stableIso,
+      publishedAt: null,
+      variants: {
+        poster: {
+          url: "/models/restaurants/maison-elyse/main/homard-bisque/v1/poster.webp",
+          bytes: 120_000,
+          sha256: "a".repeat(64),
+          width: 1200,
+          height: 900
+        },
+        web: {
+          url: "/models/restaurants/maison-elyse/main/homard-bisque/v1/web.glb",
+          bytes: 5_800_000,
+          sha256: "b".repeat(64),
+          triangleCount: 140_000,
+          vertexCount: 90_000,
+          materialCount: 6,
+          textureCount: 5,
+          maxTextureSize: 2048,
+          extensionsUsed: ["EXT_meshopt_compression"],
+          extensionsRequired: ["EXT_meshopt_compression"]
+        },
+        mobile: {
+          url: "/models/restaurants/maison-elyse/main/homard-bisque/v1/mobile.glb",
+          bytes: 2_900_000,
+          sha256: "c".repeat(64),
+          triangleCount: 80_000,
+          vertexCount: 52_000,
+          materialCount: 5,
+          textureCount: 4,
+          maxTextureSize: 1024,
+          extensionsUsed: [],
+          extensionsRequired: []
+        },
+        arLite: {
+          url: "/models/restaurants/maison-elyse/main/homard-bisque/v1/ar-lite.glb",
+          bytes: 7_600_000,
+          sha256: "d".repeat(64),
+          triangleCount: 70_000,
+          vertexCount: 48_000,
+          materialCount: 5,
+          textureCount: 4,
+          maxTextureSize: 1024,
+          extensionsUsed: [],
+          extensionsRequired: [],
+          arPlacement: "floor",
+          arScale: "fixed"
+        },
+        iosUsdz: {
+          url: "/models/restaurants/maison-elyse/main/homard-bisque/v1/ios.usdz",
+          bytes: 3_600_000,
+          sha256: "e".repeat(64),
+          usdLayerCount: 1,
+          textureCount: 4,
+          productionQuickLook: true
+        }
+      },
+      physicalScaleMeters: {
+        width: 0.22,
+        height: 0.08,
+        depth: 0.22
+      },
+      bounds: {
+        centeredXZ: true,
+        groundedY: true,
+        min: [-0.11, 0, -0.11],
+        max: [0.11, 0.08, 0.11]
+      },
+      budgets: {
+        profile: "signature",
+        publicTotalBytes: {
+          target: 14_000_000,
+          warning: 24_000_000,
+          fail: 33_554_432
+        }
+      },
+      validation: {
+        warnings: [],
+        fails: [],
+        reports: []
+      },
+      quality: {
+        manualVisualApprovalRequired: true,
+        manualVisualApproved: false,
+        approvedBy: null,
+        notes: []
+      }
+    },
+    { context: "production" }
+  );
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.fails, []);
+  assert.equal(result.metrics.validationStatus, "passed");
+  assert.equal(result.metrics.publicTotalBytes, 20_020_000);
 });
 
 test("production dish manifest fails when required fields are missing", () => {

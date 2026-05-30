@@ -12,6 +12,8 @@ landing hero.
 - Validate delivery headers only when a base URL is explicitly provided.
 - Produce JSON/Markdown quality reports for human review.
 - Keep Git free of new heavy GLB, USDZ, video, ZIP, source, and review assets.
+- Provide progressive runtime helpers that adapt the existing demo data into a
+  manifest-shaped contract without moving heavy demo binaries.
 
 ## Structure
 
@@ -23,6 +25,14 @@ scripts/3d/
   validate-restaurant.mjs
   validate-network.mjs
   manifest.mjs
+  analyze-source.mjs
+  optimize.mjs
+  optimize-dish.mjs
+  optimize-menu.mjs
+  preview.mjs
+  publish.mjs
+  rollback.mjs
+  clean-stale.mjs
   report.mjs
   quality-report.mjs
   shared/
@@ -165,12 +175,28 @@ manifest, checksum, budget, and header contract.
 6. Produce a quality report.
 7. Complete visual QA and real-device Quick Look/Scene Viewer QA before runtime activation.
 
+## Runtime Integration
+
+The current runtime keeps the demo working through a progressive adapter:
+`buildDemoDish3dManifest(dish)` converts legacy demo fields such as
+`webModel3dUrl`, `arModel3dUrl`, and `arUsdzUrl` into an internal schema v2
+manifest. `selectImmersiveVariant(...)` then chooses web, mobile, AR-lite, iOS
+USDZ, or poster fallback by device, browser, network, and user intent.
+
+The selector is intentionally fail-closed:
+
+- no model before explicit intent;
+- Save-Data and slow network get a poster confirmation step;
+- Android AR requires an AR-lite variant;
+- iOS Quick Look requires Safari and a stable USDZ URL;
+- unsafe URLs return no model.
+
 ## Not In This PR
 
 - No GLB/USDZ/MP4/WebM/MOV/ZIP binaries are added.
 - No `public/models`, `public/videos`, or `public/frames` changes are made.
 - No `app/page.tsx`, landing hero, demo runtime, or AR runtime wiring changes are made.
-- No `next.config.ts` restaurant asset headers are added.
+- No production restaurant GLB/USDZ binaries are added.
 - No real iPhone Quick Look validation is claimed.
 
 ## Next PR
