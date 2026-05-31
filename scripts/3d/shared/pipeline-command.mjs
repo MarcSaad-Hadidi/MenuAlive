@@ -729,8 +729,10 @@ function runOptimizeDish(args) {
     };
     return result;
   }
-  if (!allowPublicBinaries && !args["cdn-base-url"]) {
-    throw new Error("Writing runtime binaries requires --allow-public-binaries or --cdn-base-url");
+  if (!allowPublicBinaries) {
+    throw new Error(
+      "Writing runtime binaries requires --allow-public-binaries. --cdn-base-url is not implemented for artifact output yet."
+    );
   }
 
   mkdirSync(reports, { recursive: true });
@@ -985,10 +987,26 @@ function runCleanStale(args) {
     result.warnings.push(`Dish asset root does not exist: ${dishRoot}`);
     return result;
   }
-  const active = existsSync(activeManifestPath(rootDir, { ...identity, version: "" }))
-    ? readJsonFile(activeManifestPath(rootDir, { ...identity, version: "" }))
+  const activePath = activeManifestPath(rootDir, { ...identity, version: "" });
+  const active = existsSync(activePath)
+    ? readJsonFile(activePath)
     : null;
   const activeVersion = active?.activeVersion ?? "";
+  if (!activeVersion) {
+    result.metrics.activeManifestPath = activePath;
+    result.metrics.activeVersion = "";
+    result.metrics.stale = [];
+    result.warnings.push(
+      "No active manifest exists; stale versions cannot be identified safely."
+    );
+    if (args.write) {
+      result.ok = false;
+      result.fails.push(
+        "Refusing clean-stale --write without an active manifest to preserve."
+      );
+    }
+    return result;
+  }
   const stale = readdirSync(dishRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && entry.name !== activeVersion)
     .map((entry) => safeJoin(dishRoot, entry.name));

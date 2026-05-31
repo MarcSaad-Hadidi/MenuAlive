@@ -193,6 +193,40 @@ test("optimize-dish writes versioned variants, manifest v2, visual evidence, and
     assert.equal(existsSync(join(dir, "assets", "3d", "reports", "maison-elyse", "demo", "plat-final", "vfinal", "visual-quality.json")), true);
   }));
 
+test("optimize-dish refuses CDN mode unless public binary writes are explicitly allowed", () =>
+  withTempDir(async (dir) => {
+    const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
+    mkdirSync(dirname(sourcePath), { recursive: true });
+    writeFileSync(sourcePath, makeGlb(makeDishGltf()));
+
+    const result = await runNode([
+      "scripts/3d/optimize-dish.mjs",
+      "--restaurant",
+      "maison-elyse",
+      "--menu",
+      "demo",
+      "--dish",
+      "plat-final",
+      "--version",
+      "vcdn",
+      "--source",
+      sourcePath,
+      "--root",
+      dir,
+      "--write",
+      "--cdn-base-url",
+      "https://cdn.example.com/vistaire",
+      "--json"
+    ]);
+
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, /allow-public-binaries/i);
+    assert.equal(
+      existsSync(join(dir, "public", "models", "restaurants", "maison-elyse", "demo", "plat-final", "vcdn")),
+      false
+    );
+  }));
+
 test("publish promotes an approved version and rollback restores the previous active version", () =>
   withTempDir(async (dir) => {
     const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
@@ -283,4 +317,42 @@ test("publish promotes an approved version and rollback restores the previous ac
     assert.equal(rolledBack.status, "published");
     assert.equal(rolledBack.rollback.fromVersion, "v2");
     assert.equal(rolledBack.rollback.toVersion, "v1");
+  }));
+
+test("clean-stale refuses write mode when no active manifest exists", () =>
+  withTempDir(async (dir) => {
+    const versionOne = join(
+      dir,
+      "public",
+      "models",
+      "restaurants",
+      "maison-elyse",
+      "demo",
+      "plat-final",
+      "v1"
+    );
+    const versionTwo = join(dirname(versionOne), "v2");
+    mkdirSync(versionOne, { recursive: true });
+    mkdirSync(versionTwo, { recursive: true });
+    writeFileSync(join(versionOne, "marker.txt"), "keep v1");
+    writeFileSync(join(versionTwo, "marker.txt"), "keep v2");
+
+    const result = await runNode([
+      "scripts/3d/clean-stale.mjs",
+      "--restaurant",
+      "maison-elyse",
+      "--menu",
+      "demo",
+      "--dish",
+      "plat-final",
+      "--root",
+      dir,
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, /active manifest/i);
+    assert.equal(existsSync(versionOne), true);
+    assert.equal(existsSync(versionTwo), true);
   }));

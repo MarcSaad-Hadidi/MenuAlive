@@ -33,8 +33,9 @@ public/models/restaurants/{restaurantSlug}/manifest.json
 Source, work, and report folders are ignored by Git. Production GLB/USDZ
 binaries under `public/models/restaurants/**` are ignored by default and require
 a reviewed asset-policy exception before they can be committed. Prefer
-storage/CDN for heavy client assets; local `public/models/restaurants/**`
-generation is for validation, review, and controlled deployment staging.
+storage/CDN for heavy client assets. This command surface does not yet upload or
+emit CDN URLs from `--cdn-base-url`; until that exists, `--write` requires
+`--allow-public-binaries` and writes local review/staging files only.
 
 ## Workflow
 
@@ -101,7 +102,8 @@ npm run 3d:clean-stale -- --restaurant maison-elyse --menu main --dish homard-bi
 ```
 
 Use `--write` only after the active manifest and rollback target have been
-reviewed.
+reviewed. If no active dish manifest exists, `clean-stale --write` refuses to
+delete anything because there is no preserved active version to compare against.
 
 ## Non-Negotiables
 

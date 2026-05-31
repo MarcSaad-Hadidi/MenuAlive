@@ -182,11 +182,17 @@ if texture compression cannot be applied to a source, the fallback copy command
 is recorded in the optimization report. Android AR-lite remains a no-required
 extension GLB. The USDZ stage creates a deterministic review package; final
 client delivery must still pass real iPhone Quick Look QA before it is claimed.
+`--cdn-base-url` is reserved for a future artifact uploader and URL rewriter; it
+does not bypass `--allow-public-binaries` today.
 
 The visual-quality report is deterministic and structural: it records geometry,
 scale, material, texture, and multi-view proxy evidence. It is useful for
 repeatable gating, but it is not a substitute for manual plating review or real
 device AR validation.
+
+`3d:clean-stale --write` requires an active dish manifest. Without one, the
+command cannot distinguish stale versions from unpublished generated versions,
+so it exits without deleting any version directory.
 
 ## Storage/CDN Future
 

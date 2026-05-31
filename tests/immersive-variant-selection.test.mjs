@@ -210,6 +210,25 @@ test("variant selector rejects wrong roots, wrong extensions, and visually unapp
   assert.equal(blockedQuickLook.kind, "mobile");
   assert.equal(blockedQuickLook.reason, "ios-usdz-missing");
 
+  const wrongQuickLookExtension = {
+    ...baseManifest,
+    variants: {
+      ...baseManifest.variants,
+      iosUsdz: { url: "/models/demo/ar-lite/homard-bisque.glb", productionQuickLook: true }
+    }
+  };
+  const blockedQuickLookExtension = selectImmersiveVariant({
+    manifest: wrongQuickLookExtension,
+    device: "ios",
+    browser: "safari",
+    viewport: { width: 390, height: 844 },
+    connection: { effectiveType: "4g", saveData: false },
+    userIntent: "ar",
+    prefersReducedMotion: false
+  });
+  assert.equal(blockedQuickLookExtension.kind, "mobile");
+  assert.equal(blockedQuickLookExtension.reason, "ios-usdz-missing");
+
   const unsafeLocalRoot = {
     ...baseManifest,
     variants: {
