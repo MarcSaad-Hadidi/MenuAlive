@@ -10,6 +10,9 @@ const expectedScripts = [
   "3d:optimize-dish",
   "3d:optimize-menu",
   "3d:preview",
+  "3d:finalize-manifest",
+  "3d:record-device-qa",
+  "3d:prepare-cdn-upload",
   "3d:publish",
   "3d:rollback",
   "3d:clean-stale"

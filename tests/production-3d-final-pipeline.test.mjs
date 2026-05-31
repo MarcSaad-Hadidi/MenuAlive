@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 
 import { unzipSync, zipSync, zlibSync } from "fflate";
+import { selectOptimizationCandidate } from "../scripts/3d/shared/pipeline-command.mjs";
 
 const stableIso = "2026-05-24T00:00:00.000Z";
 const strictPromise =
@@ -580,6 +581,46 @@ function writeApprovedManifest(root, version, previousVersion = null, { writeVis
   mkdirSync(dirname(manifestPath), { recursive: true });
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   return manifestPath;
+}
+
+function setManifestBackToReview(manifest, reason = "final approval pending") {
+  manifest.status = "review";
+  manifest.validationStatus = "failed";
+  manifest.validation = { warnings: [], fails: [reason] };
+  manifest.approvedAt = null;
+  manifest.publishedAt = null;
+  manifest.lifecycle.phase = "review";
+  return manifest;
+}
+
+function writeEvidenceNote(root, relativePath, text = "Real-device QA evidence note") {
+  const filePath = join(root, relativePath);
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, `${text}\n`);
+  return {
+    path: relativePath,
+    sha256: sha256(readFileSync(filePath))
+  };
+}
+
+function copyManifestPublicAssetsToWork(root, manifest) {
+  for (const [variantKey, variant] of Object.entries(manifest.variants)) {
+    const sourcePath = join(root, "public", variant.url.replace(/^\//, ""));
+    const targetPath = join(
+      root,
+      "assets",
+      "3d",
+      "work",
+      manifest.restaurantSlug,
+      manifest.menuSlug,
+      manifest.dishSlug,
+      manifest.activeVersion,
+      variantKey === "arLite" ? "ar-lite" : variantKey === "iosUsdz" ? "ios" : variantKey,
+      variant.url.split("/").pop()
+    );
+    mkdirSync(dirname(targetPath), { recursive: true });
+    writeFileSync(targetPath, readFileSync(sourcePath));
+  }
 }
 
 function writeApprovedV1Manifest(root) {
@@ -1263,6 +1304,327 @@ test("optimize-dish records adaptive candidates and rejects when all visual gate
     }
     assert.equal(report.selectedCandidate, null);
     assert.match(report.decision.reason, /visual/i);
+  }));
+
+test("candidate selection chooses the lightest candidate that passes every gate", () => {
+  const { selectedCandidate, decision, rejectedCandidates } = selectOptimizationCandidate([
+    {
+      name: "conservative",
+      totalBytes: 900,
+      budgets: { status: "passed" },
+      glbValidation: { status: "passed" },
+      arLiteValidation: { status: "passed" },
+      visualGate: { status: "passed" },
+      antiCheat: { status: "passed" }
+    },
+    {
+      name: "balanced",
+      totalBytes: 700,
+      budgets: { status: "passed" },
+      glbValidation: { status: "passed" },
+      arLiteValidation: { status: "passed" },
+      visualGate: { status: "passed" },
+      antiCheat: { status: "passed" }
+    },
+    {
+      name: "aggressive",
+      totalBytes: 300,
+      budgets: { status: "passed" },
+      glbValidation: { status: "passed" },
+      arLiteValidation: { status: "passed" },
+      visualGate: { status: "failed", reason: "visual drift" },
+      antiCheat: { status: "passed" }
+    }
+  ]);
+
+  assert.equal(selectedCandidate, "balanced");
+  assert.match(decision.reason, /lightest/i);
+  assert.equal(rejectedCandidates.some((candidate) => candidate.name === "aggressive"), true);
+});
+
+test("candidate selection returns null when every visual gate fails", () => {
+  const { selectedCandidate, decision } = selectOptimizationCandidate([
+    {
+      name: "conservative",
+      totalBytes: 900,
+      budgets: { status: "passed" },
+      glbValidation: { status: "passed" },
+      arLiteValidation: { status: "passed" },
+      visualGate: { status: "failed", reason: "SSIM below threshold" },
+      antiCheat: { status: "passed" }
+    }
+  ]);
+
+  assert.equal(selectedCandidate, null);
+  assert.match(decision.reason, /no adaptive candidate/i);
+});
+
+test("optimize-dish --run-visual-compare writes per-candidate visual reports", { timeout: 600_000 }, () =>
+  withTempDir(async (dir) => {
+    const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
+    mkdirSync(dirname(sourcePath), { recursive: true });
+    writeFileSync(sourcePath, makeRenderableDishGlb());
+
+    const result = await runNode([
+      "scripts/3d/optimize-dish.mjs",
+      "--restaurant",
+      "maison-elyse",
+      "--menu",
+      "demo",
+      "--dish",
+      "plat-final",
+      "--version",
+      "vvisual",
+      "--source",
+      sourcePath,
+      "--root",
+      dir,
+      "--write",
+      "--allow-public-binaries",
+      "--run-visual-compare",
+      "--visual-threshold",
+      "strict",
+      "--json"
+    ]);
+
+    assert.equal(result.code, 1);
+    const reportsRoot = join(dir, "assets", "3d", "reports", "maison-elyse", "demo", "plat-final", "vvisual");
+    const candidateReport = readJson(join(reportsRoot, "candidate-report.json"));
+    assert.equal(candidateReport.candidates.length, 3);
+    for (const candidate of candidateReport.candidates) {
+      for (const variantKey of ["web", "mobile", "arLite"]) {
+        assert.equal(typeof candidate.visualReports[variantKey].reportJson.path, "string");
+        assert.equal(
+          existsSync(join(dir, candidate.visualReports[variantKey].reportJson.path)),
+          true,
+          `${candidate.name} ${variantKey} visual report should exist`
+        );
+      }
+    }
+    assert.equal(existsSync(join(reportsRoot, "candidate-report.md")), true);
+  }));
+
+test("record-device-qa writes only the requested real-device QA target with evidence", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vdevice", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    setManifestBackToReview(manifest, "device qa pending");
+    manifest.quality.realDeviceQa.iphoneQuickLook.status = "not-tested";
+    manifest.visualQuality.realDeviceQa.iphoneQuickLook.status = "not-tested";
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    const evidence = writeEvidenceNote(
+      dir,
+      "assets/3d/reports/maison-elyse/demo/plat-final/vdevice/device-qa/iphone.md"
+    );
+
+    const record = await runNode([
+      "scripts/3d/record-device-qa.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--device",
+      "iphoneQuickLook",
+      "--status",
+      "passed",
+      "--device-name",
+      "iPhone 15 Pro",
+      "--os",
+      "iOS 18.5",
+      "--tested-by",
+      "Marc",
+      "--tested-at",
+      stableIso,
+      "--evidence",
+      evidence.path,
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(record.code, 0, `${record.stdout}\n${record.stderr}`);
+    const updated = readJson(manifestPath);
+    assert.equal(updated.quality.realDeviceQa.iphoneQuickLook.status, "passed");
+    assert.equal(updated.quality.realDeviceQa.iphoneQuickLook.evidence.sha256, evidence.sha256);
+    assert.equal(updated.visualQuality.realDeviceQa.iphoneQuickLook.device, "iPhone 15 Pro");
+    assert.equal(updated.quality.realDeviceQa.androidSceneViewer.status, "passed");
+    assert.equal(updated.status, "review");
+    assert.equal(updated.validationStatus, "failed");
+  }));
+
+test("record-device-qa refuses passed status without local evidence", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vnoevidence", null, { writeVisualEvidence: true });
+
+    const record = await runNode([
+      "scripts/3d/record-device-qa.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--device",
+      "androidSceneViewer",
+      "--status",
+      "passed",
+      "--device-name",
+      "Pixel 8",
+      "--os",
+      "Android 15",
+      "--tested-by",
+      "Marc",
+      "--tested-at",
+      stableIso,
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(record.code, 1);
+    assert.match(record.stdout, /evidence/i);
+  }));
+
+test("finalize-manifest refuses without human visual approval", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vnomanual", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    setManifestBackToReview(manifest, "manual approval pending");
+    manifest.quality.manualVisualApproved = false;
+    manifest.quality.manualReview.status = "pending";
+    manifest.visualQuality.manualReview.status = "pending";
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const finalize = await runNode([
+      "scripts/3d/finalize-manifest.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(finalize.code, 1);
+    assert.match(finalize.stdout, /human visual approval/i);
+    assert.equal(readJson(manifestPath).status, "review");
+  }));
+
+test("finalize-manifest refuses approved review manifests with stale visual report bindings", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vstalereport", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    setManifestBackToReview(manifest, "ready for finalization");
+    const reportPath = join(dir, manifest.visualQuality.report.path);
+    const report = readJson(reportPath);
+    report.variants.mobile.candidate.sha256 = "0".repeat(64);
+    const reportBytes = Buffer.from(`${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(reportPath, reportBytes);
+    manifest.visualQuality.report.sha256 = sha256(reportBytes);
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const finalize = await runNode([
+      "scripts/3d/finalize-manifest.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(finalize.code, 1);
+    assert.match(finalize.stdout, /mobile.*sha256/i);
+    assert.equal(readJson(manifestPath).status, "review");
+  }));
+
+test("finalize-manifest approves a fully evidenced review manifest without publishing", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vready", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    setManifestBackToReview(manifest, "ready for finalization");
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const finalize = await runNode([
+      "scripts/3d/finalize-manifest.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(finalize.code, 0, `${finalize.stdout}\n${finalize.stderr}`);
+    const approved = readJson(manifestPath);
+    assert.equal(approved.status, "approved");
+    assert.equal(approved.validationStatus, "passed");
+    assert.deepEqual(approved.validation, { warnings: [], fails: [] });
+    assert.equal(typeof approved.approvedAt, "string");
+    assert.equal(approved.publishedAt, null);
+    assert.equal(approved.lifecycle.phase, "approved");
+  }));
+
+test("publish refuses a fully evidenced review manifest until finalize-manifest approves it", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vunfinalized", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    setManifestBackToReview(manifest, "ready for finalization");
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const publish = await runNode([
+      "scripts/3d/publish.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--quality-approved",
+      "--approved-by",
+      "QA Bot",
+      "--json"
+    ]);
+
+    assert.equal(publish.code, 1);
+    assert.match(publish.stdout, /pre-approved strict visual identity manifest|manifest status approved/i);
+  }));
+
+test("prepare-cdn-upload writes a deterministic upload plan with required headers", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vupload", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    copyManifestPublicAssetsToWork(dir, manifest);
+    for (const [variantKey, variant] of Object.entries(manifest.variants)) {
+      const directory = variantKey === "arLite" ? "ar-lite" : variantKey === "iosUsdz" ? "ios" : variantKey;
+      variant.url = `https://cdn.example.com/vistaire/maison-elyse/demo/plat-final/vupload/${directory}/${variant.url.split("/").pop()}`;
+    }
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    const outPath = join(dir, "assets", "3d", "reports", "maison-elyse", "demo", "plat-final", "vupload", "upload-plan.json");
+
+    const plan = await runNode(
+      [
+        "scripts/3d/prepare-cdn-upload.mjs",
+        "--manifest",
+        manifestPath,
+        "--root",
+        dir,
+        "--out",
+        outPath,
+        "--write",
+        "--json"
+      ],
+      {
+        env: {
+          ...process.env,
+          VISTAIRE_3D_CDN_ORIGINS: "https://cdn.example.com"
+        }
+      }
+    );
+
+    assert.equal(plan.code, 0, `${plan.stdout}\n${plan.stderr}`);
+    const uploadPlan = readJson(outPath);
+    assert.equal(uploadPlan.uploads.length, 5);
+    const usdz = uploadPlan.uploads.find((entry) => entry.variant === "iosUsdz");
+    assert.equal(usdz.contentType, "model/vnd.usdz+zip");
+    assert.equal(usdz.headers["Cache-Control"], "public, max-age=31536000, immutable");
+    assert.equal(usdz.headers["Content-Disposition"], "inline");
+    assert.equal(usdz.sha256, manifest.variants.iosUsdz.sha256);
   }));
 
 test("publish promotes an approved version and rollback restores the previous active version", () =>
