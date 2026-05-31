@@ -22,6 +22,8 @@ import { addFail, createValidationResult, validateFileExists } from "./shared/va
 import { validateSha256 } from "./shared/validators/sha256.mjs";
 import { validateUsdzBasic } from "./shared/validators/usdz-basic.mjs";
 
+const VISUAL_RATIO_EPSILON = 0.000001;
+
 function variantRole(key) {
   if (key === "iosUsdz") return "iosUsdz";
   if (key === "arLite") return "arLite";
@@ -223,6 +225,17 @@ function relativeDifference(before, after) {
   };
 }
 
+function visibleDiffCoverage(image) {
+  let visible = 0;
+  const pixelCount = image.width * image.height;
+  for (let index = 0; index < image.pixels.length; index += 4) {
+    const alpha = image.pixels[index + 3];
+    const hasVisibleColor = image.pixels[index] > 0 || image.pixels[index + 1] > 0 || image.pixels[index + 2] > 0;
+    if (alpha > 0 && hasVisibleColor) visible += 1;
+  }
+  return visible / pixelCount;
+}
+
 function simpleSsim(before, after) {
   if (before.width !== after.width || before.height !== after.height) return 0;
   const valuesA = [];
@@ -323,22 +336,33 @@ function validateRenderedComparisonTriplet({ triplet, rootDir, label, expected =
       addFail(result, `${label}: before, after, and diff images must be distinct files`);
     }
     const comparison = relativeDifference(decoded.before, decoded.after);
+    if (decoded.before.width !== decoded.diff.width || decoded.before.height !== decoded.diff.height) {
+      throw new Error("visual comparison images must share dimensions");
+    }
     const ssim = simpleSsim(decoded.before, decoded.after);
     result.metrics.maxDiffRatio = comparison.diffRatio;
     result.metrics.perceptualScore = comparison.perceptualScore;
     result.metrics.ssim = ssim;
-    if (Number.isFinite(expected.maxDiffRatio) && comparison.diffRatio > expected.maxDiffRatio + 0.000001) {
+    if (Number.isFinite(expected.maxDiffRatio) && comparison.diffRatio > expected.maxDiffRatio + VISUAL_RATIO_EPSILON) {
       addFail(result, `${label}: recomputed diff ratio exceeds reported threshold`);
     }
-    if (Number.isFinite(expected.perceptualScore) && comparison.perceptualScore + 0.000001 < expected.perceptualScore) {
+    if (Number.isFinite(expected.perceptualScore) && comparison.perceptualScore + VISUAL_RATIO_EPSILON < expected.perceptualScore) {
       addFail(result, `${label}: recomputed perceptual score is below the report`);
     }
-    if (Number.isFinite(expected.ssim) && ssim + 0.000001 < expected.ssim) {
+    if (Number.isFinite(expected.ssim) && ssim + VISUAL_RATIO_EPSILON < expected.ssim) {
       addFail(result, `${label}: recomputed SSIM is below the report`);
     }
-    const diffPixels = relativeDifference(decoded.before, decoded.diff);
-    if (diffPixels.diffRatio === 0) {
-      addFail(result, `${label}: diff image must contain visible changed pixels`);
+    const diffCoverage = visibleDiffCoverage(decoded.diff);
+    result.metrics.diffImageCoverage = diffCoverage;
+    if (diffCoverage === 0) {
+      addFail(result, `${label}: diff image must not be blank`);
+    }
+    if (comparison.diffRatio === 0 && diffCoverage > VISUAL_RATIO_EPSILON) {
+      addFail(result, `${label}: diff image marks changes when before and after are identical`);
+    }
+    const coverageTolerance = Math.max(VISUAL_RATIO_EPSILON, 1 / (decoded.diff.width * decoded.diff.height));
+    if (comparison.diffRatio > 0 && Math.abs(diffCoverage - comparison.diffRatio) > coverageTolerance) {
+      addFail(result, `${label}: diff image coverage must match the recomputed before/after delta`);
     }
   } catch (error) {
     addFail(result, `${label}: unable to recompute rendered comparison metrics: ${error.message}`);

@@ -159,7 +159,7 @@ function pngChunk(type, data = Buffer.alloc(0)) {
   return Buffer.concat([length, typeBytes, data, crc32(Buffer.concat([typeBytes, data]))]);
 }
 
-function makePng({ width = 64, height = 64, changedPixel = false, diff = false, filter = 0 } = {}) {
+function makePng({ width = 64, height = 64, changedPixel = false, changedValue = 12, diff = false, filter = 0 } = {}) {
   const header = Buffer.alloc(13);
   header.writeUInt32BE(width, 0);
   header.writeUInt32BE(height, 4);
@@ -173,7 +173,7 @@ function makePng({ width = 64, height = 64, changedPixel = false, diff = false, 
     for (let x = 0; x < width; x += 1) {
       const index = x * 4;
       const changed = changedPixel && x === 0 && y === 0;
-      const value = diff && changed ? 255 : changed ? 12 : 0;
+      const value = diff && changed ? 255 : changed ? changedValue : 0;
       unfiltered[index] = value;
       unfiltered[index + 1] = value;
       unfiltered[index + 2] = value;
@@ -320,6 +320,39 @@ function writeVisualEvidenceFiles(root, manifest) {
     writeRef(angleReport, "before");
     writeRef(angleReport, "after");
     writeRef(angleReport, "diff");
+  }
+}
+
+function writeBlankDiffEvidenceFiles(root, manifest) {
+  const beforeRender = makePng({ changedPixel: true, changedValue: 12, filter: 1 });
+  const afterRender = makePng({ changedPixel: true, changedValue: 13, filter: 1 });
+  const blankDiff = makePng({ filter: 1 });
+
+  const writeRef = (container, key, bytes) => {
+    const currentRef = container[key];
+    const ref = typeof currentRef === "string" ? currentRef : currentRef.path;
+    const filePath = join(root, ref);
+    mkdirSync(dirname(filePath), { recursive: true });
+    writeFileSync(filePath, bytes);
+    container[key] = {
+      path: ref,
+      sha256: sha256(bytes),
+      width: 64,
+      height: 64
+    };
+  };
+
+  const writeTriplet = (triplet) => {
+    writeRef(triplet, "before", beforeRender);
+    writeRef(triplet, "after", afterRender);
+    writeRef(triplet, "diff", blankDiff);
+  };
+
+  for (const triplet of Object.values(manifest.visualQuality.reportArtifacts)) {
+    writeTriplet(triplet);
+  }
+  for (const angleReport of manifest.visualQuality.angleReports) {
+    writeTriplet(angleReport);
   }
 }
 
@@ -718,6 +751,30 @@ test("publish refuses approved schema v2 manifests when visual report files are 
     assert.match(publish.stdout, /visualQuality\.reportArtifacts\.web\.before/i);
     assert.match(publish.stdout, /visualQuality\.reportArtifacts\.web\.after/i);
     assert.match(publish.stdout, /visualQuality\.reportArtifacts\.web\.diff/i);
+  }));
+
+test("publish refuses blank visual diff artifacts even when recomputed thresholds pass", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vblankdiff", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    writeBlankDiffEvidenceFiles(dir, manifest);
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const publish = await runNode([
+      "scripts/3d/publish.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--quality-approved",
+      "--approved-by",
+      "QA Bot",
+      "--json"
+    ]);
+
+    assert.equal(publish.code, 1);
+    assert.match(publish.stdout, /diff image must not be blank/i);
   }));
 
 test("publish refuses schema v1 manifests even when legacy approval fields are present", () =>
