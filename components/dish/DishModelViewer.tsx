@@ -10,6 +10,12 @@ import {
   useState
 } from "react";
 import { trackMenuEvent } from "@/lib/analytics/client";
+import {
+  buildDemoDish3dManifest,
+  selectImmersiveVariant,
+  type ImmersiveBrowser,
+  type ImmersiveDevice
+} from "@/lib/dish3dManifest";
 import type { Dish } from "@/lib/demoMenuData";
 import {
   getArUnavailableMessage,
@@ -18,7 +24,6 @@ import {
   isIosDevice,
   shouldShowArBrowserHandoff
 } from "@/lib/arEnvironment";
-import { resolveActiveQuickLookUsdzUrl } from "@/lib/quickLookAssets";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 const MV_INIT_TIMEOUT_MS = 12_000;
@@ -86,6 +91,11 @@ type ArClientEnvironment = {
   needsIosHandoff: boolean;
 };
 
+type ClientConnection = {
+  effectiveType?: string;
+  saveData?: boolean;
+};
+
 export function configureModelViewerAssetDecoders(): void {
   if (typeof window === "undefined") return;
 
@@ -112,6 +122,49 @@ function readArClientEnvironment(iosSrc: string): ArClientEnvironment {
     missingIosAr: isIos && !iosSrc,
     needsIosHandoff: shouldShowArBrowserHandoff()
   };
+}
+
+function readClientConnection(): ClientConnection {
+  if (typeof navigator === "undefined") return {};
+  const connection = (
+    navigator as Navigator & {
+      connection?: { effectiveType?: string; saveData?: boolean };
+    }
+  ).connection;
+  return {
+    effectiveType: connection?.effectiveType,
+    saveData: connection?.saveData
+  };
+}
+
+function readClientViewport(): { width: number; height: number } {
+  if (typeof window === "undefined") return { width: 0, height: 0 };
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight
+  };
+}
+
+function browserForSelection({
+  isIos,
+  isAndroid,
+  needsIosHandoff,
+  androidArUnavailable
+}: {
+  isIos: boolean;
+  isAndroid: boolean;
+  needsIosHandoff: boolean;
+  androidArUnavailable: boolean;
+}): ImmersiveBrowser {
+  if (isIos) return needsIosHandoff ? "unknown" : "safari";
+  if (isAndroid) return androidArUnavailable ? "unknown" : "chrome";
+  return "chrome";
+}
+
+function deviceForSelection(isIos: boolean, isAndroid: boolean): ImmersiveDevice {
+  if (isIos) return "ios";
+  if (isAndroid) return "android";
+  return "desktop";
 }
 
 function getCurrentPageUrl(): string {
@@ -337,40 +390,63 @@ export function DishModelViewer({
   const [modelAttempt, setModelAttempt] = useState(0);
   const [handoffDismissed, setHandoffDismissed] = useState(false);
   const [copyConfirmed, setCopyConfirmed] = useState(false);
+  const [slowNetworkConfirmed, setSlowNetworkConfirmed] = useState(false);
   const loadWatchRef = useRef<ModelViewerElement | null>(null);
   const listenerCleanupRef = useRef<(() => void) | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const isAndroid = isAndroidDevice();
-  const originalModelSrc = useMemo(
-    () => dish.model3dUrl?.trim() ?? "",
-    [dish.model3dUrl]
-  );
-  const webModelSrc = useMemo(
-    () => dish.webModel3dUrl?.trim() ?? "",
-    [dish.webModel3dUrl]
-  );
-  const arModelSrc = useMemo(
-    () => dish.arModel3dUrl?.trim() ?? "",
-    [dish.arModel3dUrl]
-  );
-  const modelSrc = arModelSrc || webModelSrc || originalModelSrc;
-  const hasModel = Boolean(modelSrc);
-  const iosSrc = useMemo(
-    () => resolveActiveQuickLookUsdzUrl({ arUsdzUrl: dish.arUsdzUrl }),
-    [dish.arUsdzUrl]
-  );
-  const arEnvironment = useMemo(
-    () => readArClientEnvironment(iosSrc),
-    [iosSrc]
-  );
+  const manifest = useMemo(() => buildDemoDish3dManifest(dish), [dish]);
+  const iosSrc = manifest.variants.iosUsdz?.url ?? "";
+  const arEnvironment = readArClientEnvironment(iosSrc);
   const { isIos, missingIosAr, needsIosHandoff } = arEnvironment;
   const androidArUnavailable =
     isAndroid && !isAndroidLikelySceneViewerCapable();
-  const iosNativeArEnabled = isIos && !needsIosHandoff && !missingIosAr;
-  const androidNativeArEnabled = isAndroid && !androidArUnavailable;
+  const selectionDevice = deviceForSelection(isIos, isAndroid);
+  const selectionBrowser = browserForSelection({
+    isIos,
+    isAndroid,
+    needsIosHandoff,
+    androidArUnavailable
+  });
+  const baseConnection = readClientConnection();
+  const effectiveConnection = slowNetworkConfirmed
+    ? { ...baseConnection, effectiveType: "4g", saveData: false }
+    : baseConnection;
+  const viewport = readClientViewport();
+  const modelSelection = selectImmersiveVariant({
+    manifest,
+    device: selectionDevice,
+    browser: selectionBrowser,
+    viewport,
+    connection: effectiveConnection,
+    userIntent: "view3d",
+    prefersReducedMotion
+  });
+  const arSelection = selectImmersiveVariant({
+    manifest,
+    device: selectionDevice,
+    browser: selectionBrowser,
+    viewport,
+    connection: effectiveConnection,
+    userIntent: "ar",
+    prefersReducedMotion
+  });
+  const modelSrc = modelSelection.shouldLoadModel ? modelSelection.url : "";
+  const hasModel = Boolean(modelSrc);
+  const shouldConfirmSlowNetwork =
+    modelSelection.requiresConfirmation && !slowNetworkConfirmed;
   const directIosQuickLookHref =
-    isIos && !needsIosHandoff && iosSrc ? iosSrc : "";
+    isIos && !needsIosHandoff && arSelection.kind === "iosUsdz"
+      ? arSelection.url
+      : "";
+  const arLiteReady = arSelection.kind === "arLite" && Boolean(arSelection.url);
+  const iosNativeArEnabled = isIos && !needsIosHandoff && !missingIosAr;
+  const androidNativeArEnabled =
+    isAndroid && !androidArUnavailable && arLiteReady;
+  const showNoModelIosHandoff =
+    !hasModel && needsIosHandoff && Boolean(iosSrc) && !shouldConfirmSlowNetwork;
+  const slowNetworkMessage = modelSelection.message;
 
   const markModelLoaded = useCallback(() => {
     setModelLoaded(true);
@@ -553,7 +629,6 @@ export function DishModelViewer({
     (androidArUnavailable || (isAndroid && runtimeArFailed));
   const showMissingIosAr = showArReady && missingIosAr;
   const showDesktopArHint = showArReady && !isIos && !isAndroid;
-  const showNoModelIosHandoff = !hasModel && needsIosHandoff && Boolean(iosSrc);
 
   useEffect(() => {
     if (!isLoadingModel) return undefined;
@@ -563,6 +638,53 @@ export function DishModelViewer({
     );
     return () => window.clearTimeout(t);
   }, [isLoadingModel, modelAttempt]);
+
+  if (shouldConfirmSlowNetwork) {
+    return (
+      <section
+        className="overflow-hidden rounded-2xl border border-white/12 bg-gradient-to-br from-[#14100c] via-[#0f0b08] to-[#080706] shadow-inner"
+        aria-labelledby={titleId}
+      >
+        <div
+          className={`relative isolate flex ${MODEL_FRAME_CLASS} flex-col justify-end overflow-hidden px-5 py-6 text-left`}
+          role="status"
+          aria-live="polite"
+        >
+          <PremiumDishBackdrop dish={dish} />
+          <div className="relative">
+            <p
+              id={titleId}
+              className="font-display text-lg leading-tight text-cream sm:text-xl"
+            >
+              {slowNetworkMessage || "Réseau lent détecté : charger la vue 3D ?"}
+            </p>
+            <p className="mt-2 max-w-sm text-xs leading-relaxed text-[#d6c7af] sm:text-sm">
+              La photo du plat reste disponible, et la vue 3D peut être lancée
+              quand vous le souhaitez.
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-champagne/45 bg-champagne px-4 text-xs font-semibold text-[#17100a] transition hover:bg-[#e3c785] focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                onClick={() => setSlowNetworkConfirmed(true)}
+              >
+                Charger la vue 3D
+              </button>
+              {onReturnToDish ? (
+                <button
+                  type="button"
+                  className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/18 bg-black/35 px-4 text-xs font-semibold text-cream transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-champagne"
+                  onClick={onReturnToDish}
+                >
+                  Revenir à la fiche du plat
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (!hasModel) {
     return (

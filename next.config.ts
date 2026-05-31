@@ -1,19 +1,19 @@
 import type { NextConfig } from "next";
 
 /** Quick Look iOS attend souvent ce MIME pour les USDZ servis en HTTPS. */
-const USDZ_DEMO_HEADERS = [
+const USDZ_MODEL_HEADERS = [
   { key: "Content-Type", value: "model/vnd.usdz+zip" },
   { key: "Content-Disposition", value: "inline" },
   { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
 ] as const;
 
-const DEMO_STATIC_ASSET_HEADERS = [
+const STATIC_ASSET_HEADERS = [
   { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
 ] as const;
 
-const GLB_DEMO_HEADERS = [
+const GLB_MODEL_HEADERS = [
   { key: "Content-Type", value: "model/gltf-binary" },
-  ...DEMO_STATIC_ASSET_HEADERS,
+  ...STATIC_ASSET_HEADERS,
 ] as const;
 
 const nextConfig: NextConfig = {
@@ -26,19 +26,27 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/models/demo/:path*.usdz",
-        headers: [...USDZ_DEMO_HEADERS],
+        headers: [...USDZ_MODEL_HEADERS],
       },
       {
         source: "/models/demo/:path*.glb",
-        headers: [...GLB_DEMO_HEADERS],
+        headers: [...GLB_MODEL_HEADERS],
+      },
+      {
+        source: "/models/restaurants/:path*.usdz",
+        headers: [...USDZ_MODEL_HEADERS],
+      },
+      {
+        source: "/models/restaurants/:path*.glb",
+        headers: [...GLB_MODEL_HEADERS],
       },
       {
         source: "/images/demo/:path*",
-        headers: [...DEMO_STATIC_ASSET_HEADERS],
+        headers: [...STATIC_ASSET_HEADERS],
       },
       {
         source: "/model-viewer/:path*.js",
-        headers: [...DEMO_STATIC_ASSET_HEADERS],
+        headers: [...STATIC_ASSET_HEADERS],
       },
     ];
   },

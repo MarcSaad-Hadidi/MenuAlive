@@ -578,8 +578,13 @@ test("3D pipeline branch does not add public media binaries or wildcard LFS rule
     .split(/\r?\n/)
     .filter(Boolean)
     .map((line) => line.slice(3).replaceAll("\\", "/"));
-  const forbidden = changedPaths.filter(
-    (filePath) =>
+  const allowedScaffoldFiles = new Set([
+    "assets/3d/reports/.gitkeep",
+    "public/models/restaurants/.gitkeep"
+  ]);
+  const forbidden = changedPaths.filter((filePath) => {
+    if (allowedScaffoldFiles.has(filePath)) return false;
+    return (
       /^public\/models\/.*\.(glb|usdz)$/i.test(filePath) ||
       (/^public\/videos\//i.test(filePath) &&
         !allowedPublicVideoExceptions.has(filePath)) ||
@@ -589,7 +594,8 @@ test("3D pipeline branch does not add public media binaries or wildcard LFS rule
       /^assets\/3d\/source\//i.test(filePath) ||
       /^assets\/3d\/work\//i.test(filePath) ||
       /^asset-review\//i.test(filePath)
-  );
+    );
+  });
 
   assert.deepEqual(forbidden, []);
 

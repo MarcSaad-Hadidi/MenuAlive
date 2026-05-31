@@ -1,8 +1,9 @@
 # Vistaire Production 3D/AR Pipeline
 
-This PR rebuilds the useful pipeline ideas from the old PR #24 without merging
-that branch, copying its binaries, activating runtime dishes, or changing the
-landing hero.
+This document describes the current Vistaire production 3D/AR pipeline. It
+keeps Git out of the heavy-asset delivery path while providing real source
+analysis, variant generation, strict validation, publication, rollback, and
+runtime selection gates.
 
 ## Objectives
 
@@ -10,8 +11,11 @@ landing hero.
 - Validate dish and restaurant manifests before runtime activation.
 - Validate GLB and USDZ files when local files are explicitly provided.
 - Validate delivery headers only when a base URL is explicitly provided.
-- Produce JSON/Markdown quality reports for human review.
+- Produce JSON/Markdown source, optimization, and visual-quality reports for
+  human review.
 - Keep Git free of new heavy GLB, USDZ, video, ZIP, source, and review assets.
+- Provide progressive runtime helpers that adapt the existing demo data into a
+  manifest-shaped contract without moving heavy demo binaries.
 
 ## Structure
 
@@ -23,6 +27,14 @@ scripts/3d/
   validate-restaurant.mjs
   validate-network.mjs
   manifest.mjs
+  analyze-source.mjs
+  optimize.mjs
+  optimize-dish.mjs
+  optimize-menu.mjs
+  preview.mjs
+  publish.mjs
+  rollback.mjs
+  clean-stale.mjs
   report.mjs
   quality-report.mjs
   shared/
@@ -56,6 +68,11 @@ npm run 3d:validate-dish -- --manifest assets/3d/fixtures/maison-elyse/demo/mais
 npm run 3d:manifest -- --dish-manifest assets/3d/fixtures/maison-elyse/demo/maison-elyse-n1/v1/manifest.json
 npm run 3d:report
 npm run 3d:quality-report
+npm run 3d:analyze-source -- --source path/to/source.glb --out path/to/source-analysis.json --markdown path/to/source-analysis.md
+npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source path/to/source.glb --write --allow-public-binaries --approved-by "Marc"
+npm run 3d:publish -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --quality-approved --approved-by "Marc" --write
+npm run 3d:rollback -- --restaurant maison-elyse --menu main --dish homard-bisque --to v1 --approved-by "Marc" --write
+npm run 3d:clean-stale -- --restaurant maison-elyse --menu main --dish homard-bisque --dry-run
 ```
 
 File validation is opt-in:
@@ -108,6 +125,9 @@ Restaurant manifests are rollups, not runtime activation switches. They include:
 
 The rollup can be generated with `npm run 3d:manifest`.
 
+`npm run 3d:publish` also writes the active dish manifest and refreshes the
+restaurant rollup from active manifests.
+
 ## Budgets
 
 Delivery budgets live in `scripts/3d/shared/budgets.mjs`. Git/LFS thresholds,
@@ -149,6 +169,31 @@ The iOS USDZ fail budget remains exactly `5 * 1024 * 1024` bytes.
 These validators are structural gates. They do not claim real iPhone Quick Look
 or Android Scene Viewer validation.
 
+## Source And Optimization
+
+`3d:analyze-source` parses the GLB JSON chunk and emits byte/hash, mesh,
+primitive, vertex, triangle, material, texture, image, extension, external URI,
+bounds, orientation, and draw-call evidence. Git LFS pointers, missing files,
+malformed GLBs, and external URI dependencies are rejected.
+
+`3d:optimize-dish` requires `@gltf-transform/cli`. Web and mobile GLB variants
+run through `gltf-transform optimize` with Meshopt and WebP texture compression;
+if texture compression cannot be applied to a source, the fallback copy command
+is recorded in the optimization report. Android AR-lite remains a no-required
+extension GLB. The USDZ stage creates a deterministic review package; final
+client delivery must still pass real iPhone Quick Look QA before it is claimed.
+`--cdn-base-url` is reserved for a future artifact uploader and URL rewriter; it
+does not bypass `--allow-public-binaries` today.
+
+The visual-quality report is deterministic and structural: it records geometry,
+scale, material, texture, and multi-view proxy evidence. It is useful for
+repeatable gating, but it is not a substitute for manual plating review or real
+device AR validation.
+
+`3d:clean-stale --write` requires an active dish manifest. Without one, the
+command cannot distinguish stale versions from unpublished generated versions,
+so it exits without deleting any version directory.
+
 ## Storage/CDN Future
 
 Future production assets should normally live in storage/CDN, not Git. A later
@@ -165,12 +210,29 @@ manifest, checksum, budget, and header contract.
 6. Produce a quality report.
 7. Complete visual QA and real-device Quick Look/Scene Viewer QA before runtime activation.
 
+## Runtime Integration
+
+The current runtime keeps the demo working through a progressive adapter:
+`buildDemoDish3dManifest(dish)` converts legacy demo fields such as
+`webModel3dUrl`, `arModel3dUrl`, and `arUsdzUrl` into an internal schema v2
+manifest. `selectImmersiveVariant(...)` then chooses web, mobile, AR-lite, iOS
+USDZ, or poster fallback by device, browser, network, and user intent.
+
+The selector is intentionally fail-closed:
+
+- no model before explicit intent;
+- Save-Data and slow network get a poster confirmation step;
+- Android AR requires an AR-lite variant;
+- iOS Quick Look requires Safari and a stable USDZ URL;
+- unsafe URLs return no model.
+
 ## Not In This PR
 
 - No GLB/USDZ/MP4/WebM/MOV/ZIP binaries are added.
-- No `public/models`, `public/videos`, or `public/frames` changes are made.
-- No `app/page.tsx`, landing hero, demo runtime, or AR runtime wiring changes are made.
-- No `next.config.ts` restaurant asset headers are added.
+- No tracked runtime binaries are added under `public/models`, `public/videos`,
+  or `public/frames`.
+- No `app/page.tsx` or landing hero changes are made.
+- No production restaurant GLB/USDZ binaries are added.
 - No real iPhone Quick Look validation is claimed.
 
 ## Next PR
