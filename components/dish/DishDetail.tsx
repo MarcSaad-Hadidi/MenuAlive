@@ -132,6 +132,7 @@ export function DishDetail({ dish }: DishDetailProps) {
   const [hasMountedPlat3d, setHasMountedPlat3d] = useState(false);
   const [quickLookPrefetchState, setQuickLookPrefetchState] =
     useState<QuickLookPrefetchState>("idle");
+  const quickLookPrefetchCleanupRef = useRef<(() => void) | null>(null);
   const plat3dAnchorRef = useRef<HTMLDivElement | null>(null);
   const viewStartRef = useRef(0);
   const shouldPrefetchQuickLook = hasActiveQuickLookUsdzUrl(dish);
@@ -157,12 +158,6 @@ export function DishDetail({ dish }: DishDetailProps) {
       });
     };
   }, [dish.categorySlug, dish.slug]);
-
-  useEffect(() => {
-    if (!shouldPrefetchQuickLook) return undefined;
-
-    return prefetchUsdzForQuickLook(dish, setQuickLookPrefetchState);
-  }, [dish, shouldPrefetchQuickLook]);
 
   const showAndScrollToPlat3d = useCallback(() => {
     setHasMountedPlat3d(true);
@@ -191,6 +186,13 @@ export function DishDetail({ dish }: DishDetailProps) {
 
   const handleVoir3dClick = useCallback(() => {
     warmModelViewerOnIntent();
+    if (shouldPrefetchQuickLook) {
+      quickLookPrefetchCleanupRef.current?.();
+      quickLookPrefetchCleanupRef.current = prefetchUsdzForQuickLook(
+        dish,
+        setQuickLookPrefetchState
+      );
+    }
     showAndScrollToPlat3d();
     window.setTimeout(() => {
       trackMenuEvent({
@@ -199,7 +201,15 @@ export function DishDetail({ dish }: DishDetailProps) {
         categorySlug: dish.categorySlug
       });
     }, 0);
-  }, [dish, showAndScrollToPlat3d]);
+  }, [dish, shouldPrefetchQuickLook, showAndScrollToPlat3d]);
+
+  useEffect(
+    () => () => {
+      quickLookPrefetchCleanupRef.current?.();
+      quickLookPrefetchCleanupRef.current = null;
+    },
+    []
+  );
 
   return (
     <article className={immersive ? "pb-24 pt-2.5" : "pb-24 pt-4 sm:pt-5"}>

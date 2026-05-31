@@ -43,6 +43,15 @@ function formatSize(bytes) {
   return `${(bytes / 1024).toFixed(1)} KiB`;
 }
 
+function parseContentLength(response) {
+  const contentRange = response.headers.get("content-range") ?? "";
+  const contentRangeMatch = contentRange.match(/\/(\d+)$/);
+  if (contentRangeMatch) return Number(contentRangeMatch[1]);
+
+  const contentLength = Number(response.headers.get("content-length") ?? "0");
+  return Number.isFinite(contentLength) && contentLength > 0 ? contentLength : 0;
+}
+
 function absoluteUrl(pathOrUrl) {
   return new URL(pathOrUrl, `${BASE_URL}/`).toString();
 }
@@ -123,9 +132,9 @@ async function checkAsset(assetUrl, label, options = {}) {
 
   ok(`${label} status ${response.status}`);
   if (options.productionQuickLook) {
-    const contentLength = Number(response.headers.get("content-length") ?? "0");
+    const contentLength = parseContentLength(response);
     if (!Number.isFinite(contentLength) || contentLength <= 0) {
-      fail(`${label} missing Content-Length for production iPhone USDZ`);
+      fail(`${label} missing Content-Length/Content-Range for production iPhone USDZ`);
     } else if (contentLength > MAX_PRODUCTION_IOS_USDZ_BYTES) {
       fail(
         `${label} exceeds production iPhone USDZ budget over network: ${formatSize(

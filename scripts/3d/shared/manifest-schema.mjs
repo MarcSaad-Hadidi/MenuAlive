@@ -6,8 +6,8 @@ import {
   validateRestaurantManifestSchema
 } from "./validators/manifest-schema.mjs";
 
-export const DISH_MANIFEST_SCHEMA_VERSION = 1;
-export const RESTAURANT_MANIFEST_SCHEMA_VERSION = 1;
+export const DISH_MANIFEST_SCHEMA_VERSION = 2;
+export const RESTAURANT_MANIFEST_SCHEMA_VERSION = 2;
 export { ALLOWED_STATUSES, ALLOWED_VALIDATION_STATUSES, REQUIRED_VARIANTS };
 
 export function validateDishManifest(manifest, options = {}) {
