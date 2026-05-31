@@ -1950,6 +1950,8 @@ function validateFinalizeReadiness({ manifest, rootDir, manifestPath, networkVal
     result.fails.push("Finalize requires human visual approval in visualQuality.manualReview");
   }
 
+  mergeResultInto(result, validateVisualApprovalReadiness({ manifest, rootDir }));
+
   const candidate = approvedCandidateForFinalize(manifest);
   const externalDelivery = manifestUsesExternalDelivery(candidate);
   if (externalDelivery) {

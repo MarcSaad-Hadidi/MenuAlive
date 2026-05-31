@@ -1506,6 +1506,34 @@ test("finalize-manifest refuses without human visual approval", () =>
     assert.equal(readJson(manifestPath).status, "review");
   }));
 
+test("finalize-manifest refuses approved review manifests with stale visual report bindings", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vstalereport", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    setManifestBackToReview(manifest, "ready for finalization");
+    const reportPath = join(dir, manifest.visualQuality.report.path);
+    const report = readJson(reportPath);
+    report.variants.mobile.candidate.sha256 = "0".repeat(64);
+    const reportBytes = Buffer.from(`${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(reportPath, reportBytes);
+    manifest.visualQuality.report.sha256 = sha256(reportBytes);
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const finalize = await runNode([
+      "scripts/3d/finalize-manifest.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(finalize.code, 1);
+    assert.match(finalize.stdout, /mobile.*sha256/i);
+    assert.equal(readJson(manifestPath).status, "review");
+  }));
+
 test("finalize-manifest approves a fully evidenced review manifest without publishing", () =>
   withTempDir(async (dir) => {
     const manifestPath = writeApprovedManifest(dir, "vready", null, { writeVisualEvidence: true });
