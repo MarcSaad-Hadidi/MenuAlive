@@ -223,19 +223,62 @@ function makeRenderableDishGlb() {
     0.25, 0, -0.2,
     0, 0.08, 0.2
   ].forEach((value, index) => positions.writeFloatLE(value, index * 4));
+  const normals = Buffer.alloc(36);
+  [
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0
+  ].forEach((value, index) => normals.writeFloatLE(value, index * 4));
+  const texcoords = Buffer.alloc(24);
+  [
+    0, 0,
+    1, 0,
+    0.5, 1
+  ].forEach((value, index) => texcoords.writeFloatLE(value, index * 4));
   const indices = Buffer.alloc(6);
   [0, 1, 2].forEach((value, index) => indices.writeUInt16LE(value, index * 2));
   const texture = makePng({ width: 64, height: 64 });
-  const imageOffset = positions.length + indices.length + 2;
-  const bin = Buffer.concat([positions, indices, Buffer.alloc(2), texture]);
+  const imageOffset = positions.length + normals.length + texcoords.length + indices.length + 2;
+  const bin = Buffer.concat([positions, normals, texcoords, indices, Buffer.alloc(2), texture]);
   const gltf = makeDishGltf({
     buffers: [{ byteLength: bin.length }],
     bufferViews: [
       { buffer: 0, byteOffset: 0, byteLength: positions.length },
-      { buffer: 0, byteOffset: positions.length, byteLength: indices.length },
+      { buffer: 0, byteOffset: positions.length, byteLength: normals.length },
+      { buffer: 0, byteOffset: positions.length + normals.length, byteLength: texcoords.length },
+      { buffer: 0, byteOffset: positions.length + normals.length + texcoords.length, byteLength: indices.length },
       { buffer: 0, byteOffset: imageOffset, byteLength: texture.length }
     ],
-    images: [{ bufferView: 2, mimeType: "image/png", name: "albedo" }]
+    accessors: [
+      {
+        bufferView: 0,
+        componentType: 5126,
+        count: 3,
+        type: "VEC3",
+        min: [-0.25, 0, -0.2],
+        max: [0.25, 0.08, 0.2]
+      },
+      {
+        bufferView: 1,
+        componentType: 5126,
+        count: 3,
+        type: "VEC3"
+      },
+      {
+        bufferView: 2,
+        componentType: 5126,
+        count: 3,
+        type: "VEC2"
+      },
+      {
+        bufferView: 3,
+        componentType: 5123,
+        count: 3,
+        type: "SCALAR"
+      }
+    ],
+    meshes: [{ primitives: [{ attributes: { POSITION: 0, NORMAL: 1, TEXCOORD_0: 2 }, indices: 3, material: 0 }] }],
+    images: [{ bufferView: 4, mimeType: "image/png", name: "albedo" }]
   });
   return makeGlb(gltf, bin);
 }
@@ -266,7 +309,7 @@ function strictVisualQuality(reviewer = "QA Bot") {
     score: 0.991,
     promise: strictPromise,
     method: "deterministic-render-comparison",
-    report: "assets/3d/reports/maison-elyse/demo/plat-final/v1/visual-report.md",
+    report: "assets/3d/reports/maison-elyse/demo/plat-final/v1/visual-report.json",
     reportArtifacts: {
       web: {
         before: "renders/web/front-before.png",
@@ -345,14 +388,11 @@ function writeVisualEvidenceFiles(root, manifest) {
   const beforePng = makePng({ filter: 1 });
   const afterPng = makePng({ changedPixel: true, filter: 1 });
   const diffPng = makePng({ changedPixel: true, diff: true, filter: 1 });
-  const reportPath = join(root, manifest.visualQuality.report);
+  const reportReference = typeof manifest.visualQuality.report === "string"
+    ? manifest.visualQuality.report
+    : manifest.visualQuality.report.path;
+  const reportPath = join(root, reportReference);
   mkdirSync(dirname(reportPath), { recursive: true });
-  const reportBytes = Buffer.from("# Visual report\n");
-  writeFileSync(reportPath, reportBytes);
-  manifest.visualQuality.report = {
-    path: manifest.visualQuality.report,
-    sha256: sha256(reportBytes)
-  };
   const writeRef = (container, key) => {
     const ref = container[key];
     const bytes = key === "before" ? beforePng : key === "after" ? afterPng : diffPng;
@@ -376,6 +416,29 @@ function writeVisualEvidenceFiles(root, manifest) {
     writeRef(angleReport, "after");
     writeRef(angleReport, "diff");
   }
+  const reportBytes = Buffer.from(`${JSON.stringify({
+    status: manifest.visualQuality.status,
+    promise: manifest.visualQuality.promise,
+    method: manifest.visualQuality.method,
+    source: {
+      sha256: manifest.sourceAnalysis.sha256
+    },
+    variants: Object.fromEntries(
+      ["web", "mobile", "arLite"].map((variantKey) => [
+        variantKey,
+        {
+          candidate: {
+            sha256: manifest.variants[variantKey].sha256
+          }
+        }
+      ])
+    )
+  }, null, 2)}\n`);
+  writeFileSync(reportPath, reportBytes);
+  manifest.visualQuality.report = {
+    path: reportReference,
+    sha256: sha256(reportBytes)
+  };
 }
 
 function writeBlankDiffEvidenceFiles(root, manifest) {
@@ -472,7 +535,7 @@ function writeApprovedManifest(root, version, previousVersion = null, { writeVis
     budgets: { profile: "simpleDish" },
     sourceAnalysis: {
       bytes: glb.length,
-      sha256: "f".repeat(64),
+      sha256: sha256(glb),
       meshes: 1,
       primitives: 1,
       triangles: 1,
@@ -588,6 +651,14 @@ function writeApprovedV1Manifest(root) {
   return manifestPath;
 }
 
+function readVisualReport(root, outDir) {
+  const reportPath = join(outDir, "visual-report.json");
+  assert.equal(existsSync(reportPath), true, "visual-report.json should exist");
+  const report = readJson(reportPath);
+  assert.equal(Array.isArray(report.angleReports), true);
+  return report;
+}
+
 test("analyze-source emits source evidence, geometry metrics, and a markdown review note", () =>
   withTempDir(async (dir) => {
     const sourcePath = join(dir, "source", "dish.glb");
@@ -674,7 +745,8 @@ test("optimize-dish writes versioned variants and rejects them until strict visu
     assert.doesNotMatch(manifest.variants.arLite.optimizer?.command ?? "", /\bcopy\b/i);
     assert.notEqual(manifest.variants.arLite.sha256, manifest.sourceAnalysis.sha256);
     assert.equal(manifest.variants.iosUsdz.proxy, false);
-    assert.equal(manifest.variants.iosUsdz.productionFaithful, true);
+    assert.equal(manifest.variants.iosUsdz.productionFaithful, false);
+    assert.equal(manifest.variants.iosUsdz.faithfulnessStatus, "unproven-until-real-device-qa");
     for (const key of ["web", "mobile", "arLite", "iosUsdz", "poster"]) {
       assert.equal(existsSync(join(dir, "public", manifest.variants[key].url)), false, key);
       assert.equal(typeof manifest.variants[key].sha256, "string");
@@ -889,7 +961,7 @@ test("publish refuses schema v1 manifests even when legacy approval fields are p
     assert.match(publish.stdout, /schemaVersion.*2/i);
   }));
 
-test("optimize-dish refuses CDN mode unless public binary writes are explicitly allowed", () =>
+test("optimize-dish refuses CDN mode when the CDN origin is not allowlisted", () =>
   withTempDir(async (dir) => {
     const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
     mkdirSync(dirname(sourcePath), { recursive: true });
@@ -916,11 +988,281 @@ test("optimize-dish refuses CDN mode unless public binary writes are explicitly 
     ]);
 
     assert.equal(result.code, 1);
-    assert.match(result.stdout, /allow-public-binaries/i);
+    assert.match(result.stdout, /allowlisted/i);
     assert.equal(
       existsSync(join(dir, "public", "models", "restaurants", "maison-elyse", "demo", "plat-final", "vcdn")),
       false
     );
+  }));
+
+test("visual-compare renders deterministic before/after/diff artifacts for identical GLBs", () =>
+  withTempDir(async (dir) => {
+    const sourcePath = join(dir, "source.glb");
+    const candidatePath = join(dir, "candidate.glb");
+    const outDir = join(dir, "assets", "3d", "reports", "visual", "mobile");
+    const renderable = makeRenderableDishGlb();
+    writeFileSync(sourcePath, renderable);
+    writeFileSync(candidatePath, renderable);
+
+    const result = await runNode([
+      "scripts/3d/visual-compare.mjs",
+      "--source",
+      sourcePath,
+      "--candidate",
+      candidatePath,
+      "--variant",
+      "mobile",
+      "--out",
+      outDir,
+      "--root",
+      dir,
+      "--threshold",
+      "strict",
+      "--json"
+    ]);
+
+    assert.equal(result.code, 0, `${result.stdout}\n${result.stderr}`);
+    const report = readVisualReport(dir, outDir);
+    const angles = new Set(report.angleReports.map((entry) => entry.angle));
+    for (const angle of [
+      "front",
+      "left",
+      "right",
+      "top",
+      "three-quarter",
+      "close-up-signature",
+      "table-distance",
+      "mobile-distance"
+    ]) {
+      assert.equal(angles.has(angle), true, `missing ${angle}`);
+    }
+    assert.equal(report.status, "passed");
+    assert.equal(report.variant, "mobile");
+    assert.equal(report.meanSsim >= 0.985, true);
+    assert.equal(report.perceptualScore >= 0.98, true);
+    assert.equal(report.maxDiffRatio, 0);
+    assert.equal(existsSync(join(outDir, "before", "front.png")), true);
+    assert.equal(existsSync(join(outDir, "after", "front.png")), true);
+    assert.equal(existsSync(join(outDir, "diff", "front.png")), true);
+    assert.equal(existsSync(join(outDir, "visual-report.md")), true);
+  }));
+
+test("approve-visual only records human approval after valid rendered evidence exists", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vapprove", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    manifest.status = "review";
+    manifest.validationStatus = "failed";
+    manifest.visualQuality.manualReview = {
+      required: true,
+      status: "pending",
+      approvalType: "human",
+      approvedBy: null,
+      approvedAt: null
+    };
+    manifest.quality.manualVisualApproved = false;
+    manifest.quality.approvedBy = null;
+    manifest.quality.manualReview = {
+      status: "pending",
+      approvalType: "human",
+      approvedBy: null,
+      approvedAt: null
+    };
+    manifest.validation = { warnings: [], fails: ["manual visual approval is pending"] };
+    manifest.approvedAt = null;
+    manifest.lifecycle.phase = "review";
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const approve = await runNode([
+      "scripts/3d/approve-visual.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--approved-by",
+      "Marc",
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(approve.code, 0, `${approve.stdout}\n${approve.stderr}`);
+    const approved = readJson(manifestPath);
+    assert.equal(approved.visualQuality.manualReview.status, "approved");
+    assert.equal(approved.visualQuality.manualReview.approvedBy, "Marc");
+    assert.equal(approved.quality.manualReview.status, "approved");
+    assert.equal(approved.quality.manualVisualApproved, true);
+    assert.equal(approved.status, "review");
+    assert.equal(approved.validationStatus, "failed");
+    assert.equal(approved.approvedAt, null);
+    assert.equal(approved.variants.web.sha256, manifest.variants.web.sha256);
+    assert.equal(approved.visualQuality.meanSsim, manifest.visualQuality.meanSsim);
+  }));
+
+test("approve-visual refuses manifests with invalid rendered evidence", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vbadapprove", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    writeBlankDiffEvidenceFiles(dir, manifest);
+    manifest.status = "review";
+    manifest.validationStatus = "failed";
+    manifest.visualQuality.manualReview.status = "pending";
+    manifest.visualQuality.manualReview.approvedBy = null;
+    manifest.visualQuality.manualReview.approvedAt = null;
+    manifest.quality.manualVisualApproved = false;
+    manifest.quality.manualReview.status = "pending";
+    manifest.quality.manualReview.approvedBy = null;
+    manifest.quality.manualReview.approvedAt = null;
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const approve = await runNode([
+      "scripts/3d/approve-visual.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--approved-by",
+      "Marc",
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(approve.code, 1);
+    assert.match(approve.stdout, /diff image must not be blank/i);
+    assert.equal(readJson(manifestPath).visualQuality.manualReview.status, "pending");
+  }));
+
+test("approve-visual refuses visual reports bound to the wrong generated variant", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vwrongbinding", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    const reportPath = join(dir, manifest.visualQuality.report.path);
+    const report = readJson(reportPath);
+    report.variants.mobile.candidate.sha256 = "0".repeat(64);
+    const reportBytes = Buffer.from(`${JSON.stringify(report, null, 2)}\n`);
+    writeFileSync(reportPath, reportBytes);
+    manifest.visualQuality.report.sha256 = sha256(reportBytes);
+    manifest.status = "review";
+    manifest.validationStatus = "failed";
+    manifest.visualQuality.manualReview.status = "pending";
+    manifest.visualQuality.manualReview.approvedBy = null;
+    manifest.visualQuality.manualReview.approvedAt = null;
+    manifest.quality.manualVisualApproved = false;
+    manifest.quality.manualReview.status = "pending";
+    manifest.quality.manualReview.approvedBy = null;
+    manifest.quality.manualReview.approvedAt = null;
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const approve = await runNode([
+      "scripts/3d/approve-visual.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--approved-by",
+      "Marc",
+      "--write",
+      "--json"
+    ]);
+
+    assert.equal(approve.code, 1);
+    assert.match(approve.stdout, /mobile.*sha256/i);
+    assert.equal(readJson(manifestPath).visualQuality.manualReview.status, "pending");
+  }));
+
+test("optimize-dish CDN mode writes staging artifacts and CDN URLs without public binaries", () =>
+  withTempDir(async (dir) => {
+    const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
+    mkdirSync(dirname(sourcePath), { recursive: true });
+    writeFileSync(sourcePath, makeRenderableDishGlb());
+
+    const result = await runNode(
+      [
+        "scripts/3d/optimize-dish.mjs",
+        "--restaurant",
+        "maison-elyse",
+        "--menu",
+        "demo",
+        "--dish",
+        "plat-final",
+        "--version",
+        "vcdn",
+        "--source",
+        sourcePath,
+        "--root",
+        dir,
+        "--write",
+        "--cdn-base-url",
+        "https://cdn.example.com/vistaire",
+        "--json"
+      ],
+      {
+        env: {
+          ...process.env,
+          VISTAIRE_3D_CDN_ORIGINS: "https://cdn.example.com"
+        }
+      }
+    );
+
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, /strict rendered visual identity/i);
+    const manifestPath = join(
+      dir,
+      "public",
+      "models",
+      "restaurants",
+      "maison-elyse",
+      "demo",
+      "plat-final",
+      "vcdn",
+      "manifest.json"
+    );
+    const manifest = readJson(manifestPath);
+    assert.equal(manifest.variants.web.url, "https://cdn.example.com/vistaire/maison-elyse/demo/plat-final/vcdn/web/plat-final-web.glb");
+    assert.equal(manifest.variants.iosUsdz.url.endsWith(".usdz"), true);
+    assert.equal(existsSync(join(dir, "public", "models", "restaurants", "maison-elyse", "demo", "plat-final", "vcdn", "web")), false);
+    assert.equal(existsSync(join(dir, "assets", "3d", "work", "maison-elyse", "demo", "plat-final", "vcdn", "web", "plat-final-web.glb")), true);
+  }));
+
+test("optimize-dish records adaptive candidates and rejects when all visual gates fail", () =>
+  withTempDir(async (dir) => {
+    const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
+    mkdirSync(dirname(sourcePath), { recursive: true });
+    writeFileSync(sourcePath, makeRenderableDishGlb());
+
+    const result = await runNode([
+      "scripts/3d/optimize-dish.mjs",
+      "--restaurant",
+      "maison-elyse",
+      "--menu",
+      "demo",
+      "--dish",
+      "plat-final",
+      "--version",
+      "vcandidates",
+      "--source",
+      sourcePath,
+      "--root",
+      dir,
+      "--write",
+      "--allow-public-binaries",
+      "--json"
+    ]);
+
+    assert.equal(result.code, 1);
+    const report = readJson(join(dir, "assets", "3d", "reports", "maison-elyse", "demo", "plat-final", "vcandidates", "optimization-report.json"));
+    assert.deepEqual(report.candidates.map((candidate) => candidate.name), [
+      "conservative",
+      "balanced",
+      "aggressive"
+    ]);
+    for (const candidate of report.candidates) {
+      assert.equal(candidate.variants.arLite.analysis.externalUris.length, 0);
+      assert.equal(candidate.variants.arLite.analysis.extensionsRequired.length, 0);
+      assert.equal(candidate.variants.arLite.analysis.bounds.groundedY, true);
+      assert.equal(candidate.variants.arLite.analysis.bounds.centeredXZ, true);
+    }
+    assert.equal(report.selectedCandidate, null);
+    assert.match(report.decision.reason, /visual/i);
   }));
 
 test("publish promotes an approved version and rollback restores the previous active version", () =>

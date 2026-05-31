@@ -42,6 +42,7 @@ export function writeStdout(value, json = false) {
 }
 
 export function publicUrlToFilePath(url, rootDir = process.cwd()) {
+  if (/^https?:\/\//i.test(String(url ?? ""))) return null;
   const clean = String(url ?? "").split(/[?#]/)[0].replace(/^\/+/, "");
   const fullPath = normalize(join(rootDir, "public", clean));
   const publicRoot = normalize(join(rootDir, "public"));
