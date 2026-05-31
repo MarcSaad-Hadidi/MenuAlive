@@ -78,6 +78,21 @@ are written under ignored `assets/3d/work/**` as review/staging outputs only.
 Review poster outputs are rejected by default and cannot be presented as
 production posters or exposed as runtime assets.
 
+To run the full end-to-end rendered comparison during optimization:
+
+```bash
+VISTAIRE_3D_CDN_ORIGINS=https://cdn.example.com npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source assets/3d/source/maison-elyse/main/homard-bisque/v1/source.glb --write --cdn-base-url https://cdn.example.com/vistaire --run-visual-compare --visual-threshold strict
+```
+
+This generates conservative, balanced, and aggressive candidate sets for web,
+mobile, AR-lite, iOS USDZ, and poster outputs. For each candidate GLB variant it
+writes strict rendered before/after/diff evidence and `visual-report.json`
+under `assets/3d/reports/**`, then writes `candidate-report.json` and
+`candidate-report.md`. The selected candidate is the lightest candidate that
+passes byte budgets, GLB checks, AR-lite constraints, anti-copy checks, and all
+strict visual comparisons. If no candidate passes, `selectedCandidate` remains
+`null` and the manifest stays `review`/`failed`.
+
 4. Review the generated schema v2 dish manifest with URLs, bytes, hashes,
    physical scale, bounds, budgets, validation state, source analysis, visual
    quality, lifecycle, rollback, and manual quality state. The manifest remains
@@ -110,7 +125,28 @@ source/candidate SHA-256 binding before stamping the human visual-review
 fields. It does not change lifecycle status, clear validation failures, or mark
 iPhone/Android real-device QA as passed.
 
-8. Validate delivery headers after upload:
+8. Prepare CDN upload plan when using `--cdn-base-url`:
+
+```bash
+npm run 3d:prepare-cdn-upload -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --out assets/3d/reports/maison-elyse/main/homard-bisque/v1/upload-plan.json --write
+```
+
+The plan lists each ignored staging file, target CDN URL, bytes, SHA-256,
+content type, immutable cache headers, and USDZ `Content-Disposition: inline`.
+It does not upload and does not validate the CDN.
+
+9. Record real-device QA only after testing on actual hardware:
+
+```bash
+npm run 3d:record-device-qa -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --device iphoneQuickLook --status passed --device-name "iPhone 15 Pro" --os "iOS 18.5" --tested-by "Marc" --tested-at "2026-05-31T12:00:00.000Z" --evidence assets/3d/reports/maison-elyse/main/homard-bisque/v1/device-qa/iphone.md --write
+npm run 3d:record-device-qa -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --device androidSceneViewer --status passed --device-name "Pixel 8" --os "Android 15" --tested-by "Marc" --tested-at "2026-05-31T12:00:00.000Z" --evidence assets/3d/reports/maison-elyse/main/homard-bisque/v1/device-qa/android.md --write
+```
+
+`passed` requires local evidence with a stored SHA-256. The command only updates
+the requested QA target; it does not approve, publish, or clear validation
+failures.
+
+10. Validate delivery headers after upload:
 
 ```bash
 npm run 3d:validate-network -- --base-url https://example.com --manifest path/to/manifest.json --strict
@@ -121,13 +157,25 @@ publish:
 
 ```bash
 npm run 3d:validate-network -- --base-url https://example.com --manifest path/to/manifest.json --strict > assets/3d/reports/.../network-validation.json
-npm run 3d:publish -- --manifest path/to/manifest.json --network-validation-report assets/3d/reports/.../network-validation.json --quality-approved --approved-by "Marc" --write
+npm run 3d:finalize-manifest -- --manifest path/to/manifest.json --network-validation-report assets/3d/reports/.../network-validation.json --write
 ```
 
 The report must include matching fetched byte counts and SHA-256 values for each
 CDN asset.
 
-9. Publish only after strict validation, real rendered visual evidence,
+11. Finalize the version manifest after visual approval, device QA, and CDN
+    validation:
+
+```bash
+npm run 3d:finalize-manifest -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --write
+```
+
+Finalize changes `review` to `approved`, sets `validationStatus: "passed"`,
+clears validation warnings/fails only after strict validation passes, writes
+`approvedAt`, keeps `publishedAt: null`, and never writes the active dish or
+restaurant manifest.
+
+12. Publish only after strict validation, real rendered visual evidence,
    pre-existing human approval, and explicit passed real-device Quick
    Look/Scene Viewer QA:
 
@@ -135,14 +183,14 @@ CDN asset.
 npm run 3d:publish -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --quality-approved --approved-by "Marc" --write
 ```
 
-10. Roll back by changing the active version, never by deleting the previous
+13. Roll back by changing the active version, never by deleting the previous
    assets:
 
 ```bash
 npm run 3d:rollback -- --restaurant maison-elyse --menu main --dish homard-bisque --to v1 --approved-by "Marc" --write
 ```
 
-11. Inspect stale inactive version folders without deleting active assets:
+14. Inspect stale inactive version folders without deleting active assets:
 
 ```bash
 npm run 3d:clean-stale -- --restaurant maison-elyse --menu main --dish homard-bisque --dry-run

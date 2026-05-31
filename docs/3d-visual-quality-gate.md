@@ -77,3 +77,20 @@ npm run 3d:approve-visual -- --manifest path/to/manifest.json --approved-by "Mar
 `3d:approve-visual` only handles human visual-review fields. It does not claim
 real iPhone Quick Look or Android Scene Viewer validation, does not clear
 validation failures, and does not promote a manifest to `approved` by itself.
+
+Record real-device evidence after actual hardware QA:
+
+```bash
+npm run 3d:record-device-qa -- --manifest path/to/manifest.json --device iphoneQuickLook --status passed --device-name "iPhone 15 Pro" --os "iOS 18.5" --tested-by "Marc" --tested-at "2026-05-31T12:00:00.000Z" --evidence assets/3d/reports/.../device-qa/iphone.md --write
+npm run 3d:record-device-qa -- --manifest path/to/manifest.json --device androidSceneViewer --status passed --device-name "Pixel 8" --os "Android 15" --tested-by "Marc" --tested-at "2026-05-31T12:00:00.000Z" --evidence assets/3d/reports/.../device-qa/android.md --write
+```
+
+Finalize only after strict visual evidence, human approval, real-device QA, and
+delivery validation are present:
+
+```bash
+npm run 3d:finalize-manifest -- --manifest path/to/manifest.json --write
+```
+
+Finalize marks the version manifest `approved` but leaves `publishedAt` null and
+does not write active publication manifests.

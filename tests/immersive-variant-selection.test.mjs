@@ -249,3 +249,71 @@ test("variant selector rejects wrong roots, wrong extensions, and visually unapp
   assert.equal(blockedRoot.kind, "none");
   assert.match(blockedRoot.reason, /unsafe/i);
 });
+
+test("variant selector accepts only allowlisted CDN origins with stable role-specific URLs", () => {
+  const cdnManifest = {
+    ...buildDemoDish3dManifest(baseDish),
+    variants: {
+      poster: {
+        url: "https://cdn.example.com/vistaire/maison-elyse/demo/homard-bisque/v1/poster/homard-bisque.png"
+      },
+      web: {
+        url: "https://cdn.example.com/vistaire/maison-elyse/demo/homard-bisque/v1/web/homard-bisque-web.glb"
+      },
+      mobile: {
+        url: "https://cdn.example.com/vistaire/maison-elyse/demo/homard-bisque/v1/mobile/homard-bisque-mobile.glb"
+      },
+      arLite: {
+        url: "https://cdn.example.com/vistaire/maison-elyse/demo/homard-bisque/v1/ar-lite/homard-bisque-ar-lite.glb"
+      },
+      iosUsdz: {
+        url: "https://cdn.example.com/vistaire/maison-elyse/demo/homard-bisque/v1/ios/homard-bisque.usdz"
+      }
+    }
+  };
+
+  const allowed = selectImmersiveVariant({
+    manifest: cdnManifest,
+    device: "desktop",
+    browser: "chrome",
+    viewport: { width: 1440, height: 900 },
+    connection: { effectiveType: "4g", saveData: false },
+    userIntent: "view3d",
+    prefersReducedMotion: false,
+    allowedExternalOrigins: ["https://cdn.example.com"]
+  });
+  assert.equal(allowed.kind, "web");
+  assert.equal(allowed.url, cdnManifest.variants.web.url);
+
+  const blockedOrigin = selectImmersiveVariant({
+    manifest: cdnManifest,
+    device: "desktop",
+    browser: "chrome",
+    viewport: { width: 1440, height: 900 },
+    connection: { effectiveType: "4g", saveData: false },
+    userIntent: "view3d",
+    prefersReducedMotion: false,
+    allowedExternalOrigins: ["https://static.example.com"]
+  });
+  assert.equal(blockedOrigin.kind, "none");
+  assert.match(blockedOrigin.reason, /unsafe/i);
+
+  const blockedQuery = selectImmersiveVariant({
+    manifest: {
+      ...cdnManifest,
+      variants: {
+        ...cdnManifest.variants,
+        web: { url: `${cdnManifest.variants.web.url}?v=1` }
+      }
+    },
+    device: "desktop",
+    browser: "chrome",
+    viewport: { width: 1440, height: 900 },
+    connection: { effectiveType: "4g", saveData: false },
+    userIntent: "view3d",
+    prefersReducedMotion: false,
+    allowedExternalOrigins: ["https://cdn.example.com"]
+  });
+  assert.equal(blockedQuery.kind, "none");
+  assert.match(blockedQuery.reason, /unsafe/i);
+});
