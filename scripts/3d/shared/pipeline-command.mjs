@@ -17,7 +17,8 @@ import { parseArgs, readJsonFile, writeStdout } from "./file-utils.mjs";
 import {
   summarizeRestaurantManifest
 } from "./manifest-schema.mjs";
-import { validateDishManifestPipeline } from "../validate-dish.mjs";
+import { encodePngImage } from "./png-image.mjs";
+import { collectManifestAssets, validateDishManifestPipeline, validateVisualEvidence } from "../validate-dish.mjs";
 
 const HELP = `Vistaire 3D production command
 
@@ -32,6 +33,7 @@ Write safety:
   --root <path>              Workspace/root directory, defaults to cwd
   --allow-public-binaries    Allow writing runtime GLB/USDZ/poster files under public/models/restaurants
   --approved-by <name>       Required for approved/publish/rollback operations
+  --cdn-base-url <url>       Rewrite generated variant URLs to an approved CDN/storage origin
 `;
 
 const VARIANT_DIRS = Object.freeze({
@@ -47,13 +49,9 @@ const VARIANT_FILES = Object.freeze({
   mobile: (slug) => `${slug}-mobile.glb`,
   arLite: (slug) => `${slug}-ar-lite.glb`,
   iosUsdz: (slug) => `${slug}.usdz`,
-  poster: (slug) => `${slug}.webp`
+  poster: (slug) => `${slug}.png`
 });
 
-const WEBP_PLACEHOLDER = Buffer.from(
-  "UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA",
-  "base64"
-);
 const STRICT_VISUAL_PROMISE =
   "visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds";
 const STRICT_VISUAL_THRESHOLDS = Object.freeze({
@@ -71,6 +69,7 @@ const STRICT_VISUAL_THRESHOLDS = Object.freeze({
 });
 const STRICT_VISUAL_REJECTION =
   "Strict rendered visual identity evidence is required before optimization can be approved: source/candidate before-after-diff renders for web, mobile, and arLite, per-angle SSIM/perceptual scores, texture/silhouette/color/material/scale/origin/low-poly/appetite checks, and human approval.";
+const CANDIDATE_PROFILES = Object.freeze(["conservative", "balanced", "aggressive"]);
 
 function pendingRealDeviceQa() {
   return {
@@ -92,6 +91,52 @@ function pendingRealDeviceQa() {
       testedAt: null
     }
   };
+}
+
+function createReviewPosterPng({ analysis }) {
+  const width = 512;
+  const height = 512;
+  const pixels = Buffer.alloc(width * height * 4);
+  const plateRadiusX = Math.round(width * 0.34);
+  const plateRadiusY = Math.round(height * 0.2);
+  const centerX = Math.round(width / 2);
+  const centerY = Math.round(height * 0.55);
+  const triangleTone = Math.max(64, Math.min(220, 120 + Math.round((analysis.triangles ?? 0) % 80)));
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = (y * width + x) * 4;
+      const vignette = Math.round(22 * Math.hypot((x - centerX) / width, (y - centerY) / height));
+      pixels[index] = Math.max(8, 24 - vignette);
+      pixels[index + 1] = Math.max(8, 23 - vignette);
+      pixels[index + 2] = Math.max(7, 20 - vignette);
+      pixels[index + 3] = 255;
+      const dx = (x - centerX) / plateRadiusX;
+      const dy = (y - centerY) / plateRadiusY;
+      const plate = dx * dx + dy * dy;
+      if (plate <= 1) {
+        const rim = plate > 0.78 ? 218 : 188;
+        pixels[index] = rim;
+        pixels[index + 1] = rim - 8;
+        pixels[index + 2] = rim - 28;
+      }
+      const garnish = ((x - centerX + 35) / (plateRadiusX * 0.48)) ** 2 + ((y - centerY + 18) / (plateRadiusY * 0.42)) ** 2;
+      if (garnish <= 1) {
+        pixels[index] = triangleTone;
+        pixels[index + 1] = Math.max(48, triangleTone - 36);
+        pixels[index + 2] = Math.max(32, triangleTone - 72);
+      }
+    }
+  }
+  return encodePngImage({ width, height, pixels });
+}
+
+function mergeResultInto(target, source) {
+  target.warnings.push(...(source.warnings ?? []));
+  target.fails.push(...(source.fails ?? []));
+  target.evidence.push(...(source.evidence ?? []));
+  target.metrics[source.name ?? "validation"] = source.metrics ?? {};
+  if (!source.ok) target.ok = false;
+  return target;
 }
 
 function createResult(name, metrics = {}) {
@@ -415,6 +460,51 @@ function productionUrl(identity, variantKey) {
   return `/models/restaurants/${identity.restaurantSlug}/${identity.menuSlug}/${identity.dishSlug}/${identity.version}/${directory}/${fileName}`;
 }
 
+function configuredCdnOrigins() {
+  return String(process.env.VISTAIRE_3D_CDN_ORIGINS ?? "")
+    .split(/[,\s]+/)
+    .map((entry) => entry.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+}
+
+function cleanCdnBaseUrl(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error("--cdn-base-url must be a valid HTTPS URL");
+  }
+  if (parsed.protocol !== "https:") throw new Error("--cdn-base-url must use HTTPS");
+  if (parsed.username || parsed.password || parsed.search || parsed.hash) {
+    throw new Error("--cdn-base-url must not include credentials, query, or hash");
+  }
+  const allowedOrigins = configuredCdnOrigins();
+  if (!allowedOrigins.includes(parsed.origin)) {
+    throw new Error(`--cdn-base-url origin ${parsed.origin} is not allowlisted by VISTAIRE_3D_CDN_ORIGINS`);
+  }
+  return `${parsed.origin}${parsed.pathname.replace(/\/+$/, "")}`;
+}
+
+function cdnAssetUrl(identity, variantKey, cdnBaseUrl) {
+  const directory = VARIANT_DIRS[variantKey];
+  const fileName = VARIANT_FILES[variantKey](identity.dishSlug);
+  return [
+    cdnBaseUrl.replace(/\/+$/, ""),
+    identity.restaurantSlug,
+    identity.menuSlug,
+    identity.dishSlug,
+    identity.version,
+    directory,
+    fileName
+  ].join("/");
+}
+
+function deliveryUrl(identity, variantKey, cdnBaseUrl = "") {
+  return cdnBaseUrl ? cdnAssetUrl(identity, variantKey, cdnBaseUrl) : productionUrl(identity, variantKey);
+}
+
 function reportDir(rootDir, identity) {
   return safeJoin(
     rootDir,
@@ -481,40 +571,92 @@ function gltfTransformCli(toolchainRoot = process.cwd()) {
   return cliPath;
 }
 
-function runGltfTransform({ input, output, profile }) {
+function transformArgsFor({ input, output, profile, candidateName = "balanced" }) {
+  const candidateArgs = {
+    conservative: {
+      web: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "2048"],
+      mobile: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "1536"],
+      arLite: [
+        "optimize",
+        input,
+        output,
+        "--compress",
+        "false",
+        "--texture-compress",
+        "false",
+        "--texture-size",
+        "1536",
+        "--simplify",
+        "true",
+        "--simplify-ratio",
+        "0.9",
+        "--simplify-error",
+        "0.00025",
+        "--simplify-lock-border",
+        "true"
+      ]
+    },
+    balanced: {
+      web: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "2048"],
+      mobile: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "1024"],
+      arLite: [
+        "optimize",
+        input,
+        output,
+        "--compress",
+        "false",
+        "--texture-compress",
+        "false",
+        "--texture-size",
+        "1024",
+        "--simplify",
+        "true",
+        "--simplify-ratio",
+        "0.72",
+        "--simplify-error",
+        "0.00045",
+        "--simplify-lock-border",
+        "true"
+      ]
+    },
+    aggressive: {
+      web: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "1536"],
+      mobile: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "768"],
+      arLite: [
+        "optimize",
+        input,
+        output,
+        "--compress",
+        "false",
+        "--texture-compress",
+        "false",
+        "--texture-size",
+        "768",
+        "--simplify",
+        "true",
+        "--simplify-ratio",
+        "0.55",
+        "--simplify-error",
+        "0.0007",
+        "--simplify-lock-border",
+        "true"
+      ]
+    }
+  };
+  return candidateArgs[candidateName]?.[profile] ?? candidateArgs.balanced.arLite;
+}
+
+function runGltfTransform({ input, output, profile, candidateName = "balanced" }) {
   const cli = gltfTransformCli(process.cwd());
   ensureParent(output);
-  const commands = {
-    web: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "2048"],
-    mobile: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "1024"],
-    arLite: [
-      "optimize",
-      input,
-      output,
-      "--compress",
-      "false",
-      "--texture-compress",
-      "false",
-      "--texture-size",
-      "1024",
-      "--simplify",
-      "true",
-      "--simplify-ratio",
-      "0.72",
-      "--simplify-error",
-      "0.00045",
-      "--simplify-lock-border",
-      "true"
-    ]
-  };
-  const args = commands[profile] ?? commands.arLite;
+  const args = transformArgsFor({ input, output, profile, candidateName });
   execFileSync(process.execPath, [cli, ...args], {
     cwd: process.cwd(),
     encoding: "utf8",
     stdio: "pipe",
     windowsHide: true
   });
-  return { ok: true, command: `gltf-transform ${args.join(" ")}`, fallback: false };
+  return { ok: true, command: `gltf-transform ${args.join(" ")}`, fallback: false, candidateName };
 }
 
 function usdIdentifier(value, fallback) {
@@ -773,6 +915,173 @@ function buildManifest({ identity, analysis, variants, visualQuality, approvedBy
   };
 }
 
+function candidateWorkFilePath(rootDir, identity, candidateName, variantKey) {
+  return safeJoin(
+    workDir(rootDir, identity),
+    "candidates",
+    candidateName,
+    VARIANT_DIRS[variantKey],
+    VARIANT_FILES[variantKey](identity.dishSlug)
+  );
+}
+
+function validateVisualApprovalReadiness({ manifest, rootDir }) {
+  const result = createResult("visual-approval-readiness");
+  const visualQuality = manifest?.visualQuality ?? {};
+  if (visualQuality.status !== "passed") {
+    result.ok = false;
+    result.fails.push("visualQuality.status must be passed before human visual approval");
+  }
+  if (visualQuality.promise !== STRICT_VISUAL_PROMISE) {
+    result.ok = false;
+    result.fails.push("visualQuality.promise must match the strict Vistaire visual equivalence wording");
+  }
+  if (!/render/i.test(String(visualQuality.method ?? "")) || !/comparison/i.test(String(visualQuality.method ?? ""))) {
+    result.ok = false;
+    result.fails.push("visualQuality.method must describe deterministic rendered comparison");
+  }
+  if (!visualQuality.report) {
+    result.ok = false;
+    result.fails.push("visualQuality.report is required before approval");
+  }
+  for (const variantKey of ["web", "mobile", "arLite"]) {
+    const triplet = visualQuality.reportArtifacts?.[variantKey];
+    if (!triplet?.before || !triplet?.after || !triplet?.diff) {
+      result.ok = false;
+      result.fails.push(`visualQuality.reportArtifacts.${variantKey} before/after/diff evidence is required`);
+    }
+    const angleCount = (visualQuality.angleReports ?? []).filter((entry) => entry?.variant === variantKey).length;
+    if (angleCount < 4) {
+      result.ok = false;
+      result.fails.push(`visualQuality.angleReports.${variantKey} must include at least four deterministic angles`);
+    }
+  }
+  const thresholdChecks = [
+    ["meanSsim", ">=", STRICT_VISUAL_THRESHOLDS.meanSsim],
+    ["perceptualScore", ">=", STRICT_VISUAL_THRESHOLDS.perceptualScore],
+    ["maxDiffRatio", "<=", STRICT_VISUAL_THRESHOLDS.maxDiffRatio],
+    ["maxSilhouetteDiff", "<=", STRICT_VISUAL_THRESHOLDS.maxSilhouetteDiff],
+    ["maxColorDelta", "<=", STRICT_VISUAL_THRESHOLDS.maxColorDelta],
+    ["maxTextureBlurDelta", "<=", STRICT_VISUAL_THRESHOLDS.maxTextureBlurDelta],
+    ["maxMaterialDrift", "<=", STRICT_VISUAL_THRESHOLDS.maxMaterialDrift],
+    ["maxScaleDriftMeters", "<=", STRICT_VISUAL_THRESHOLDS.maxScaleDriftMeters],
+    ["maxOriginDriftMeters", "<=", STRICT_VISUAL_THRESHOLDS.maxOriginDriftMeters],
+    ["lowPolyVisibilityScore", "<=", STRICT_VISUAL_THRESHOLDS.maxLowPolyVisibility],
+    ["appetitePreservationScore", ">=", STRICT_VISUAL_THRESHOLDS.minAppetitePreservation]
+  ];
+  for (const [metric, operator, threshold] of thresholdChecks) {
+    const value = Number(visualQuality[metric]);
+    const ok = operator === ">=" ? value >= threshold : value <= threshold;
+    if (!Number.isFinite(value) || !ok) {
+      result.ok = false;
+      result.fails.push(`visualQuality.${metric} does not satisfy strict threshold ${operator} ${threshold}`);
+    }
+  }
+  for (const [key, check] of Object.entries(visualQuality.checks ?? {})) {
+    if (check?.status !== "passed") {
+      result.ok = false;
+      result.fails.push(`visualQuality.checks.${key}.status must be passed`);
+    }
+  }
+  const evidence = validateVisualEvidence({ manifest, rootDir });
+  mergeResultInto(result, evidence);
+  return result;
+}
+
+function runApproveVisual(args) {
+  const result = createResult("3d:approve-visual");
+  const rootDir = normalize(resolve(args.root ?? process.cwd()));
+  const manifestPath = args.manifest ? normalize(resolve(String(args.manifest))) : "";
+  if (!manifestPath || !existsSync(manifestPath)) throw new Error("--manifest must point to an existing dish manifest");
+  if (!args.write) throw new Error("Visual approval requires --write");
+  const approvedBy = String(args["approved-by"] ?? "").trim();
+  if (!approvedBy) throw new Error("Visual approval requires --approved-by");
+
+  const manifest = readJsonFile(manifestPath);
+  const readiness = validateVisualApprovalReadiness({ manifest, rootDir });
+  mergeResultInto(result, readiness);
+  if (!readiness.ok) return result;
+
+  const now = new Date().toISOString();
+  const approved = {
+    ...manifest,
+    visualQuality: {
+      ...manifest.visualQuality,
+      manualReview: {
+        ...(manifest.visualQuality?.manualReview ?? {}),
+        required: true,
+        status: "approved",
+        approvalType: "human",
+        approvedBy,
+        approvedAt: now
+      }
+    },
+    quality: {
+      ...(manifest.quality ?? {}),
+      manualVisualApprovalRequired: true,
+      manualVisualApproved: true,
+      approvedBy,
+      manualReview: {
+        ...(manifest.quality?.manualReview ?? {}),
+        status: "approved",
+        approvalType: "human",
+        approvedBy,
+        approvedAt: now
+      }
+    }
+  };
+
+  writeJsonFile(manifestPath, approved);
+  result.metrics.manifestPath = manifestPath;
+  result.metrics.manualReview = approved.visualQuality.manualReview;
+  result.warnings.push("Visual approval recorded; production publish remains blocked until strict manifest validation and real-device iPhone and Android QA pass.");
+  return result;
+}
+
+function manifestUsesExternalDelivery(manifest) {
+  return Object.values(manifest?.variants ?? {}).some((variant) => /^https:\/\//i.test(String(variant?.url ?? "")));
+}
+
+function validateNetworkValidationReport({ manifest, reportPath }) {
+  const result = createResult("cdn-network-validation-report");
+  if (!reportPath) {
+    result.ok = false;
+    result.fails.push("CDN publish requires --network-validation-report from npm run 3d:validate-network -- --strict");
+    return result;
+  }
+  const fullPath = normalize(resolve(String(reportPath)));
+  if (!existsSync(fullPath)) {
+    result.ok = false;
+    result.fails.push(`Network validation report is missing: ${fullPath}`);
+    return result;
+  }
+  const report = readJsonFile(fullPath);
+  if (report.ok !== true || report.name !== "network-headers") {
+    result.ok = false;
+    result.fails.push("Network validation report must be a passing network-headers result");
+  }
+  const metricsByUrl = new Map((report.metrics?.assets ?? []).map((asset) => [asset.url, asset]));
+  for (const asset of collectManifestAssets(manifest)) {
+    if (!/^https:\/\//i.test(asset.url)) continue;
+    const metric = metricsByUrl.get(asset.url);
+    if (!metric) {
+      result.ok = false;
+      result.fails.push(`${asset.label}: network validation report is missing ${asset.url}`);
+      continue;
+    }
+    if (Number.isFinite(asset.bytes) && metric.fetchedBytes !== asset.bytes) {
+      result.ok = false;
+      result.fails.push(`${asset.label}: network validation fetchedBytes does not match manifest bytes`);
+    }
+    if (asset.sha256 && metric.fetchedSha256 !== asset.sha256) {
+      result.ok = false;
+      result.fails.push(`${asset.label}: network validation fetchedSha256 does not match manifest sha256`);
+    }
+  }
+  result.metrics.reportPath = fullPath;
+  return result;
+}
+
 function activeManifestPath(rootDir, identity) {
   return safeJoin(
     rootDir,
@@ -860,6 +1169,7 @@ function runOptimizeDish(args) {
   const dryRun = !args.write || Boolean(args["dry-run"]);
   const allowPublicBinaries = Boolean(args["allow-public-binaries"]);
   const approvedBy = String(args["approved-by"] ?? "").trim();
+  const cdnBaseUrl = cleanCdnBaseUrl(args["cdn-base-url"] ?? "");
   const reports = reportDir(rootDir, identity);
   const work = workDir(rootDir, identity);
   const analysis = analyzeGlbFile(source);
@@ -880,13 +1190,14 @@ function runOptimizeDish(args) {
     result.metrics.plannedOutputs = {
       reports,
       work,
+      cdnBaseUrl: cdnBaseUrl || null,
       publicBase: `/models/restaurants/${identity.restaurantSlug}/${identity.menuSlug}/${identity.dishSlug}/${identity.version}`
     };
     return result;
   }
-  if (!allowPublicBinaries) {
+  if (!allowPublicBinaries && !cdnBaseUrl) {
     throw new Error(
-      "Writing runtime binaries requires --allow-public-binaries. --cdn-base-url is not implemented for artifact output yet."
+      "Writing runtime binaries requires --allow-public-binaries or an allowlisted --cdn-base-url for CDN/storage mode."
     );
   }
 
@@ -897,14 +1208,86 @@ function runOptimizeDish(args) {
   writeJsonFile(join(reports, "source-analysis.json"), analysisResult);
   writeAnalysisMarkdown(join(reports, "source-analysis.md"), analysis);
 
+  const candidateReports = [];
   const generatedFiles = {};
   const transformEvidence = {};
-  for (const key of ["web", "mobile", "arLite"]) {
-    const filePath = workFilePath(rootDir, identity, key);
-    const command = runGltfTransform({ rootDir, input: source, output: filePath, profile: key });
-    generatedFiles[key] = filePath;
-    transformEvidence[key] = command;
+  const generatedAnalysis = {};
+  for (const candidateName of CANDIDATE_PROFILES) {
+    const candidateFiles = {};
+    const candidateEvidence = {};
+    const candidateAnalysis = {};
+    for (const key of ["web", "mobile", "arLite"]) {
+      const filePath =
+        candidateName === "balanced"
+          ? workFilePath(rootDir, identity, key)
+          : candidateWorkFilePath(rootDir, identity, candidateName, key);
+      const command = runGltfTransform({ input: source, output: filePath, profile: key, candidateName });
+      const variantAnalysis = analyzeGlbFile(filePath);
+      candidateFiles[key] = filePath;
+      candidateEvidence[key] = command;
+      candidateAnalysis[key] = variantAnalysis;
+      if (candidateName === "balanced") {
+        generatedFiles[key] = filePath;
+        transformEvidence[key] = command;
+        generatedAnalysis[key] = variantAnalysis;
+      }
+    }
+    const candidateVariants = Object.fromEntries(
+      ["web", "mobile", "arLite"].map((key) => [
+        key,
+        {
+          filePath: candidateFiles[key],
+          bytes: statSync(candidateFiles[key]).size,
+          sha256: fileHash(candidateFiles[key]),
+          url: deliveryUrl(identity, key, cdnBaseUrl),
+          analysis: {
+            triangles: candidateAnalysis[key].triangles,
+            vertices: candidateAnalysis[key].vertices,
+            materials: candidateAnalysis[key].materials,
+            textures: candidateAnalysis[key].textures,
+            images: candidateAnalysis[key].images,
+            extensionsUsed: candidateAnalysis[key].extensionsUsed,
+            extensionsRequired: candidateAnalysis[key].extensionsRequired,
+            externalUris: candidateAnalysis[key].externalUris,
+            bounds: candidateAnalysis[key].bounds
+          }
+        }
+      ])
+    );
+    const totalBytes = Object.values(candidateVariants).reduce((sum, variant) => sum + variant.bytes, 0);
+    candidateReports.push({
+      name: candidateName,
+      variants: candidateVariants,
+      transformEvidence: candidateEvidence,
+      totalBytes,
+      budgets: {
+        status: "pending-final-validation",
+        note: "Full budget validation runs against the assembled manifest variant set."
+      },
+      visualGate: {
+        status: "failed",
+        reason: STRICT_VISUAL_REJECTION
+      },
+      decision: {
+        status: "rejected",
+        reason: "Candidate cannot be selected until strict rendered visual identity evidence passes."
+      }
+    });
   }
+  const passingCandidates = candidateReports
+    .filter((candidate) => candidate.visualGate.status === "passed")
+    .sort((a, b) => a.totalBytes - b.totalBytes);
+  const selectedCandidate = passingCandidates[0]?.name ?? null;
+  const decision = selectedCandidate
+    ? {
+        status: "selected",
+        selectedCandidate,
+        reason: "Selected the lightest candidate that passed budgets and strict visual evidence."
+      }
+    : {
+        status: "rejected",
+        reason: "No adaptive candidate passed strict visual identity evidence; previous active version must remain active."
+      };
 
   const usdzPath = workFilePath(rootDir, identity, "iosUsdz");
   ensureParent(usdzPath);
@@ -913,32 +1296,44 @@ function runOptimizeDish(args) {
 
   const posterPath = workFilePath(rootDir, identity, "poster");
   ensureParent(posterPath);
-  writeFileSync(posterPath, WEBP_PLACEHOLDER);
+  writeFileSync(posterPath, createReviewPosterPng({ analysis }));
   generatedFiles.poster = posterPath;
 
   const variants = {
-    web: variantMetadata(generatedFiles.web, productionUrl(identity, "web"), {
+    web: variantMetadata(generatedFiles.web, deliveryUrl(identity, "web", cdnBaseUrl), {
       profile: "web",
       optimizer: transformEvidence.web
     }),
-    mobile: variantMetadata(generatedFiles.mobile, productionUrl(identity, "mobile"), {
+    mobile: variantMetadata(generatedFiles.mobile, deliveryUrl(identity, "mobile", cdnBaseUrl), {
       profile: "mobile",
       optimizer: transformEvidence.mobile
     }),
-    arLite: variantMetadata(generatedFiles.arLite, productionUrl(identity, "arLite"), {
+    arLite: variantMetadata(generatedFiles.arLite, deliveryUrl(identity, "arLite", cdnBaseUrl), {
       profile: "arLite",
       optimizationMethod: "mesh-simplification-ar-lite",
       optimizer: transformEvidence.arLite,
-      extensionsRequired: []
+      triangleCount: generatedAnalysis.arLite.triangles,
+      vertexCount: generatedAnalysis.arLite.vertices,
+      materialCount: generatedAnalysis.arLite.materials,
+      textureCount: generatedAnalysis.arLite.textures,
+      maxTextureSize: Math.max(
+        0,
+        ...generatedAnalysis.arLite.imageMetrics.map((image) => Math.max(image.width ?? 0, image.height ?? 0))
+      ),
+      extensionsUsed: generatedAnalysis.arLite.extensionsUsed,
+      extensionsRequired: generatedAnalysis.arLite.extensionsRequired,
+      arPlacement: "floor",
+      arScale: "fixed"
     }),
-    iosUsdz: variantMetadata(generatedFiles.iosUsdz, productionUrl(identity, "iosUsdz"), {
+    iosUsdz: variantMetadata(generatedFiles.iosUsdz, deliveryUrl(identity, "iosUsdz", cdnBaseUrl), {
       profile: "ios-quicklook",
-      productionFaithful: true,
+      productionFaithful: false,
+      faithfulnessStatus: "unproven-until-real-device-qa",
       proxy: false,
       conversionMethod: "glb-usdz-geometry-texture-export",
       sourceVariant: "arLite"
     }),
-    poster: variantMetadata(generatedFiles.poster, productionUrl(identity, "poster"), {
+    poster: variantMetadata(generatedFiles.poster, deliveryUrl(identity, "poster", cdnBaseUrl), {
       profile: "poster",
       placeholder: true,
       productionPoster: false
@@ -953,7 +1348,7 @@ function runOptimizeDish(args) {
     manifest,
     manifestPath: versionManifestPath(rootDir, identity),
     context: "production",
-    requireFiles: true,
+    requireFiles: allowPublicBinaries && !cdnBaseUrl,
     rootDir,
     strict: true
   });
@@ -971,6 +1366,15 @@ function runOptimizeDish(args) {
     source,
     generatedFiles,
     transformEvidence,
+    candidates: candidateReports,
+    selectedCandidate,
+    decision,
+    delivery: {
+      mode: cdnBaseUrl ? "cdn" : "public",
+      cdnBaseUrl: cdnBaseUrl || null,
+      publicBinariesWritten: false,
+      networkValidationRequiredBeforePublish: Boolean(cdnBaseUrl)
+    },
     validation
   });
   writeJsonFile(versionManifestPath(rootDir, identity), manifest);
@@ -1001,6 +1405,15 @@ function runPublish(args) {
   if (!approvedBy) throw new Error("Publish requires --approved-by");
 
   const manifest = readJsonFile(manifestPath);
+  const externalDelivery = manifestUsesExternalDelivery(manifest);
+  if (externalDelivery) {
+    const networkReport = validateNetworkValidationReport({
+      manifest,
+      reportPath: args["network-validation-report"]
+    });
+    mergeResultInto(result, networkReport);
+    if (!networkReport.ok) return result;
+  }
   const identity = {
     restaurantSlug: cleanSegment(manifest.restaurantSlug, "restaurantSlug"),
     menuSlug: cleanSegment(manifest.menuSlug, "menuSlug"),
@@ -1011,7 +1424,7 @@ function runPublish(args) {
     manifest,
     manifestPath,
     context: "production",
-    requireFiles: true,
+    requireFiles: !externalDelivery,
     rootDir,
     strict: true
   });
@@ -1085,7 +1498,7 @@ function runPublish(args) {
     manifest: published,
     manifestPath,
     context: "production",
-    requireFiles: true,
+    requireFiles: !externalDelivery,
     rootDir,
     strict: true
   });
@@ -1149,7 +1562,7 @@ function runRollback(args) {
     manifest: rolledBack,
     manifestPath: targetPath,
     context: "production",
-    requireFiles: true,
+    requireFiles: !manifestUsesExternalDelivery(rolledBack),
     rootDir,
     strict: true
   });
@@ -1245,6 +1658,7 @@ export function runPipelineCommand(commandName, argv = process.argv.slice(2)) {
     if (commandName === "3d:analyze-source") output = runAnalyzeSource(args);
     else if (commandName === "3d:optimize-dish") output = runOptimizeDish(args);
     else if (commandName === "3d:optimize" || commandName === "3d:optimize-menu") output = runOptimizeDish(args);
+    else if (commandName === "3d:approve-visual") output = runApproveVisual(args);
     else if (commandName === "3d:publish") output = runPublish(args);
     else if (commandName === "3d:rollback") output = runRollback(args);
     else if (commandName === "3d:clean-stale") output = runCleanStale(args);

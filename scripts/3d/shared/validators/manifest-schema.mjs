@@ -98,6 +98,13 @@ function allowedRootsForContext(context) {
   return ["/models/restaurants/", "/models/demo/"];
 }
 
+function configuredCdnOrigins() {
+  return String(process.env.VISTAIRE_3D_CDN_ORIGINS ?? "")
+    .split(/[,\s]+/)
+    .map((entry) => entry.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+}
+
 function validateSlug(result, value, path) {
   if (typeof value !== "string" || !value.trim()) {
     addFail(result, pathMessage(path, "is required and must be a non-empty string"));
@@ -108,9 +115,29 @@ function validateSlug(result, value, path) {
   }
 }
 
-function validatePublicUrl(result, url, path, context) {
+function validatePublicUrl(result, url, path, context, allowedExternalOrigins = configuredCdnOrigins()) {
   if (typeof url !== "string" || !url.trim()) {
     addFail(result, pathMessage(path, "must be a stable public URL"));
+    return;
+  }
+
+  if (/^https:\/\//i.test(url)) {
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      addFail(result, pathMessage(path, "must be a valid HTTPS URL"));
+      return;
+    }
+    if (!allowedExternalOrigins.includes(parsed.origin)) {
+      addFail(result, pathMessage(path, `external origin ${parsed.origin} is not allowlisted`));
+    }
+    if (parsed.search || parsed.hash || parsed.username || parsed.password) {
+      addFail(result, pathMessage(path, "must not include credentials, query, or hash"));
+    }
+    if (parsed.pathname.includes("\\") || parsed.pathname.includes("..")) {
+      addFail(result, pathMessage(path, "must not include traversal or backslashes"));
+    }
     return;
   }
 
@@ -145,14 +172,14 @@ function validateVariantExtension(result, key, url, path) {
   }
 }
 
-function validateVariant(result, key, variant, context) {
+function validateVariant(result, key, variant, context, allowedExternalOrigins) {
   const path = `variants.${key}`;
   if (!isObject(variant)) {
     addFail(result, pathMessage(path, "is required"));
     return;
   }
 
-  validatePublicUrl(result, variant.url, `${path}.url`, context);
+  validatePublicUrl(result, variant.url, `${path}.url`, context, allowedExternalOrigins);
   validateVariantExtension(result, key, variant.url, `${path}.url`);
   if (key === "iosUsdz" && typeof variant.url === "string" && /[?#]/.test(variant.url)) {
     addFail(result, pathMessage(`${path}.url`, "iosUsdz production URLs must not include query/hash"));
@@ -185,6 +212,37 @@ function validateVariant(result, key, variant, context) {
     variant.extensionsRequired.length > 0
   ) {
     addFail(result, pathMessage(`${path}.extensionsRequired`, "must be empty for Android AR-lite"));
+  }
+}
+
+function variantDirectory(key) {
+  return {
+    web: "web",
+    mobile: "mobile",
+    arLite: "ar-lite",
+    iosUsdz: "ios",
+    poster: "poster"
+  }[key] ?? key;
+}
+
+function validateExternalVariantPath(result, manifest, key, variant) {
+  const url = String(variant?.url ?? "");
+  if (!/^https:\/\//i.test(url)) return;
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return;
+  }
+  const expected = `/${manifest.restaurantSlug}/${manifest.menuSlug}/${manifest.dishSlug}/${manifest.activeVersion}/${variantDirectory(key)}/`;
+  if (!parsed.pathname.includes(expected)) {
+    addFail(
+      result,
+      pathMessage(
+        `variants.${key}.url`,
+        `external URL path must include ${expected} to avoid cross-tenant CDN asset reuse`
+      )
+    );
   }
 }
 
@@ -687,6 +745,7 @@ function expectedValidationStatusFor(manifest) {
 
 export function validateDishManifestSchema(manifest, options = {}) {
   const context = options.context ?? "production";
+  const allowedExternalOrigins = options.allowedExternalOrigins ?? configuredCdnOrigins();
   const result = createValidationResult({
     name: "manifest-schema",
     metrics: {
@@ -752,7 +811,8 @@ export function validateDishManifestSchema(manifest, options = {}) {
     addFail(result, pathMessage("variants", "must be an object"));
   } else {
     for (const key of REQUIRED_VARIANTS) {
-      validateVariant(result, key, manifest.variants[key], context);
+      validateVariant(result, key, manifest.variants[key], context, allowedExternalOrigins);
+      validateExternalVariantPath(result, manifest, key, manifest.variants[key]);
     }
   }
 

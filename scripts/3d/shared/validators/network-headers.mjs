@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { PRODUCTION_3D_BUDGETS, formatBytes } from "../budgets.mjs";
 import { addFail, addWarning, createValidationResult } from "./file-exists.mjs";
 
@@ -20,14 +22,55 @@ function parseContentLength(response, method) {
 }
 
 function isSafeManifestAssetUrl(url) {
+  if (typeof url !== "string" || !url.trim()) return false;
+  if (/^https:\/\//i.test(url)) {
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return false;
+    }
+    const allowedOrigins = String(process.env.VISTAIRE_3D_CDN_ORIGINS ?? "")
+      .split(/[,\s]+/)
+      .map((entry) => entry.trim().replace(/\/+$/, ""))
+      .filter(Boolean);
+    return (
+      allowedOrigins.includes(parsed.origin) &&
+      !parsed.username &&
+      !parsed.password &&
+      !parsed.search &&
+      !parsed.hash &&
+      !parsed.pathname.includes("\\") &&
+      !parsed.pathname.includes("..")
+    );
+  }
   return (
-    typeof url === "string" &&
     url.startsWith("/") &&
     !url.startsWith("//") &&
     !url.includes("\\") &&
     !url.includes("..") &&
     !/^(?:javascript|data|file|https?):/i.test(url)
   );
+}
+
+function hasExpectedExternalPath(url, expectedPathSuffix) {
+  if (!expectedPathSuffix || !isExternalHttpsUrl(url)) return true;
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname.includes(expectedPathSuffix);
+  } catch {
+    return false;
+  }
+}
+
+function isExternalHttpsUrl(url) {
+  return /^https:\/\//i.test(String(url ?? ""));
+}
+
+function hasAllowedCors(headers) {
+  const allowed = (headers.get("access-control-allow-origin") ?? "").trim();
+  const vistaireOrigin = String(process.env.VISTAIRE_APP_ORIGIN ?? "").trim();
+  return allowed === "*" || (vistaireOrigin && allowed === vistaireOrigin);
 }
 
 async function cancelBody(response) {
@@ -90,6 +133,16 @@ async function fetchHeaders(url, fetchImpl) {
   };
 }
 
+async function fetchAndHash(url, fetchImpl) {
+  const response = await fetchImpl(url, { method: "GET", redirect: "manual" });
+  const bytes = Buffer.from(await response.arrayBuffer());
+  return {
+    response,
+    bytes,
+    sha256: createHash("sha256").update(bytes).digest("hex")
+  };
+}
+
 function expectedForAsset(asset) {
   const pathname = new URL(asset.url, "http://local").pathname.toLowerCase();
   if (pathname.endsWith(".glb")) {
@@ -118,6 +171,13 @@ async function validateAsset(asset, baseUrl, fetchImpl, result, strict) {
   let rangeIgnored;
   if (!isSafeManifestAssetUrl(asset.url)) {
     addFail(result, `${label}: unsafe manifest asset URL`, { url: asset.url });
+    return;
+  }
+  if (!hasExpectedExternalPath(asset.url, asset.expectedPathSuffix)) {
+    addFail(result, `${label}: external asset URL must stay under expected CDN path ${asset.expectedPathSuffix}`, {
+      url: asset.url,
+      expectedPathSuffix: asset.expectedPathSuffix
+    });
     return;
   }
   const url = absoluteUrl(baseUrl, asset.url);
@@ -175,6 +235,39 @@ async function validateAsset(asset, baseUrl, fetchImpl, result, strict) {
   for (const expectedCache of expected.cache ?? []) {
     if (!headerIncludes(response.headers, "cache-control", expectedCache)) {
       addFail(result, `${label}: cache-control expected ${expectedCache}, got ${metric.cacheControl || "(missing)"}`, metric);
+    }
+  }
+
+  if (Number.isFinite(asset.bytes) && contentLength && contentLength !== asset.bytes) {
+    const message = `${label}: Content-Length/Content-Range ${contentLength} does not match manifest bytes ${asset.bytes}`;
+    if (strict) addFail(result, message, metric);
+    else addWarning(result, message, metric);
+  }
+
+  if (isExternalHttpsUrl(asset.url) && ["web", "mobile", "arLite", "poster"].includes(asset.role ?? "")) {
+    metric.accessControlAllowOrigin = response.headers.get("access-control-allow-origin") ?? "";
+    if (!hasAllowedCors(response.headers)) {
+      addFail(result, `${label}: external runtime asset must allow Vistaire CORS access`, metric);
+    }
+  }
+
+  if (strict && typeof asset.sha256 === "string" && /^[a-f0-9]{64}$/i.test(asset.sha256)) {
+    try {
+      const hashed = await fetchAndHash(url, fetchImpl);
+      metric.getStatus = hashed.response.status;
+      metric.fetchedBytes = hashed.bytes.length;
+      metric.fetchedSha256 = hashed.sha256;
+      if (hashed.response.status >= 300) {
+        addFail(result, `${label}: GET status ${hashed.response.status} while verifying sha256`, metric);
+      }
+      if (Number.isFinite(asset.bytes) && hashed.bytes.length !== asset.bytes) {
+        addFail(result, `${label}: fetched byte length ${hashed.bytes.length} does not match manifest bytes ${asset.bytes}`, metric);
+      }
+      if (hashed.sha256 !== asset.sha256) {
+        addFail(result, `${label}: fetched sha256 does not match manifest sha256`, metric);
+      }
+    } catch (error) {
+      addFail(result, `${label}: unable to verify sha256 from network body: ${error.message}`, metric);
     }
   }
 

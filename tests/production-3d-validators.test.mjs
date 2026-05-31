@@ -445,6 +445,57 @@ test("network header validator falls back from HEAD to GET Range and reads Conte
   );
 });
 
+test("network header validator rejects CDN byte and sha256 mismatches in strict mode", async () => {
+  const expectedBytes = Buffer.from("vistaire-cdn-object");
+  const wrongBytes = Buffer.from("wrong-object");
+  const previousOrigins = process.env.VISTAIRE_3D_CDN_ORIGINS;
+  process.env.VISTAIRE_3D_CDN_ORIGINS = "https://cdn.example.com";
+  try {
+    const result = await validateNetworkHeaders({
+      baseUrl: "https://vistaire.example",
+      strict: true,
+      assets: [
+        {
+          url: "https://cdn.example.com/vistaire/maison-elyse/demo/dish/v1/web/dish-web.glb",
+          label: "dish web GLB",
+          role: "web",
+          bytes: expectedBytes.length,
+          sha256: sha256(expectedBytes)
+        }
+      ],
+      fetchImpl: async (url, options = {}) => {
+        if (options.method === "HEAD") {
+          return new Response(null, {
+            status: 200,
+            headers: {
+              "access-control-allow-origin": "*",
+              "cache-control": "public, max-age=31536000, immutable",
+              "content-length": String(wrongBytes.length),
+              "content-type": "model/gltf-binary"
+            }
+          });
+        }
+        return new Response(wrongBytes, {
+          status: 200,
+          headers: {
+            "access-control-allow-origin": "*",
+            "cache-control": "public, max-age=31536000, immutable",
+            "content-length": String(wrongBytes.length),
+            "content-type": "model/gltf-binary"
+          }
+        });
+      }
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.fails.join("\n"), /Content-Length/i);
+    assert.match(result.fails.join("\n"), /sha256/i);
+  } finally {
+    if (previousOrigins === undefined) delete process.env.VISTAIRE_3D_CDN_ORIGINS;
+    else process.env.VISTAIRE_3D_CDN_ORIGINS = previousOrigins;
+  }
+});
+
 test("network header validator fails when Range fallback is ignored in strict mode", async () => {
   const result = await validateNetworkHeaders({
     baseUrl: "http://localhost:3000",

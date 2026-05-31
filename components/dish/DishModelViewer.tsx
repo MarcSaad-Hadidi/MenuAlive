@@ -36,6 +36,10 @@ const IOS_USDZ_MISSING_TEXT =
 const MODEL_FRAME_CLASS =
   "h-[min(58vh,420px)] min-h-[280px] w-full rounded-xl bg-[#10100e] ring-1 ring-white/8 sm:h-[min(65vh,460px)] sm:min-h-[340px]";
 const MESHOPT_DECODER_URL = "/model-viewer/meshopt-decoder-74188840.js";
+const ALLOWED_3D_CDN_ORIGINS = (process.env.NEXT_PUBLIC_VISTAIRE_3D_CDN_ORIGINS ?? "")
+  .split(/[,\s]+/)
+  .map((entry) => entry.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
 
 export type DishModelViewerProps = {
   dish: Pick<
@@ -421,7 +425,8 @@ export function DishModelViewer({
     viewport,
     connection: effectiveConnection,
     userIntent: "view3d",
-    prefersReducedMotion
+    prefersReducedMotion,
+    allowedExternalOrigins: ALLOWED_3D_CDN_ORIGINS
   });
   const arSelection = selectImmersiveVariant({
     manifest,
@@ -430,7 +435,8 @@ export function DishModelViewer({
     viewport,
     connection: effectiveConnection,
     userIntent: "ar",
-    prefersReducedMotion
+    prefersReducedMotion,
+    allowedExternalOrigins: ALLOWED_3D_CDN_ORIGINS
   });
   const modelSrc = modelSelection.shouldLoadModel ? modelSelection.url : "";
   const hasModel = Boolean(modelSrc);

@@ -59,3 +59,21 @@ artifacts, and passed real-device Quick Look/Scene Viewer QA at validation time.
 Generated variants that have not passed this gate stay in ignored
 `assets/3d/work/**`; they must not be exposed under `public/models/restaurants/**`
 as runtime assets.
+
+## Commands
+
+Generate rendered evidence:
+
+```bash
+npm run 3d:visual-compare -- --source path/to/source.glb --candidate path/to/candidate.glb --variant mobile --out assets/3d/reports/.../visual/mobile --threshold strict
+```
+
+Record human visual approval after the report passes:
+
+```bash
+npm run 3d:approve-visual -- --manifest path/to/manifest.json --approved-by "Marc" --write
+```
+
+`3d:approve-visual` only handles human visual-review fields. It does not claim
+real iPhone Quick Look or Android Scene Viewer validation, does not clear
+validation failures, and does not promote a manifest to `approved` by itself.

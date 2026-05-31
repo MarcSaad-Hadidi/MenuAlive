@@ -30,10 +30,23 @@ function variantRole(key) {
   return key;
 }
 
+function variantDirectory(key) {
+  return {
+    web: "web",
+    mobile: "mobile",
+    arLite: "ar-lite",
+    iosUsdz: "ios",
+    poster: "poster"
+  }[key] ?? key;
+}
+
 export function collectManifestAssets(manifest) {
   return Object.entries(manifest.variants ?? {}).map(([key, variant]) => ({
     role: variantRole(key),
     url: variant.url,
+    bytes: variant.bytes,
+    sha256: variant.sha256,
+    expectedPathSuffix: `/${manifest.restaurantSlug}/${manifest.menuSlug}/${manifest.dishSlug}/${manifest.activeVersion}/${variantDirectory(key)}/`,
     label: `${manifest.restaurantSlug}/${manifest.menuSlug}/${manifest.dishSlug}/${key}`,
     productionQuickLook: key === "iosUsdz"
   }));
@@ -354,7 +367,7 @@ function validateRenderedComparisonTriplet({ triplet, rootDir, label, expected =
     }
     const diffCoverage = visibleDiffCoverage(decoded.diff);
     result.metrics.diffImageCoverage = diffCoverage;
-    if (diffCoverage === 0) {
+    if (comparison.diffRatio > 0 && diffCoverage === 0) {
       addFail(result, `${label}: diff image must not be blank`);
     }
     if (comparison.diffRatio === 0 && diffCoverage > VISUAL_RATIO_EPSILON) {
@@ -425,6 +438,56 @@ function visualEvidenceChecks({ manifest, rootDir }) {
     );
   }
   return checks;
+}
+
+function validateVisualReportBinding({ manifest, rootDir }) {
+  const result = createValidationResult({
+    name: "visual-report-binding",
+    metrics: {
+      reportPath: "",
+      sourceSha256: manifest?.sourceAnalysis?.sha256 ?? ""
+    }
+  });
+  const reportPath = resolveEvidencePath(manifest?.visualQuality?.report, rootDir);
+  result.metrics.reportPath = reportPath ?? "";
+  if (!reportPath) return addFail(result, "visualQuality.report: local JSON visual report is required");
+  let report;
+  try {
+    report = JSON.parse(readFileSync(reportPath, "utf8"));
+  } catch (error) {
+    return addFail(result, `visualQuality.report: must be readable visual-report.json (${error.message})`);
+  }
+  const sourceSha256 = manifest?.sourceAnalysis?.sha256;
+  if (!sourceSha256 || report?.source?.sha256 !== sourceSha256) {
+    addFail(result, "visualQuality.report.source.sha256 must match manifest.sourceAnalysis.sha256", {
+      expected: sourceSha256,
+      actual: report?.source?.sha256
+    });
+  }
+  for (const variantKey of ["web", "mobile", "arLite"]) {
+    const expectedSha256 = manifest?.variants?.[variantKey]?.sha256;
+    const candidateSha256 =
+      report?.variant === variantKey
+        ? report?.candidate?.sha256
+        : report?.variants?.[variantKey]?.candidate?.sha256 ??
+          report?.variants?.[variantKey]?.sha256 ??
+          report?.candidates?.[variantKey]?.sha256;
+    result.metrics[`${variantKey}CandidateSha256`] = candidateSha256 ?? "";
+    if (!expectedSha256 || candidateSha256 !== expectedSha256) {
+      addFail(result, `visualQuality.report.${variantKey}.candidate.sha256 must match manifest.variants.${variantKey}.sha256`, {
+        expected: expectedSha256,
+        actual: candidateSha256
+      });
+    }
+  }
+  return result;
+}
+
+export function validateVisualEvidence({ manifest, rootDir = process.cwd() } = {}) {
+  return mergeValidationResults([...visualEvidenceChecks({ manifest, rootDir }), validateVisualReportBinding({ manifest, rootDir })], {
+    name: "visual-evidence",
+    metrics: { rootDir }
+  });
 }
 
 function validatePosterImage({ filePath, label }) {

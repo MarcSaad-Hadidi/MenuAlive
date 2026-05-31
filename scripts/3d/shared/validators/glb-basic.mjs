@@ -302,7 +302,12 @@ export function validateGlbBasic({
       riskyExtensions
     });
   }
-  if ((role === "arLite" || production) && result.metrics.extensionsRequired.length > 0) {
+  if (role === "arLite" && result.metrics.extensionsRequired.length > 0) {
+    addFail(result, `${label}: Android AR-lite GLB must not require extensions`, {
+      role,
+      extensionsRequired: result.metrics.extensionsRequired
+    });
+  } else if (production && result.metrics.extensionsRequired.length > 0) {
     addWarning(result, `${label}: AR delivery should avoid required extensions`, {
       role,
       extensionsRequired: result.metrics.extensionsRequired

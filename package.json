@@ -15,6 +15,8 @@
     "3d:optimize": "node scripts/3d/optimize.mjs",
     "3d:optimize-dish": "node scripts/3d/optimize-dish.mjs",
     "3d:optimize-menu": "node scripts/3d/optimize-menu.mjs",
+    "3d:visual-compare": "node scripts/3d/visual-compare.mjs",
+    "3d:approve-visual": "node scripts/3d/approve-visual.mjs",
     "3d:validate": "node scripts/3d/validate.mjs",
     "3d:validate-dish": "node scripts/3d/validate-dish.mjs",
     "3d:validate-restaurant": "node scripts/3d/validate-restaurant.mjs",

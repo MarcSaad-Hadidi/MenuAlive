@@ -70,6 +70,8 @@ npm run 3d:report
 npm run 3d:quality-report
 npm run 3d:analyze-source -- --source path/to/source.glb --out path/to/source-analysis.json --markdown path/to/source-analysis.md
 npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source path/to/source.glb --write --allow-public-binaries --approved-by "Marc"
+npm run 3d:visual-compare -- --source path/to/source.glb --candidate assets/3d/work/maison-elyse/main/homard-bisque/v1/mobile/homard-bisque-mobile.glb --variant mobile --out assets/3d/reports/maison-elyse/main/homard-bisque/v1/visual/mobile --threshold strict
+npm run 3d:approve-visual -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --approved-by "Marc" --write
 npm run 3d:publish -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --quality-approved --approved-by "Marc" --write
 npm run 3d:rollback -- --restaurant maison-elyse --menu main --dish homard-bisque --to v1 --approved-by "Marc" --write
 npm run 3d:clean-stale -- --restaurant maison-elyse --menu main --dish homard-bisque --dry-run
@@ -179,12 +181,29 @@ malformed GLBs, and external URI dependencies are rejected.
 `3d:optimize-dish` requires `@gltf-transform/cli`. Web and mobile GLB variants
 run through `gltf-transform optimize` with Meshopt and WebP texture compression.
 AR-lite uses a separate Android profile with no required compression extension,
-mesh simplification, and no copy fallback. The iOS USDZ candidate is generated
-from the AR-lite GLB geometry/textures instead of a minimal proxy package. The
-command rejects by default and writes generated variants under ignored
-`assets/3d/work/**` until strict visual proof exists. Placeholder poster outputs
-are review artifacts, not production assets. `--approved-by` records the
-reviewer request but cannot turn missing visual proof into approval.
+mesh simplification, and no copy fallback. The optimizer records conservative,
+balanced, and aggressive candidate metadata and refuses to select the lightest
+candidate unless it also passes the strict visual gate. The iOS USDZ candidate
+is generated from the AR-lite GLB geometry/textures instead of a minimal proxy
+package, but its `productionFaithful` field remains false until evidence and
+real-device QA prove that path. The command rejects by default and writes
+generated variants under ignored `assets/3d/work/**` until strict visual proof
+exists. Review poster outputs are not production assets. `--approved-by`
+records the reviewer request but cannot turn missing visual proof into approval.
+
+`3d:visual-compare` is the deterministic rendered evidence generator. It uses
+Playwright Chromium, a fixed `model-viewer` harness, fixed DPR/camera/background,
+and software WebGL settings to render source and candidate GLBs. It emits
+before/after/diff PNGs for front, left, right, top, three-quarter,
+close-up-signature, table-distance, and mobile-distance angles, plus JSON and
+Markdown reports with SSIM, perceptual, diff, silhouette, color, texture,
+material, low-poly, and appetite metrics.
+
+`3d:approve-visual` verifies the rendered report files before stamping human
+visual approval fields. The report must be bound to the manifest source and
+candidate SHA-256 values. The command does not change lifecycle status, clear
+validation failures, or auto-fill real-device iPhone Quick Look or Android
+Scene Viewer results.
 
 The required visual promise is: "visually indistinguishable under deterministic
 multi-angle mobile dining-distance review within strict thresholds." A manifest
@@ -203,18 +222,22 @@ visual report files, before/after/diff images, per-angle metrics, valid local
 variant files, existing human approval in the manifest, and passed real-device
 iPhone Quick Look plus Android Scene Viewer QA.
 
-`--cdn-base-url` is reserved for a future artifact uploader and URL rewriter; it
-does not bypass `--allow-public-binaries` today.
+`--cdn-base-url` rewrites variant URLs to an HTTPS origin listed in
+`VISTAIRE_3D_CDN_ORIGINS` and keeps generated binaries in ignored staging
+folders. It does not upload artifacts and does not bypass checksum, visual,
+manual approval, or real-device QA gates. CDN publish requires a saved strict
+`3d:validate-network` report whose fetched byte counts and SHA-256 values match
+the manifest.
 
 `3d:clean-stale --write` requires an active dish manifest. Without one, the
 command cannot distinguish stale versions from unpublished generated versions,
 so it exits without deleting any version directory.
 
-## Storage/CDN Future
+## Storage/CDN
 
-Future production assets should normally live in storage/CDN, not Git. A later
-PR can add a CDN allowlist and runtime resolver after this pipeline proves the
-manifest, checksum, budget, and header contract.
+Production assets should normally live in storage/CDN, not Git. The pipeline can
+emit allowlisted CDN URLs and SHA-256 metadata, but operators must upload the
+staged binaries and run network/header validation before publish.
 
 ## Migrating One Dish
 
