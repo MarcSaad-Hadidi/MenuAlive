@@ -177,12 +177,13 @@ bounds, orientation, and draw-call evidence. Git LFS pointers, missing files,
 malformed GLBs, and external URI dependencies are rejected.
 
 `3d:optimize-dish` requires `@gltf-transform/cli`. Web and mobile GLB variants
-run through `gltf-transform optimize` with Meshopt and WebP texture compression;
-if texture compression cannot be applied to a source, the fallback copy command
-is recorded in the optimization report. The command now rejects by default and
-writes generated variants under ignored `assets/3d/work/**` until strict visual
-proof exists. Android AR-lite copy, minimal USDZ proxy, and placeholder poster
-outputs are review artifacts, not production assets. `--approved-by` records the
+run through `gltf-transform optimize` with Meshopt and WebP texture compression.
+AR-lite uses a separate Android profile with no required compression extension,
+mesh simplification, and no copy fallback. The iOS USDZ candidate is generated
+from the AR-lite GLB geometry/textures instead of a minimal proxy package. The
+command rejects by default and writes generated variants under ignored
+`assets/3d/work/**` until strict visual proof exists. Placeholder poster outputs
+are review artifacts, not production assets. `--approved-by` records the
 reviewer request but cannot turn missing visual proof into approval.
 
 The required visual promise is: "visually indistinguishable under deterministic
@@ -199,7 +200,8 @@ manual approval and it does not clear visual failures. If a heavy source cannot
 meet budgets without visible loss, keep the previous version and request artist
 retouching or source simplification. Publication requires schema v2, existing
 visual report files, before/after/diff images, per-angle metrics, valid local
-variant files, and existing human approval in the manifest.
+variant files, existing human approval in the manifest, and passed real-device
+iPhone Quick Look plus Android Scene Viewer QA.
 
 `--cdn-base-url` is reserved for a future artifact uploader and URL rewriter; it
 does not bypass `--allow-public-binaries` today.

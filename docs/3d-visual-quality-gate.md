@@ -2,7 +2,7 @@
 
 Vistaire rejects optimized 3D assets by default. A candidate becomes eligible
 only after it proves premium visual equivalence with real rendered comparison
-evidence, strict metrics, and human approval.
+evidence, strict metrics, human approval, and real-device AR QA.
 
 The production wording for "exactly the same visual" is:
 
@@ -24,6 +24,8 @@ Every approved or published production manifest must include:
   appetite-preservation checks
 - a visual report path
 - human approval with reviewer name and date
+- passed real-device iPhone Quick Look and Android Scene Viewer QA, with
+  device, OS, tester, and date recorded
 
 ## Automatic Rejection
 
@@ -36,6 +38,7 @@ Reject the candidate when any of these are true:
 - before/after/diff artifacts are missing
 - the visual report is missing
 - manual human approval is missing
+- real-device iPhone/Android QA evidence is missing or not passed
 - textures are blurry
 - silhouette, color, material, scale, or origin changes
 - visible low-poly artifacts appear
@@ -50,8 +53,8 @@ source simplification.
 `npm run 3d:publish` may only promote a manifest that is already approved by
 the strict visual gate. `--quality-approved` confirms the publish operation; it
 does not create approval, does not clear failures, and does not replace the
-visual report. Approved publication requires schema v2 and existing local
-report artifacts at validation time.
+visual report. Approved publication requires schema v2, existing local report
+artifacts, and passed real-device Quick Look/Scene Viewer QA at validation time.
 
 Generated variants that have not passed this gate stay in ignored
 `assets/3d/work/**`; they must not be exposed under `public/models/restaurants/**`

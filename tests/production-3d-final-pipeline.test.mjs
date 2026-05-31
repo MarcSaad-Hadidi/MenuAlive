@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
-import { zipSync, zlibSync } from "fflate";
+import { unzipSync, zipSync, zlibSync } from "fflate";
 
 const stableIso = "2026-05-24T00:00:00.000Z";
 const strictPromise =
@@ -139,6 +139,28 @@ function makeUsdz() {
   );
 }
 
+function realDeviceQa() {
+  return {
+    required: true,
+    iphoneQuickLook: {
+      required: true,
+      status: "passed",
+      device: "iPhone 15 Pro",
+      os: "iOS 18.5",
+      testedBy: "QA Bot",
+      testedAt: stableIso
+    },
+    androidSceneViewer: {
+      required: true,
+      status: "passed",
+      device: "Pixel 8",
+      os: "Android 15",
+      testedBy: "QA Bot",
+      testedAt: stableIso
+    }
+  };
+}
+
 function crc32(bytes) {
   let crc = 0xffffffff;
   for (const byte of bytes) {
@@ -192,6 +214,38 @@ function makePng({ width = 64, height = 64, changedPixel = false, changedValue =
     pngChunk("IDAT", Buffer.from(zlibSync(raw))),
     pngChunk("IEND")
   ]);
+}
+
+function makeRenderableDishGlb() {
+  const positions = Buffer.alloc(36);
+  [
+    -0.25, 0, -0.2,
+    0.25, 0, -0.2,
+    0, 0.08, 0.2
+  ].forEach((value, index) => positions.writeFloatLE(value, index * 4));
+  const indices = Buffer.alloc(6);
+  [0, 1, 2].forEach((value, index) => indices.writeUInt16LE(value, index * 2));
+  const texture = makePng({ width: 64, height: 64 });
+  const imageOffset = positions.length + indices.length + 2;
+  const bin = Buffer.concat([positions, indices, Buffer.alloc(2), texture]);
+  const gltf = makeDishGltf({
+    buffers: [{ byteLength: bin.length }],
+    bufferViews: [
+      { buffer: 0, byteOffset: 0, byteLength: positions.length },
+      { buffer: 0, byteOffset: positions.length, byteLength: indices.length },
+      { buffer: 0, byteOffset: imageOffset, byteLength: texture.length }
+    ],
+    images: [{ bufferView: 2, mimeType: "image/png", name: "albedo" }]
+  });
+  return makeGlb(gltf, bin);
+}
+
+function usdzTextBundle(bytes) {
+  const zip = unzipSync(bytes);
+  return Object.entries(zip)
+    .filter(([name]) => /\.usd[ac]?$/i.test(name))
+    .map(([, entry]) => Buffer.from(entry).toString("utf8"))
+    .join("\n");
 }
 
 function writePublicFile(root, url, bytes) {
@@ -282,7 +336,8 @@ function strictVisualQuality(reviewer = "QA Bot") {
       approvalType: "human",
       approvedBy: reviewer,
       approvedAt: stableIso
-    }
+    },
+    realDeviceQa: realDeviceQa()
   };
 }
 
@@ -439,6 +494,7 @@ function writeApprovedManifest(root, version, previousVersion = null, { writeVis
         approvedBy: "QA Bot",
         approvedAt: stableIso
       },
+      realDeviceQa: realDeviceQa(),
       notes: []
     },
     lifecycle: {
@@ -570,7 +626,7 @@ test("optimize-dish writes versioned variants and rejects them until strict visu
   withTempDir(async (dir) => {
     const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
     mkdirSync(dirname(sourcePath), { recursive: true });
-    writeFileSync(sourcePath, makeGlb(makeDishGltf()));
+    writeFileSync(sourcePath, makeRenderableDishGlb());
 
     const result = await runNode([
       "scripts/3d/optimize-dish.mjs",
@@ -614,11 +670,21 @@ test("optimize-dish writes versioned variants and rejects them until strict visu
     assert.equal(manifest.quality.manualVisualApproved, false);
     assert.equal(manifest.visualQuality.status, "failed");
     assert.equal(manifest.sourceAnalysis.triangles, 1);
+    assert.notEqual(manifest.variants.arLite.optimizationMethod, "copy");
+    assert.doesNotMatch(manifest.variants.arLite.optimizer?.command ?? "", /\bcopy\b/i);
+    assert.notEqual(manifest.variants.arLite.sha256, manifest.sourceAnalysis.sha256);
+    assert.equal(manifest.variants.iosUsdz.proxy, false);
+    assert.equal(manifest.variants.iosUsdz.productionFaithful, true);
     for (const key of ["web", "mobile", "arLite", "iosUsdz", "poster"]) {
       assert.equal(existsSync(join(dir, "public", manifest.variants[key].url)), false, key);
       assert.equal(typeof manifest.variants[key].sha256, "string");
       assert.equal(manifest.variants[key].sha256.length, 64);
     }
+    const usdzText = usdzTextBundle(
+      readFileSync(join(dir, "assets", "3d", "work", "maison-elyse", "demo", "plat-final", "vfinal", "ios", "plat-final.usdz"))
+    );
+    assert.match(usdzText, /\bdef\s+Mesh\b|\bpoint3f\[\]\s+points\b/);
+    assert.doesNotMatch(usdzText, /\bDishProxy\b|vistaire:sourceSha256/);
     assert.equal(
       existsSync(join(dir, "assets", "3d", "work", "maison-elyse", "demo", "plat-final", "vfinal", "web", "plat-final-web.glb")),
       true
@@ -630,7 +696,7 @@ test("optimize-dish rejects generated staging assets until strict rendered visua
   withTempDir(async (dir) => {
     const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
     mkdirSync(dirname(sourcePath), { recursive: true });
-    writeFileSync(sourcePath, makeGlb(makeDishGltf()));
+    writeFileSync(sourcePath, makeRenderableDishGlb());
 
     const result = await runNode([
       "scripts/3d/optimize-dish.mjs",
@@ -674,11 +740,11 @@ test("optimize-dish rejects generated staging assets until strict rendered visua
     assert.equal(manifest.quality.manualVisualApproved, false);
   }));
 
-test("publish refuses a generated proxy manifest even when CLI approval flags are supplied", () =>
+test("publish refuses a generated review manifest even when CLI approval flags are supplied", () =>
   withTempDir(async (dir) => {
     const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
     mkdirSync(dirname(sourcePath), { recursive: true });
-    writeFileSync(sourcePath, makeGlb(makeDishGltf()));
+    writeFileSync(sourcePath, makeRenderableDishGlb());
 
     await runNode([
       "scripts/3d/optimize-dish.mjs",
@@ -775,6 +841,31 @@ test("publish refuses blank visual diff artifacts even when recomputed threshold
 
     assert.equal(publish.code, 1);
     assert.match(publish.stdout, /diff image must not be blank/i);
+  }));
+
+test("publish refuses approved manifests when real-device QA evidence is absent", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vnoqa", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    delete manifest.quality.realDeviceQa;
+    delete manifest.visualQuality.realDeviceQa;
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const publish = await runNode([
+      "scripts/3d/publish.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--quality-approved",
+      "--approved-by",
+      "QA Bot",
+      "--json"
+    ]);
+
+    assert.equal(publish.code, 1);
+    assert.match(publish.stdout, /realDeviceQa/i);
   }));
 
 test("publish refuses schema v1 manifests even when legacy approval fields are present", () =>

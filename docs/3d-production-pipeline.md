@@ -60,12 +60,14 @@ npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-
 ```
 
 The optimizer requires `@gltf-transform/cli`. Web and mobile candidates use
-`gltf-transform optimize` with Meshopt and WebP texture compression, with a
-safe `copy` fallback recorded in the report when a source texture blocks
-compression. These generated files are written under ignored
-`assets/3d/work/**` as review/staging outputs only. Android AR-lite copy,
-minimal USDZ proxy, and placeholder poster outputs are rejected by default and
-cannot be presented as production optimization or exposed as runtime assets.
+`gltf-transform optimize` with Meshopt and WebP texture compression. AR-lite
+uses a separate no-required-extension simplification profile for Android Scene
+Viewer; a plain `copy` is a failure, not a fallback. The iOS USDZ candidate is
+generated from the optimized AR-lite GLB geometry/textures, never from a
+hard-coded proxy package. These generated files are written under ignored
+`assets/3d/work/**` as review/staging outputs only. Placeholder poster outputs
+are rejected by default and cannot be presented as production optimization or
+exposed as runtime assets.
 
 4. Review the generated schema v2 dish manifest with URLs, bytes, hashes,
    physical scale, bounds, budgets, validation state, source analysis, visual
@@ -84,8 +86,9 @@ npm run 3d:validate-dish -- --manifest public/models/restaurants/maison-elyse/ma
 npm run 3d:validate-network -- --base-url https://example.com --manifest path/to/manifest.json --strict
 ```
 
-7. Publish only after strict validation, real rendered visual evidence, and
-   pre-existing human approval:
+7. Publish only after strict validation, real rendered visual evidence,
+   pre-existing human approval, and explicit passed real-device Quick
+   Look/Scene Viewer QA:
 
 ```bash
 npm run 3d:publish -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --quality-approved --approved-by "Marc" --write
@@ -120,8 +123,9 @@ See `docs/3d-visual-quality-gate.md` for the full visual identity gate.
 - No USDZ proxy, poster placeholder, or AR-lite copy may be presented as
   production optimization.
 - No publish without before/after/diff evidence for web, mobile, and AR-lite.
-- No publish without a visual report, strict SSIM/perceptual thresholds, and
-  human visual approval already present in the manifest.
+- No publish without a visual report, strict SSIM/perceptual thresholds, human
+  visual approval, and passed real-device iPhone/Android QA already present in
+  the manifest.
 - No claim of real iPhone Quick Look or Android Scene Viewer validation without
   testing on those devices.
 - The phrase "exactly the same visual" means "visually indistinguishable under

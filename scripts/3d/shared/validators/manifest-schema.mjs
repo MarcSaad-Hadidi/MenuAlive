@@ -56,6 +56,7 @@ const STRICT_VISUAL_REQUIRED_CHECKS = Object.freeze({
   lowPoly: "visible low-poly artifacts must be absent",
   appetite: "dish appetite appeal must be preserved"
 });
+const REAL_DEVICE_QA_TARGETS = Object.freeze(["iphoneQuickLook", "androidSceneViewer"]);
 
 function pathMessage(path, message) {
   return `${path}: ${message}`;
@@ -327,6 +328,38 @@ function validateMetricAtMost(result, visualQuality, metricName, thresholdName, 
   }
 }
 
+function validateRealDeviceQa(result, qa, path) {
+  if (!isObject(qa)) {
+    addFail(result, pathMessage(path, "real-device QA evidence is required"));
+    return;
+  }
+  if (qa.required !== true) {
+    addFail(result, pathMessage(`${path}.required`, "must be true for production 3D/AR publish"));
+  }
+  for (const target of REAL_DEVICE_QA_TARGETS) {
+    const entry = qa[target];
+    const entryPath = `${path}.${target}`;
+    if (!isObject(entry)) {
+      addFail(result, pathMessage(entryPath, "real-device QA result is required"));
+      continue;
+    }
+    if (entry.required !== true) {
+      addFail(result, pathMessage(`${entryPath}.required`, "must be true"));
+    }
+    if (entry.status !== "passed") {
+      addFail(result, pathMessage(`${entryPath}.status`, "must be passed on a real device before publishing"));
+    }
+    for (const field of ["device", "os", "testedBy"]) {
+      if (typeof entry[field] !== "string" || !entry[field].trim()) {
+        addFail(result, pathMessage(`${entryPath}.${field}`, "is required for real-device QA"));
+      }
+    }
+    if (!isIsoDateOrNull(entry.testedAt) || entry.testedAt === null) {
+      addFail(result, pathMessage(`${entryPath}.testedAt`, "real-device QA date is required"));
+    }
+  }
+}
+
 function angleReportsForVariant(visualQuality, variantKey) {
   const reports = Array.isArray(visualQuality?.angleReports) ? visualQuality.angleReports : [];
   return reports.filter((entry) => entry?.variant === variantKey || isObject(entry?.variants?.[variantKey]));
@@ -472,7 +505,9 @@ function validateStrictVisualIdentity(result, manifest) {
     if (typeof manifest.quality.approvedBy !== "string" || !manifest.quality.approvedBy.trim()) {
       addFail(result, pathMessage("quality.approvedBy", "human reviewer name is required"));
     }
+    validateRealDeviceQa(result, manifest.quality.realDeviceQa, "quality.realDeviceQa");
   }
+  validateRealDeviceQa(result, visualQuality.realDeviceQa, "visualQuality.realDeviceQa");
 }
 
 function validateStrictProductionVariantMetadata(result, manifest) {
@@ -496,8 +531,13 @@ function validateStrictProductionVariantMetadata(result, manifest) {
     }
   }
 
-  if (isObject(iosUsdz) && iosUsdz.productionFaithful !== true) {
-    addFail(result, pathMessage("variants.iosUsdz.productionFaithful", "faithful USDZ export is required for production"));
+  if (isObject(iosUsdz)) {
+    if (iosUsdz.productionFaithful !== true) {
+      addFail(result, pathMessage("variants.iosUsdz.productionFaithful", "faithful USDZ export is required for production"));
+    }
+    if (iosUsdz.proxy === true) {
+      addFail(result, pathMessage("variants.iosUsdz.proxy", "USDZ proxy packages cannot be production assets"));
+    }
   }
 
   if (isObject(poster)) {

@@ -15,6 +15,28 @@ const stableIso = "2026-05-24T00:00:00.000Z";
 const strictPromise =
   "visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds";
 
+function realDeviceQa() {
+  return {
+    required: true,
+    iphoneQuickLook: {
+      required: true,
+      status: "passed",
+      device: "iPhone 15 Pro",
+      os: "iOS 18.5",
+      testedBy: "QA Bot",
+      testedAt: stableIso
+    },
+    androidSceneViewer: {
+      required: true,
+      status: "passed",
+      device: "Pixel 8",
+      os: "Android 15",
+      testedBy: "QA Bot",
+      testedAt: stableIso
+    }
+  };
+}
+
 function strictVisualQuality(overrides = {}) {
   const angles = ["front", "left", "right", "top"];
   return {
@@ -93,6 +115,7 @@ function strictVisualQuality(overrides = {}) {
       approvedBy: "QA Bot",
       approvedAt: stableIso
     },
+    realDeviceQa: realDeviceQa(),
     ...overrides
   };
 }
@@ -260,6 +283,7 @@ test("production dish manifest accepts the schema v2 contract with physical scal
         manualVisualApprovalRequired: true,
         manualVisualApproved: true,
         approvedBy: "QA Bot",
+        realDeviceQa: realDeviceQa(),
         notes: []
       },
       sourceAnalysis: {

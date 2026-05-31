@@ -75,6 +75,8 @@ For production approval, `visualQuality` must include:
   `lowPoly`, and `appetite` with `status: "passed"`
 - `manualReview.required: true`, `manualReview.status: "approved"`,
   `manualReview.approvalType: "human"`, `approvedBy`, and `approvedAt`
+- `realDeviceQa.required: true` with passed `iphoneQuickLook` and
+  `androidSceneViewer` entries, including device, OS, tester, and test date
 
 Publish-time validation resolves the visual report and image references as
 local relative paths under the workspace. Missing files, unsafe paths, or
@@ -84,6 +86,7 @@ Variant metadata must also stay honest:
 
 - `variants.arLite` cannot be an unoptimized source copy.
 - `variants.iosUsdz.productionFaithful` must be `true`.
+- `variants.iosUsdz.proxy` must not be `true`.
 - `variants.poster.productionPoster` must be `true`.
 - `variants.poster.placeholder` must not be `true`.
 

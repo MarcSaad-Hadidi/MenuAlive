@@ -72,6 +72,28 @@ const STRICT_VISUAL_THRESHOLDS = Object.freeze({
 const STRICT_VISUAL_REJECTION =
   "Strict rendered visual identity evidence is required before optimization can be approved: source/candidate before-after-diff renders for web, mobile, and arLite, per-angle SSIM/perceptual scores, texture/silhouette/color/material/scale/origin/low-poly/appetite checks, and human approval.";
 
+function pendingRealDeviceQa() {
+  return {
+    required: true,
+    iphoneQuickLook: {
+      required: true,
+      status: "not-tested",
+      device: null,
+      os: null,
+      testedBy: null,
+      testedAt: null
+    },
+    androidSceneViewer: {
+      required: true,
+      status: "not-tested",
+      device: null,
+      os: null,
+      testedBy: null,
+      testedAt: null
+    }
+  };
+}
+
 function createResult(name, metrics = {}) {
   return {
     ok: true,
@@ -465,54 +487,146 @@ function runGltfTransform({ input, output, profile }) {
   const commands = {
     web: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "2048"],
     mobile: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "1024"],
-    arLite: ["copy", input, output]
+    arLite: [
+      "optimize",
+      input,
+      output,
+      "--compress",
+      "false",
+      "--texture-compress",
+      "false",
+      "--texture-size",
+      "1024",
+      "--simplify",
+      "true",
+      "--simplify-ratio",
+      "0.72",
+      "--simplify-error",
+      "0.00045",
+      "--simplify-lock-border",
+      "true"
+    ]
   };
   const args = commands[profile] ?? commands.arLite;
-  try {
-    execFileSync(process.execPath, [cli, ...args], {
-      cwd: process.cwd(),
-      encoding: "utf8",
-      stdio: "pipe",
-      windowsHide: true
-    });
-    return { ok: true, command: `gltf-transform ${args.join(" ")}`, fallback: false };
-  } catch (error) {
-    if (profile === "arLite") throw error;
-    execFileSync(process.execPath, [cli, "copy", input, output], {
-      cwd: process.cwd(),
-      encoding: "utf8",
-      stdio: "pipe",
-      windowsHide: true
-    });
-    return {
-      ok: true,
-      command: `gltf-transform copy ${input} ${output}`,
-      fallback: true,
-      reason: error.stderr?.toString() || error.message
-    };
-  }
+  execFileSync(process.execPath, [cli, ...args], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    stdio: "pipe",
+    windowsHide: true
+  });
+  return { ok: true, command: `gltf-transform ${args.join(" ")}`, fallback: false };
 }
 
-function createUsdzPackage({ identity, analysis }) {
-  const usda = [
+function usdIdentifier(value, fallback) {
+  const cleaned = String(value ?? "")
+    .replace(/[^A-Za-z0-9_]/g, "_")
+    .replace(/^[^A-Za-z_]+/, "");
+  return cleaned || fallback;
+}
+
+function readAccessor(gltf, binBuffer, accessorIndex) {
+  const accessor = gltf.accessors?.[accessorIndex];
+  if (!accessor) throw new Error(`Missing accessor ${accessorIndex}`);
+  const view = gltf.bufferViews?.[accessor.bufferView];
+  if (!view || view.buffer !== 0) throw new Error(`Accessor ${accessorIndex} must use an embedded GLB bufferView`);
+  const componentBytes = componentSize(accessor.componentType);
+  const itemSize = typeCount(accessor.type);
+  const stride = view.byteStride ?? componentBytes * itemSize;
+  const start = (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
+  const values = [];
+  for (let item = 0; item < accessor.count; item += 1) {
+    const itemOffset = start + item * stride;
+    const tuple = [];
+    for (let component = 0; component < itemSize; component += 1) {
+      const offset = itemOffset + component * componentBytes;
+      if (accessor.componentType === 5126) tuple.push(binBuffer.readFloatLE(offset));
+      else if (accessor.componentType === 5125) tuple.push(binBuffer.readUInt32LE(offset));
+      else if (accessor.componentType === 5123) tuple.push(binBuffer.readUInt16LE(offset));
+      else if (accessor.componentType === 5121) tuple.push(binBuffer.readUInt8(offset));
+      else throw new Error(`Unsupported accessor component type ${accessor.componentType}`);
+    }
+    values.push(itemSize === 1 ? tuple[0] : tuple);
+  }
+  return values;
+}
+
+function imageExtension(image, bytes) {
+  const mimeType = String(image?.mimeType ?? "").toLowerCase();
+  if (mimeType.includes("png") || bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex"))) return "png";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg") || bytes.subarray(0, 3).equals(Buffer.from("ffd8ff", "hex"))) return "jpg";
+  if (mimeType.includes("webp") || (bytes.length >= 12 && bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP")) {
+    return "webp";
+  }
+  return "";
+}
+
+function formatUsdNumber(value) {
+  return Number(value.toFixed(6)).toString();
+}
+
+function createUsdzPackageFromGlb({ glbPath, identity }) {
+  const { json: gltf, binBuffer } = parseGlb(readFileSync(glbPath));
+  const entries = {};
+  const textureEntries = [];
+  for (const [index, image] of (gltf.images ?? []).entries()) {
+    const bytes = embeddedImageBytes(gltf, binBuffer, image);
+    const extension = imageExtension(image, bytes);
+    if (!extension || bytes.length === 0) continue;
+    const name = `textures/image-${index}.${extension}`;
+    entries[name] = bytes;
+    textureEntries.push(name);
+  }
+
+  const lines = [
     "#usda 1.0",
-    `def Xform "${identity.dishSlug}" {`,
-    `  custom string vistaire:sourceSha256 = "${analysis.sha256}"`,
-    `  custom int vistaire:triangles = ${analysis.triangles}`,
-    "  def Mesh \"DishProxy\" {",
-    "    point3f[] points = [(-0.25, 0, -0.2), (0.25, 0, -0.2), (0, 0.08, 0.2)]",
-    "    int[] faceVertexCounts = [3]",
-    "    int[] faceVertexIndices = [0, 1, 2]",
-    "  }",
-    "  def Material \"VistaireMaterial\" {}",
-    "}"
-  ].join("\n");
-  return Buffer.from(
-    zipSync({
-      "model.usda": Buffer.from(usda),
-      "textures/poster.png": Buffer.from("89504e470d0a1a0a", "hex")
-    })
-  );
+    "(",
+    `  defaultPrim = "${usdIdentifier(identity.dishSlug, "Dish")}"`,
+    ")",
+    "",
+    `def Xform "${usdIdentifier(identity.dishSlug, "Dish")}" {`
+  ];
+
+  let meshCount = 0;
+  for (const [meshIndex, mesh] of (gltf.meshes ?? []).entries()) {
+    for (const [primitiveIndex, primitive] of (mesh.primitives ?? []).entries()) {
+      if ((primitive.mode ?? 4) !== 4) {
+        throw new Error("USDZ export supports triangle-list GLB primitives only");
+      }
+      const positionAccessor = primitive.attributes?.POSITION;
+      if (!Number.isInteger(positionAccessor)) throw new Error("USDZ export requires POSITION accessors");
+      const points = readAccessor(gltf, binBuffer, positionAccessor);
+      const indices = Number.isInteger(primitive.indices)
+        ? readAccessor(gltf, binBuffer, primitive.indices)
+        : points.map((_, index) => index);
+      if (indices.length < 3 || indices.length % 3 !== 0) {
+        throw new Error("USDZ export requires triangle indices");
+      }
+      const meshName = usdIdentifier(mesh.name, `Mesh_${meshIndex}_${primitiveIndex}`);
+      lines.push(`  def Mesh "${meshName}" {`);
+      lines.push(
+        `    point3f[] points = [${points
+          .map((point) => `(${point.map(formatUsdNumber).join(", ")})`)
+          .join(", ")}]`
+      );
+      lines.push(`    int[] faceVertexCounts = [${Array(indices.length / 3).fill(3).join(", ")}]`);
+      lines.push(`    int[] faceVertexIndices = [${indices.join(", ")}]`);
+      lines.push("  }");
+      meshCount += 1;
+    }
+  }
+
+  if (meshCount === 0) throw new Error("USDZ export requires at least one renderable mesh");
+
+  for (const [index, material] of (gltf.materials ?? []).entries()) {
+    const materialName = usdIdentifier(material.name, `Material_${index}`);
+    lines.push(`  def Material "${materialName}" {}`);
+  }
+  for (const textureName of textureEntries) {
+    lines.push(`  asset vistaireTexture_${usdIdentifier(textureName, "Texture")} = @${textureName}@`);
+  }
+  lines.push("}");
+  entries["model.usda"] = Buffer.from(`${lines.join("\n")}\n`);
+  return Buffer.from(zipSync(entries, { level: 0 }));
 }
 
 function makeVisualQualityReport({ identity, analysis, variants, approvedBy }) {
@@ -557,8 +671,7 @@ function makeVisualQualityReport({ identity, analysis, variants, approvedBy }) {
       requestedBy: approvedBy || null
     },
     realDeviceQa: {
-      iphoneQuickLook: "not-tested",
-      androidSceneViewer: "not-tested"
+      ...pendingRealDeviceQa()
     },
     identity
   };
@@ -637,8 +750,7 @@ function buildManifest({ identity, analysis, variants, visualQuality, approvedBy
         approvedAt: visualApproved ? visualQuality.manualReview.approvedAt ?? now : null
       },
       realDeviceQa: {
-        iphoneQuickLook: "not-tested",
-        androidSceneViewer: "not-tested"
+        ...pendingRealDeviceQa()
       }
     },
     lifecycle: {
@@ -796,7 +908,7 @@ function runOptimizeDish(args) {
 
   const usdzPath = workFilePath(rootDir, identity, "iosUsdz");
   ensureParent(usdzPath);
-  writeFileSync(usdzPath, createUsdzPackage({ identity, analysis }));
+  writeFileSync(usdzPath, createUsdzPackageFromGlb({ glbPath: generatedFiles.arLite, identity }));
   generatedFiles.iosUsdz = usdzPath;
 
   const posterPath = workFilePath(rootDir, identity, "poster");
@@ -815,13 +927,16 @@ function runOptimizeDish(args) {
     }),
     arLite: variantMetadata(generatedFiles.arLite, productionUrl(identity, "arLite"), {
       profile: "arLite",
-      optimizationMethod: "copy",
+      optimizationMethod: "mesh-simplification-ar-lite",
+      optimizer: transformEvidence.arLite,
       extensionsRequired: []
     }),
     iosUsdz: variantMetadata(generatedFiles.iosUsdz, productionUrl(identity, "iosUsdz"), {
       profile: "ios-quicklook",
-      productionFaithful: false,
-      proxy: true
+      productionFaithful: true,
+      proxy: false,
+      conversionMethod: "glb-usdz-geometry-texture-export",
+      sourceVariant: "arLite"
     }),
     poster: variantMetadata(generatedFiles.poster, productionUrl(identity, "poster"), {
       profile: "poster",
