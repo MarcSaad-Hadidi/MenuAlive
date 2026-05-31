@@ -11,8 +11,8 @@ runtime selection gates.
 - Validate dish and restaurant manifests before runtime activation.
 - Validate GLB and USDZ files when local files are explicitly provided.
 - Validate delivery headers only when a base URL is explicitly provided.
-- Produce JSON/Markdown source, optimization, and visual-quality reports for
-  human review.
+- Produce JSON/Markdown source and optimization reports, then reject the asset
+  until a real rendered visual-quality report exists.
 - Keep Git free of new heavy GLB, USDZ, video, ZIP, source, and review assets.
 - Provide progressive runtime helpers that adapt the existing demo data into a
   manifest-shaped contract without moving heavy demo binaries.
@@ -177,18 +177,34 @@ bounds, orientation, and draw-call evidence. Git LFS pointers, missing files,
 malformed GLBs, and external URI dependencies are rejected.
 
 `3d:optimize-dish` requires `@gltf-transform/cli`. Web and mobile GLB variants
-run through `gltf-transform optimize` with Meshopt and WebP texture compression;
-if texture compression cannot be applied to a source, the fallback copy command
-is recorded in the optimization report. Android AR-lite remains a no-required
-extension GLB. The USDZ stage creates a deterministic review package; final
-client delivery must still pass real iPhone Quick Look QA before it is claimed.
+run through `gltf-transform optimize` with Meshopt and WebP texture compression.
+AR-lite uses a separate Android profile with no required compression extension,
+mesh simplification, and no copy fallback. The iOS USDZ candidate is generated
+from the AR-lite GLB geometry/textures instead of a minimal proxy package. The
+command rejects by default and writes generated variants under ignored
+`assets/3d/work/**` until strict visual proof exists. Placeholder poster outputs
+are review artifacts, not production assets. `--approved-by` records the
+reviewer request but cannot turn missing visual proof into approval.
+
+The required visual promise is: "visually indistinguishable under deterministic
+multi-angle mobile dining-distance review within strict thresholds." A manifest
+cannot be approved or published unless `visualQuality` records real rendered
+comparison evidence for web, mobile, and AR-lite: before/after/diff artifacts,
+per-angle reports, SSIM/perceptual scores, texture sharpness, silhouette, color,
+material, scale/origin, low-poly, and appetite-preservation checks, plus human
+approval. A structural visualQuality proxy is a rejection, not a warning.
+
+`npm run 3d:publish` verifies that strict evidence already exists. The
+`--quality-approved` flag is a publish confirmation only; it does not create
+manual approval and it does not clear visual failures. If a heavy source cannot
+meet budgets without visible loss, keep the previous version and request artist
+retouching or source simplification. Publication requires schema v2, existing
+visual report files, before/after/diff images, per-angle metrics, valid local
+variant files, existing human approval in the manifest, and passed real-device
+iPhone Quick Look plus Android Scene Viewer QA.
+
 `--cdn-base-url` is reserved for a future artifact uploader and URL rewriter; it
 does not bypass `--allow-public-binaries` today.
-
-The visual-quality report is deterministic and structural: it records geometry,
-scale, material, texture, and multi-view proxy evidence. It is useful for
-repeatable gating, but it is not a substitute for manual plating review or real
-device AR validation.
 
 `3d:clean-stale --write` requires an active dish manifest. Without one, the
 command cannot distinguish stale versions from unpublished generated versions,

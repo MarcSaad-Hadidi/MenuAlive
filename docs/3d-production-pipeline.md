@@ -53,23 +53,27 @@ estimate, and a simple/signature classification. Missing files, malformed GLBs,
 Git LFS pointers, and external URI dependencies fail the command.
 
 3. Produce web, mobile, Android AR-lite, iOS USDZ, poster, schema v2 manifest,
-   source-analysis, optimization, and visual-quality reports:
+   source-analysis, optimization, and a rejected visual-quality report:
 
 ```bash
 npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source assets/3d/source/maison-elyse/main/homard-bisque/v1/source.glb --write --allow-public-binaries --approved-by "Marc"
 ```
 
 The optimizer requires `@gltf-transform/cli`. Web and mobile candidates use
-`gltf-transform optimize` with Meshopt and WebP texture compression, with a
-safe `copy` fallback recorded in the report when a source texture blocks
-compression. Android AR-lite uses a no-required-extension GLB copy. The USDZ
-builder creates a minimal Quick Look package for review staging; final client
-delivery still requires manual iPhone validation and replacement with the
-approved USDZ export when photoreal USD fidelity is required.
+`gltf-transform optimize` with Meshopt and WebP texture compression. AR-lite
+uses a separate no-required-extension simplification profile for Android Scene
+Viewer; a plain `copy` is a failure, not a fallback. The iOS USDZ candidate is
+generated from the optimized AR-lite GLB geometry/textures, never from a
+hard-coded proxy package. These generated files are written under ignored
+`assets/3d/work/**` as review/staging outputs only. Placeholder poster outputs
+are rejected by default and cannot be presented as production optimization or
+exposed as runtime assets.
 
 4. Review the generated schema v2 dish manifest with URLs, bytes, hashes,
    physical scale, bounds, budgets, validation state, source analysis, visual
-   quality, lifecycle, rollback, and manual quality state.
+   quality, lifecycle, rollback, and manual quality state. The manifest remains
+   `review`/`failed` until a real rendered visual report is attached. Rejected
+   variants are not promoted into `public/models/restaurants/**`.
 5. Validate the manifest and files:
 
 ```bash
@@ -82,7 +86,9 @@ npm run 3d:validate-dish -- --manifest public/models/restaurants/maison-elyse/ma
 npm run 3d:validate-network -- --base-url https://example.com --manifest path/to/manifest.json --strict
 ```
 
-7. Publish only after strict validation and visual approval:
+7. Publish only after strict validation, real rendered visual evidence,
+   pre-existing human approval, and explicit passed real-device Quick
+   Look/Scene Viewer QA:
 
 ```bash
 npm run 3d:publish -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --quality-approved --approved-by "Marc" --write
@@ -107,12 +113,23 @@ delete anything because there is no preserved active version to compare against.
 
 ## Non-Negotiables
 
+See `docs/3d-visual-quality-gate.md` for the full visual identity gate.
+
 - No GLB/USDZ before user intent in the frontend.
 - No production Quick Look URL with query strings or hashes.
 - No broad Git LFS rules.
 - No unvalidated candidates in `public/`.
+- No production approval based only on geometry/material/texture presence.
+- No USDZ proxy, poster placeholder, or AR-lite copy may be presented as
+  production optimization.
+- No publish without before/after/diff evidence for web, mobile, and AR-lite.
+- No publish without a visual report, strict SSIM/perceptual thresholds, human
+  visual approval, and passed real-device iPhone/Android QA already present in
+  the manifest.
 - No claim of real iPhone Quick Look or Android Scene Viewer validation without
   testing on those devices.
-- Automated visual quality is a deterministic structural proxy. It catches
-  geometry, scale, material, and texture coverage regressions, but manual visual
-  approval and real-device QA remain release gates.
+- The phrase "exactly the same visual" means "visually indistinguishable under
+  deterministic multi-angle mobile dining-distance review within strict
+  thresholds." It is not a pixel-perfect claim.
+- If a heavy source cannot meet delivery budgets without visible loss, reject
+  it, keep the previous version, and request artist simplification or retouching.

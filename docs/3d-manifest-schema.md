@@ -1,7 +1,9 @@
 # Vistaire 3D Manifest Schema
 
 Vistaire supports legacy schema v1 manifests and production schema v2 manifests.
-New production work should use schema v2.
+New production work should use schema v2. In production, any dish manifest
+marked `passed`, `approved`, or `published` must be schema v2 so the strict
+visual identity contract can be enforced.
 
 ## Dish Manifest V2
 
@@ -49,6 +51,44 @@ Schema v2 also requires:
 Published manifests must have no warnings or fails, `validationStatus:
 "passed"`, `approvedAt`, `publishedAt`, and manual visual approval when
 required.
+
+Approved and published production manifests are strict visual-identity records.
+They must not use a structural proxy as visual proof. The required
+`visualQuality.promise` is:
+
+```text
+visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds
+```
+
+For production approval, `visualQuality` must include:
+
+- `method` describing deterministic rendered comparison, not structural proxying
+- `report`
+- `reportArtifacts.web.before`, `after`, and `diff`
+- `reportArtifacts.mobile.before`, `after`, and `diff`
+- `reportArtifacts.arLite.before`, `after`, and `diff`
+- per-angle `angleReports` for web, mobile, and AR-lite
+- strict SSIM and perceptual metrics
+- strict pixel diff, silhouette, color, texture blur, material drift,
+  scale/origin, low-poly, and appetite-preservation metrics
+- `checks.textureSharpness`, `silhouette`, `color`, `material`, `scaleOrigin`,
+  `lowPoly`, and `appetite` with `status: "passed"`
+- `manualReview.required: true`, `manualReview.status: "approved"`,
+  `manualReview.approvalType: "human"`, `approvedBy`, and `approvedAt`
+- `realDeviceQa.required: true` with passed `iphoneQuickLook` and
+  `androidSceneViewer` entries, including device, OS, tester, and test date
+
+Publish-time validation resolves the visual report and image references as
+local relative paths under the workspace. Missing files, unsafe paths, or
+non-image before/after/diff artifacts fail publication.
+
+Variant metadata must also stay honest:
+
+- `variants.arLite` cannot be an unoptimized source copy.
+- `variants.iosUsdz.productionFaithful` must be `true`.
+- `variants.iosUsdz.proxy` must not be `true`.
+- `variants.poster.productionPoster` must be `true`.
+- `variants.poster.placeholder` must not be `true`.
 
 Runtime selection is stricter than the schema:
 

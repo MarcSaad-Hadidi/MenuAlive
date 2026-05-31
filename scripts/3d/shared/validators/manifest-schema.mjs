@@ -30,6 +30,33 @@ const ISO_DATE_PATTERN =
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DISH_SCHEMA_VERSIONS = new Set([1, 2]);
 const RESTAURANT_SCHEMA_VERSIONS = new Set([1, 2]);
+const STRICT_VISUAL_PROMISE =
+  "visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds";
+const STRICT_VISUAL_VARIANTS = Object.freeze(["web", "mobile", "arLite"]);
+const STRICT_VISUAL_ANGLE_MINIMUM = 4;
+const STRICT_VISUAL_THRESHOLDS = Object.freeze({
+  meanSsim: 0.985,
+  perceptualScore: 0.98,
+  maxDiffRatio: 0.004,
+  maxSilhouetteDiff: 0.002,
+  maxColorDelta: 0.015,
+  maxTextureBlurDelta: 0.02,
+  maxMaterialDrift: 0.02,
+  maxScaleDriftMeters: 0.003,
+  maxOriginDriftMeters: 0.003,
+  maxLowPolyVisibility: 0.01,
+  minAppetitePreservation: 0.98
+});
+const STRICT_VISUAL_REQUIRED_CHECKS = Object.freeze({
+  textureSharpness: "texture sharpness must not regress",
+  silhouette: "silhouette must not change",
+  color: "color must not drift",
+  material: "material must remain premium",
+  scaleOrigin: "scale and origin must remain stable",
+  lowPoly: "visible low-poly artifacts must be absent",
+  appetite: "dish appetite appeal must be preserved"
+});
+const REAL_DEVICE_QA_TARGETS = Object.freeze(["iphoneQuickLook", "androidSceneViewer"]);
 
 function pathMessage(path, message) {
   return `${path}: ${message}`;
@@ -47,6 +74,21 @@ function isIsoDateOrNull(value) {
 
 function isSchemaV2(manifest) {
   return manifest?.schemaVersion === 2;
+}
+
+function shouldUseStrictProductionSchema(manifest, context) {
+  return (
+    context === "production" &&
+    (
+      manifest.status === "approved" ||
+      manifest.status === "published" ||
+      manifest.validationStatus === "passed"
+    )
+  );
+}
+
+function shouldRequireStrictVisualIdentity(manifest, context) {
+  return shouldUseStrictProductionSchema(manifest, context) && isSchemaV2(manifest);
 }
 
 function allowedRootsForContext(context) {
@@ -203,6 +245,311 @@ function validateNumberField(
   }
 }
 
+function numberAt(value, path) {
+  const parts = path.split(".");
+  let cursor = value;
+  for (const part of parts) {
+    if (!isObject(cursor) && typeof cursor !== "number") return undefined;
+    cursor = cursor?.[part];
+  }
+  return Number.isFinite(cursor) ? cursor : undefined;
+}
+
+function visualMetric(visualQuality, metricName) {
+  if (Number.isFinite(visualQuality?.[metricName])) return visualQuality[metricName];
+  return numberAt(visualQuality, `metrics.${metricName}`);
+}
+
+function visualThreshold(visualQuality, thresholdName) {
+  if (Number.isFinite(visualQuality?.thresholds?.[thresholdName])) {
+    return visualQuality.thresholds[thresholdName];
+  }
+  return STRICT_VISUAL_THRESHOLDS[thresholdName];
+}
+
+function isEvidenceReference(value) {
+  if (typeof value === "string") return value.trim().length > 0;
+  if (!isObject(value)) return false;
+  const reference = value.path ?? value.url ?? value.href;
+  return typeof reference === "string" && reference.trim().length > 0;
+}
+
+function validateEvidenceTriplet(result, triplet, path) {
+  if (!isObject(triplet)) {
+    addFail(result, pathMessage(path, "must include before, after, and diff rendered evidence"));
+    return;
+  }
+  for (const key of ["before", "after", "diff"]) {
+    if (!isEvidenceReference(triplet[key])) {
+      addFail(result, pathMessage(`${path}.${key}`, "rendered before/after/diff artifact is required"));
+    }
+  }
+}
+
+function validateMetricAtLeast(result, visualQuality, metricName, thresholdName, label) {
+  const value = visualMetric(visualQuality, metricName);
+  const threshold = visualThreshold(visualQuality, thresholdName);
+  if (!Number.isFinite(value)) {
+    addFail(result, pathMessage(`visualQuality.${metricName}`, `${label} metric is required`));
+    return;
+  }
+  if (!Number.isFinite(threshold) || threshold < STRICT_VISUAL_THRESHOLDS[thresholdName]) {
+    addFail(result, pathMessage(`visualQuality.thresholds.${thresholdName}`, "must keep the strict production minimum"));
+  }
+  if (value < STRICT_VISUAL_THRESHOLDS[thresholdName]) {
+    addFail(
+      result,
+      pathMessage(
+        `visualQuality.${metricName}`,
+        `${label} ${value} is below strict threshold ${STRICT_VISUAL_THRESHOLDS[thresholdName]}`
+      )
+    );
+  }
+}
+
+function validateMetricAtMost(result, visualQuality, metricName, thresholdName, label) {
+  const value = visualMetric(visualQuality, metricName);
+  const threshold = visualThreshold(visualQuality, thresholdName);
+  if (!Number.isFinite(value)) {
+    addFail(result, pathMessage(`visualQuality.${metricName}`, `${label} metric is required`));
+    return;
+  }
+  if (!Number.isFinite(threshold) || threshold > STRICT_VISUAL_THRESHOLDS[thresholdName]) {
+    addFail(result, pathMessage(`visualQuality.thresholds.${thresholdName}`, "must keep the strict production maximum"));
+  }
+  if (value > STRICT_VISUAL_THRESHOLDS[thresholdName]) {
+    addFail(
+      result,
+      pathMessage(
+        `visualQuality.${metricName}`,
+        `${label} ${value} exceeds strict threshold ${STRICT_VISUAL_THRESHOLDS[thresholdName]}`
+      )
+    );
+  }
+}
+
+function validateRealDeviceQa(result, qa, path) {
+  if (!isObject(qa)) {
+    addFail(result, pathMessage(path, "real-device QA evidence is required"));
+    return;
+  }
+  if (qa.required !== true) {
+    addFail(result, pathMessage(`${path}.required`, "must be true for production 3D/AR publish"));
+  }
+  for (const target of REAL_DEVICE_QA_TARGETS) {
+    const entry = qa[target];
+    const entryPath = `${path}.${target}`;
+    if (!isObject(entry)) {
+      addFail(result, pathMessage(entryPath, "real-device QA result is required"));
+      continue;
+    }
+    if (entry.required !== true) {
+      addFail(result, pathMessage(`${entryPath}.required`, "must be true"));
+    }
+    if (entry.status !== "passed") {
+      addFail(result, pathMessage(`${entryPath}.status`, "must be passed on a real device before publishing"));
+    }
+    for (const field of ["device", "os", "testedBy"]) {
+      if (typeof entry[field] !== "string" || !entry[field].trim()) {
+        addFail(result, pathMessage(`${entryPath}.${field}`, "is required for real-device QA"));
+      }
+    }
+    if (!isIsoDateOrNull(entry.testedAt) || entry.testedAt === null) {
+      addFail(result, pathMessage(`${entryPath}.testedAt`, "real-device QA date is required"));
+    }
+  }
+}
+
+function angleReportsForVariant(visualQuality, variantKey) {
+  const reports = Array.isArray(visualQuality?.angleReports) ? visualQuality.angleReports : [];
+  return reports.filter((entry) => entry?.variant === variantKey || isObject(entry?.variants?.[variantKey]));
+}
+
+function validateStrictVisualIdentity(result, manifest) {
+  const visualQuality = manifest.visualQuality;
+  if (!isObject(visualQuality)) {
+    addFail(result, pathMessage("visualQuality", "must be an object"));
+    return;
+  }
+
+  if (visualQuality.status !== "passed") {
+    addFail(result, pathMessage("visualQuality.status", "must be passed after strict rendered visual identity review"));
+  }
+  if (visualQuality.promise !== STRICT_VISUAL_PROMISE) {
+    addFail(
+      result,
+      pathMessage(
+        "visualQuality.promise",
+        `must be ${JSON.stringify(STRICT_VISUAL_PROMISE)}`
+      )
+    );
+  }
+  const method = String(visualQuality.method ?? "");
+  if (!/render/i.test(method) || !/comparison/i.test(method)) {
+    addFail(result, pathMessage("visualQuality.method", "must describe deterministic rendered comparison"));
+  }
+  if (/proxy|structural/i.test(method)) {
+    addFail(result, pathMessage("visualQuality.method", "structural visualQuality proxy is not production evidence"));
+  }
+  if (!isEvidenceReference(visualQuality.report)) {
+    addFail(result, pathMessage("visualQuality.report", "visual report is required"));
+  }
+
+  const artifacts = visualQuality.reportArtifacts;
+  if (!isObject(artifacts)) {
+    addFail(result, pathMessage("visualQuality.reportArtifacts", "rendered before/after/diff evidence is required"));
+  } else {
+    for (const variantKey of STRICT_VISUAL_VARIANTS) {
+      validateEvidenceTriplet(result, artifacts[variantKey], `visualQuality.reportArtifacts.${variantKey}`);
+    }
+  }
+
+  const angleReports = Array.isArray(visualQuality.angleReports) ? visualQuality.angleReports : [];
+  if (angleReports.length === 0) {
+    addFail(result, pathMessage("visualQuality.angleReports", "report per angle is required"));
+  }
+  for (const variantKey of STRICT_VISUAL_VARIANTS) {
+    const variantReports = angleReportsForVariant(visualQuality, variantKey);
+    const angles = new Set(variantReports.map((entry) => entry.angle).filter(Boolean));
+    if (angles.size < STRICT_VISUAL_ANGLE_MINIMUM) {
+      addFail(
+        result,
+        pathMessage(
+          `visualQuality.angleReports.${variantKey}`,
+          `must include at least ${STRICT_VISUAL_ANGLE_MINIMUM} deterministic angles`
+        )
+      );
+    }
+    for (const report of variantReports) {
+      const reportPath = `visualQuality.angleReports.${variantKey}.${report.angle ?? "unknown"}`;
+      validateEvidenceTriplet(result, report, reportPath);
+      if (report.status !== "passed") {
+        addFail(result, pathMessage(`${reportPath}.status`, "must be passed"));
+      }
+      if (!Number.isFinite(report.ssim)) {
+        addFail(result, pathMessage(`${reportPath}.ssim`, "SSIM metric is required"));
+      } else if (report.ssim < STRICT_VISUAL_THRESHOLDS.meanSsim) {
+        addFail(result, pathMessage(`${reportPath}.ssim`, "is below the strict SSIM threshold"));
+      }
+      if (!Number.isFinite(report.perceptualScore)) {
+        addFail(result, pathMessage(`${reportPath}.perceptualScore`, "perceptual metric is required"));
+      } else if (report.perceptualScore < STRICT_VISUAL_THRESHOLDS.perceptualScore) {
+        addFail(result, pathMessage(`${reportPath}.perceptualScore`, "is below the strict perceptual threshold"));
+      }
+      if (!Number.isFinite(report.maxDiffRatio)) {
+        addFail(result, pathMessage(`${reportPath}.maxDiffRatio`, "diff ratio metric is required"));
+      } else if (report.maxDiffRatio > STRICT_VISUAL_THRESHOLDS.maxDiffRatio) {
+        addFail(result, pathMessage(`${reportPath}.maxDiffRatio`, "exceeds the strict diff threshold"));
+      }
+    }
+  }
+
+  validateMetricAtLeast(result, visualQuality, "meanSsim", "meanSsim", "SSIM");
+  validateMetricAtLeast(result, visualQuality, "perceptualScore", "perceptualScore", "perceptual score");
+  validateMetricAtMost(result, visualQuality, "maxDiffRatio", "maxDiffRatio", "pixel diff ratio");
+  validateMetricAtMost(result, visualQuality, "maxSilhouetteDiff", "maxSilhouetteDiff", "silhouette diff");
+  validateMetricAtMost(result, visualQuality, "maxColorDelta", "maxColorDelta", "color drift");
+  validateMetricAtMost(result, visualQuality, "maxTextureBlurDelta", "maxTextureBlurDelta", "texture blur");
+  validateMetricAtMost(result, visualQuality, "maxMaterialDrift", "maxMaterialDrift", "material drift");
+  validateMetricAtMost(result, visualQuality, "maxScaleDriftMeters", "maxScaleDriftMeters", "scale drift");
+  validateMetricAtMost(result, visualQuality, "maxOriginDriftMeters", "maxOriginDriftMeters", "origin drift");
+  validateMetricAtMost(result, visualQuality, "lowPolyVisibilityScore", "maxLowPolyVisibility", "visible low-poly score");
+  validateMetricAtLeast(
+    result,
+    visualQuality,
+    "appetitePreservationScore",
+    "minAppetitePreservation",
+    "appetite preservation"
+  );
+
+  if (!isObject(visualQuality.checks)) {
+    addFail(result, pathMessage("visualQuality.checks", "strict visual checks are required"));
+  } else {
+    for (const [checkKey, message] of Object.entries(STRICT_VISUAL_REQUIRED_CHECKS)) {
+      const check = visualQuality.checks[checkKey];
+      if (!isObject(check)) {
+        addFail(result, pathMessage(`visualQuality.checks.${checkKey}`, message));
+      } else if (check.status !== "passed") {
+        addFail(result, pathMessage(`visualQuality.checks.${checkKey}.status`, message));
+      }
+    }
+  }
+
+  const manualReview = visualQuality.manualReview;
+  if (!isObject(manualReview) || manualReview.required !== true) {
+    addFail(result, pathMessage("visualQuality.manualReview.required", "human visual approval is required"));
+  } else {
+    if (manualReview.status !== "approved") {
+      addFail(result, pathMessage("visualQuality.manualReview.status", "must be approved by a human reviewer"));
+    }
+    if (manualReview.approvalType !== "human") {
+      addFail(result, pathMessage("visualQuality.manualReview.approvalType", "must be human"));
+    }
+    if (typeof manualReview.approvedBy !== "string" || !manualReview.approvedBy.trim()) {
+      addFail(result, pathMessage("visualQuality.manualReview.approvedBy", "human reviewer name is required"));
+    }
+    if (!isIsoDateOrNull(manualReview.approvedAt) || manualReview.approvedAt === null) {
+      addFail(result, pathMessage("visualQuality.manualReview.approvedAt", "human approval date is required"));
+    }
+  }
+
+  if (!isObject(manifest.quality)) {
+    addFail(result, pathMessage("quality", "manual visual approval block is required"));
+  } else {
+    if (manifest.quality.manualVisualApprovalRequired !== true) {
+      addFail(result, pathMessage("quality.manualVisualApprovalRequired", "must remain true for production"));
+    }
+    if (manifest.quality.manualVisualApproved !== true) {
+      addFail(result, pathMessage("quality.manualVisualApproved", "human visual approval is required"));
+    }
+    if (typeof manifest.quality.approvedBy !== "string" || !manifest.quality.approvedBy.trim()) {
+      addFail(result, pathMessage("quality.approvedBy", "human reviewer name is required"));
+    }
+    validateRealDeviceQa(result, manifest.quality.realDeviceQa, "quality.realDeviceQa");
+  }
+  validateRealDeviceQa(result, visualQuality.realDeviceQa, "visualQuality.realDeviceQa");
+}
+
+function validateStrictProductionVariantMetadata(result, manifest) {
+  const arLite = manifest.variants?.arLite;
+  const iosUsdz = manifest.variants?.iosUsdz;
+  const poster = manifest.variants?.poster;
+  const sourceSha256 = manifest.sourceAnalysis?.sha256;
+
+  if (isObject(arLite)) {
+    if (arLite.optimizationMethod === "copy" || arLite.optimizer?.command?.includes(" copy ")) {
+      addFail(result, pathMessage("variants.arLite.optimizationMethod", "arLite copy cannot be presented as optimization"));
+    }
+    if (typeof sourceSha256 === "string" && arLite.sha256 === sourceSha256) {
+      addFail(result, pathMessage("variants.arLite.sha256", "arLite must not be an unoptimized source copy"));
+    }
+    if (arLite.sha256 && arLite.sha256 === manifest.variants?.web?.sha256) {
+      addFail(result, pathMessage("variants.arLite.sha256", "arLite must not be a web GLB copy"));
+    }
+    if (arLite.sha256 && arLite.sha256 === manifest.variants?.mobile?.sha256) {
+      addFail(result, pathMessage("variants.arLite.sha256", "arLite must not be a mobile GLB copy"));
+    }
+  }
+
+  if (isObject(iosUsdz)) {
+    if (iosUsdz.productionFaithful !== true) {
+      addFail(result, pathMessage("variants.iosUsdz.productionFaithful", "faithful USDZ export is required for production"));
+    }
+    if (iosUsdz.proxy === true) {
+      addFail(result, pathMessage("variants.iosUsdz.proxy", "USDZ proxy packages cannot be production assets"));
+    }
+  }
+
+  if (isObject(poster)) {
+    if (poster.placeholder === true) {
+      addFail(result, pathMessage("variants.poster.placeholder", "poster placeholder cannot be production evidence"));
+    }
+    if (poster.productionPoster !== true) {
+      addFail(result, pathMessage("variants.poster.productionPoster", "production poster approval is required"));
+    }
+  }
+}
+
 function validateVec3(result, value, path) {
   if (!Array.isArray(value) || value.length !== 3) {
     addFail(result, pathMessage(path, "must be a 3-number array"));
@@ -213,7 +560,7 @@ function validateVec3(result, value, path) {
   });
 }
 
-function validateV2Blocks(result, manifest) {
+function validateV2Blocks(result, manifest, context) {
   if (manifest.kind !== "vistaire.dish-3d-manifest") {
     addFail(result, pathMessage("kind", "must be vistaire.dish-3d-manifest"));
   }
@@ -308,6 +655,11 @@ function validateV2Blocks(result, manifest) {
     }
   }
 
+  if (shouldRequireStrictVisualIdentity(manifest, context)) {
+    validateStrictVisualIdentity(result, manifest);
+    validateStrictProductionVariantMetadata(result, manifest);
+  }
+
   if (!isObject(manifest.lifecycle)) {
     addFail(result, pathMessage("lifecycle", "must be an object"));
   } else if (manifest.lifecycle.phase && manifest.lifecycle.phase !== manifest.status) {
@@ -367,6 +719,14 @@ export function validateDishManifestSchema(manifest, options = {}) {
 
   if (!DISH_SCHEMA_VERSIONS.has(manifest.schemaVersion)) {
     addFail(result, pathMessage("schemaVersion", "must be 1 or 2"));
+  } else if (shouldUseStrictProductionSchema(manifest, context) && !isSchemaV2(manifest)) {
+    addFail(
+      result,
+      pathMessage(
+        "schemaVersion",
+        "must be 2 for production manifests marked passed, approved, or published"
+      )
+    );
   }
   for (const field of ["restaurantSlug", "menuSlug", "dishSlug"]) {
     validateSlug(result, manifest[field], field);
@@ -408,7 +768,7 @@ export function validateDishManifestSchema(manifest, options = {}) {
 
   validateValidationBlock(result, manifest, context);
   validateLifecycleDates(result, manifest, context);
-  if (isSchemaV2(manifest)) validateV2Blocks(result, manifest);
+  if (isSchemaV2(manifest)) validateV2Blocks(result, manifest, context);
 
   const declaredQualityStatus = manifest.validationStatus;
   const expectedQualityStatus = expectedValidationStatusFor(manifest);

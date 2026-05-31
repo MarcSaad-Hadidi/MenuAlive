@@ -54,6 +54,45 @@ const WEBP_PLACEHOLDER = Buffer.from(
   "UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA",
   "base64"
 );
+const STRICT_VISUAL_PROMISE =
+  "visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds";
+const STRICT_VISUAL_THRESHOLDS = Object.freeze({
+  meanSsim: 0.985,
+  perceptualScore: 0.98,
+  maxDiffRatio: 0.004,
+  maxSilhouetteDiff: 0.002,
+  maxColorDelta: 0.015,
+  maxTextureBlurDelta: 0.02,
+  maxMaterialDrift: 0.02,
+  maxScaleDriftMeters: 0.003,
+  maxOriginDriftMeters: 0.003,
+  maxLowPolyVisibility: 0.01,
+  minAppetitePreservation: 0.98
+});
+const STRICT_VISUAL_REJECTION =
+  "Strict rendered visual identity evidence is required before optimization can be approved: source/candidate before-after-diff renders for web, mobile, and arLite, per-angle SSIM/perceptual scores, texture/silhouette/color/material/scale/origin/low-poly/appetite checks, and human approval.";
+
+function pendingRealDeviceQa() {
+  return {
+    required: true,
+    iphoneQuickLook: {
+      required: true,
+      status: "not-tested",
+      device: null,
+      os: null,
+      testedBy: null,
+      testedAt: null
+    },
+    androidSceneViewer: {
+      required: true,
+      status: "not-tested",
+      device: null,
+      os: null,
+      testedBy: null,
+      testedAt: null
+    }
+  };
+}
 
 function createResult(name, metrics = {}) {
   return {
@@ -376,10 +415,6 @@ function productionUrl(identity, variantKey) {
   return `/models/restaurants/${identity.restaurantSlug}/${identity.menuSlug}/${identity.dishSlug}/${identity.version}/${directory}/${fileName}`;
 }
 
-function productionFilePath(rootDir, identity, variantKey) {
-  return safeJoin(rootDir, "public", productionUrl(identity, variantKey).replace(/^\//, ""));
-}
-
 function reportDir(rootDir, identity) {
   return safeJoin(
     rootDir,
@@ -403,6 +438,14 @@ function workDir(rootDir, identity) {
     identity.menuSlug,
     identity.dishSlug,
     identity.version
+  );
+}
+
+function workFilePath(rootDir, identity, variantKey) {
+  return safeJoin(
+    workDir(rootDir, identity),
+    VARIANT_DIRS[variantKey],
+    VARIANT_FILES[variantKey](identity.dishSlug)
   );
 }
 
@@ -444,86 +487,191 @@ function runGltfTransform({ input, output, profile }) {
   const commands = {
     web: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "2048"],
     mobile: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "1024"],
-    arLite: ["copy", input, output]
+    arLite: [
+      "optimize",
+      input,
+      output,
+      "--compress",
+      "false",
+      "--texture-compress",
+      "false",
+      "--texture-size",
+      "1024",
+      "--simplify",
+      "true",
+      "--simplify-ratio",
+      "0.72",
+      "--simplify-error",
+      "0.00045",
+      "--simplify-lock-border",
+      "true"
+    ]
   };
   const args = commands[profile] ?? commands.arLite;
-  try {
-    execFileSync(process.execPath, [cli, ...args], {
-      cwd: process.cwd(),
-      encoding: "utf8",
-      stdio: "pipe",
-      windowsHide: true
-    });
-    return { ok: true, command: `gltf-transform ${args.join(" ")}`, fallback: false };
-  } catch (error) {
-    if (profile === "arLite") throw error;
-    execFileSync(process.execPath, [cli, "copy", input, output], {
-      cwd: process.cwd(),
-      encoding: "utf8",
-      stdio: "pipe",
-      windowsHide: true
-    });
-    return {
-      ok: true,
-      command: `gltf-transform copy ${input} ${output}`,
-      fallback: true,
-      reason: error.stderr?.toString() || error.message
-    };
-  }
+  execFileSync(process.execPath, [cli, ...args], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    stdio: "pipe",
+    windowsHide: true
+  });
+  return { ok: true, command: `gltf-transform ${args.join(" ")}`, fallback: false };
 }
 
-function createUsdzPackage({ identity, analysis }) {
-  const usda = [
+function usdIdentifier(value, fallback) {
+  const cleaned = String(value ?? "")
+    .replace(/[^A-Za-z0-9_]/g, "_")
+    .replace(/^[^A-Za-z_]+/, "");
+  return cleaned || fallback;
+}
+
+function readAccessor(gltf, binBuffer, accessorIndex) {
+  const accessor = gltf.accessors?.[accessorIndex];
+  if (!accessor) throw new Error(`Missing accessor ${accessorIndex}`);
+  const view = gltf.bufferViews?.[accessor.bufferView];
+  if (!view || view.buffer !== 0) throw new Error(`Accessor ${accessorIndex} must use an embedded GLB bufferView`);
+  const componentBytes = componentSize(accessor.componentType);
+  const itemSize = typeCount(accessor.type);
+  const stride = view.byteStride ?? componentBytes * itemSize;
+  const start = (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
+  const values = [];
+  for (let item = 0; item < accessor.count; item += 1) {
+    const itemOffset = start + item * stride;
+    const tuple = [];
+    for (let component = 0; component < itemSize; component += 1) {
+      const offset = itemOffset + component * componentBytes;
+      if (accessor.componentType === 5126) tuple.push(binBuffer.readFloatLE(offset));
+      else if (accessor.componentType === 5125) tuple.push(binBuffer.readUInt32LE(offset));
+      else if (accessor.componentType === 5123) tuple.push(binBuffer.readUInt16LE(offset));
+      else if (accessor.componentType === 5121) tuple.push(binBuffer.readUInt8(offset));
+      else throw new Error(`Unsupported accessor component type ${accessor.componentType}`);
+    }
+    values.push(itemSize === 1 ? tuple[0] : tuple);
+  }
+  return values;
+}
+
+function imageExtension(image, bytes) {
+  const mimeType = String(image?.mimeType ?? "").toLowerCase();
+  if (mimeType.includes("png") || bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex"))) return "png";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg") || bytes.subarray(0, 3).equals(Buffer.from("ffd8ff", "hex"))) return "jpg";
+  if (mimeType.includes("webp") || (bytes.length >= 12 && bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP")) {
+    return "webp";
+  }
+  return "";
+}
+
+function formatUsdNumber(value) {
+  return Number(value.toFixed(6)).toString();
+}
+
+function createUsdzPackageFromGlb({ glbPath, identity }) {
+  const { json: gltf, binBuffer } = parseGlb(readFileSync(glbPath));
+  const entries = {};
+  const textureEntries = [];
+  for (const [index, image] of (gltf.images ?? []).entries()) {
+    const bytes = embeddedImageBytes(gltf, binBuffer, image);
+    const extension = imageExtension(image, bytes);
+    if (!extension || bytes.length === 0) continue;
+    const name = `textures/image-${index}.${extension}`;
+    entries[name] = bytes;
+    textureEntries.push(name);
+  }
+
+  const lines = [
     "#usda 1.0",
-    `def Xform "${identity.dishSlug}" {`,
-    `  custom string vistaire:sourceSha256 = "${analysis.sha256}"`,
-    `  custom int vistaire:triangles = ${analysis.triangles}`,
-    "  def Mesh \"DishProxy\" {",
-    "    point3f[] points = [(-0.25, 0, -0.2), (0.25, 0, -0.2), (0, 0.08, 0.2)]",
-    "    int[] faceVertexCounts = [3]",
-    "    int[] faceVertexIndices = [0, 1, 2]",
-    "  }",
-    "  def Material \"VistaireMaterial\" {}",
-    "}"
-  ].join("\n");
-  return Buffer.from(
-    zipSync({
-      "model.usda": Buffer.from(usda),
-      "textures/poster.png": Buffer.from("89504e470d0a1a0a", "hex")
-    })
-  );
+    "(",
+    `  defaultPrim = "${usdIdentifier(identity.dishSlug, "Dish")}"`,
+    ")",
+    "",
+    `def Xform "${usdIdentifier(identity.dishSlug, "Dish")}" {`
+  ];
+
+  let meshCount = 0;
+  for (const [meshIndex, mesh] of (gltf.meshes ?? []).entries()) {
+    for (const [primitiveIndex, primitive] of (mesh.primitives ?? []).entries()) {
+      if ((primitive.mode ?? 4) !== 4) {
+        throw new Error("USDZ export supports triangle-list GLB primitives only");
+      }
+      const positionAccessor = primitive.attributes?.POSITION;
+      if (!Number.isInteger(positionAccessor)) throw new Error("USDZ export requires POSITION accessors");
+      const points = readAccessor(gltf, binBuffer, positionAccessor);
+      const indices = Number.isInteger(primitive.indices)
+        ? readAccessor(gltf, binBuffer, primitive.indices)
+        : points.map((_, index) => index);
+      if (indices.length < 3 || indices.length % 3 !== 0) {
+        throw new Error("USDZ export requires triangle indices");
+      }
+      const meshName = usdIdentifier(mesh.name, `Mesh_${meshIndex}_${primitiveIndex}`);
+      lines.push(`  def Mesh "${meshName}" {`);
+      lines.push(
+        `    point3f[] points = [${points
+          .map((point) => `(${point.map(formatUsdNumber).join(", ")})`)
+          .join(", ")}]`
+      );
+      lines.push(`    int[] faceVertexCounts = [${Array(indices.length / 3).fill(3).join(", ")}]`);
+      lines.push(`    int[] faceVertexIndices = [${indices.join(", ")}]`);
+      lines.push("  }");
+      meshCount += 1;
+    }
+  }
+
+  if (meshCount === 0) throw new Error("USDZ export requires at least one renderable mesh");
+
+  for (const [index, material] of (gltf.materials ?? []).entries()) {
+    const materialName = usdIdentifier(material.name, `Material_${index}`);
+    lines.push(`  def Material "${materialName}" {}`);
+  }
+  for (const textureName of textureEntries) {
+    lines.push(`  asset vistaireTexture_${usdIdentifier(textureName, "Texture")} = @${textureName}@`);
+  }
+  lines.push("}");
+  entries["model.usda"] = Buffer.from(`${lines.join("\n")}\n`);
+  return Buffer.from(zipSync(entries, { level: 0 }));
 }
 
 function makeVisualQualityReport({ identity, analysis, variants, approvedBy }) {
-  const geometryScore = analysis.triangles > 0 && analysis.vertices > 0 ? 1 : 0;
-  const scaleScore = analysis.bounds.groundedY && analysis.bounds.centeredXZ ? 1 : 0.8;
-  const materialScore = analysis.materials > 0 ? 1 : 0.75;
-  const textureScore = analysis.textures > 0 ? 0.95 : 0.85;
-  const score = Number(((geometryScore + scaleScore + materialScore + textureScore) / 4).toFixed(4));
   return {
-    status: score >= 0.85 ? "passed" : "warning",
-    score,
-    threshold: 0.85,
-    method: "deterministic-structural-render-proxy",
+    status: "failed",
+    score: 0,
+    promise: STRICT_VISUAL_PROMISE,
+    method: "missing-deterministic-render-comparison",
+    thresholds: STRICT_VISUAL_THRESHOLDS,
+    report: null,
+    reportArtifacts: {},
+    angleReports: [],
+    metrics: {},
     deterministicViews: ["front", "left", "right", "top", "three-quarter"],
     checks: {
-      silhouette: { status: "passed", score: geometryScore },
-      physicalScale: { status: scaleScore >= 1 ? "passed" : "warning", score: scaleScore },
-      materialCoverage: { status: materialScore >= 1 ? "passed" : "warning", score: materialScore },
-      textureSharpnessProxy: { status: textureScore >= 0.85 ? "passed" : "warning", score: textureScore }
+      textureSharpness: { status: "failed", reason: "Rendered texture sharpness comparison is missing" },
+      silhouette: { status: "failed", reason: "Rendered silhouette diff is missing" },
+      color: { status: "failed", reason: "Rendered color drift comparison is missing" },
+      material: { status: "failed", reason: "Rendered material drift review is missing" },
+      scaleOrigin: { status: "failed", reason: "Scale/origin comparison is missing" },
+      lowPoly: { status: "failed", reason: "Low-poly visibility review is missing" },
+      appetite: { status: "failed", reason: "Human appetite appeal review is missing" }
     },
     variants: Object.fromEntries(
       Object.entries(variants).map(([key, variant]) => [key, { bytes: variant.bytes, sha256: variant.sha256 }])
     ),
+    sourceSummary: {
+      bytes: analysis.bytes,
+      sha256: analysis.sha256,
+      triangles: analysis.triangles,
+      vertices: analysis.vertices,
+      materials: analysis.materials,
+      textures: analysis.textures
+    },
+    fails: [STRICT_VISUAL_REJECTION],
     manualReview: {
       required: true,
-      status: approvedBy ? "approved" : "pending",
-      approvedBy: approvedBy || null,
-      approvedAt: approvedBy ? new Date().toISOString() : null
+      status: "pending",
+      approvalType: "human",
+      approvedBy: null,
+      approvedAt: null,
+      requestedBy: approvedBy || null
     },
     realDeviceQa: {
-      iphoneQuickLook: "not-tested",
-      androidSceneViewer: "not-tested"
+      ...pendingRealDeviceQa()
     },
     identity
   };
@@ -542,8 +690,14 @@ function variantMetadata(filePath, url, extra = {}) {
 
 function buildManifest({ identity, analysis, variants, visualQuality, approvedBy }) {
   const now = new Date().toISOString();
-  const status = approvedBy ? "approved" : "review";
+  const visualApproved =
+    visualQuality?.status === "passed" &&
+    visualQuality?.manualReview?.status === "approved" &&
+    visualQuality?.manualReview?.approvalType === "human" &&
+    Boolean(visualQuality?.manualReview?.approvedBy);
+  const status = visualApproved ? "approved" : "review";
   const totalBytes = Object.values(variants).reduce((sum, variant) => sum + variant.bytes, 0);
+  const validationFails = visualApproved ? [] : [STRICT_VISUAL_REJECTION];
   return {
     schemaVersion: 2,
     kind: "vistaire.dish-3d-manifest",
@@ -552,7 +706,7 @@ function buildManifest({ identity, analysis, variants, visualQuality, approvedBy
     dishSlug: identity.dishSlug,
     activeVersion: identity.version,
     status,
-    validationStatus: "passed",
+    validationStatus: visualApproved ? "passed" : "failed",
     variants,
     bytes: { total: totalBytes },
     physicalScaleMeters: {
@@ -586,16 +740,17 @@ function buildManifest({ identity, analysis, variants, visualQuality, approvedBy
     visualQuality,
     quality: {
       manualVisualApprovalRequired: true,
-      manualVisualApproved: Boolean(approvedBy),
-      approvedBy: approvedBy || null,
+      manualVisualApproved: visualApproved,
+      approvedBy: visualApproved ? visualQuality.manualReview.approvedBy : null,
+      requestedBy: approvedBy || null,
       manualReview: {
-        status: approvedBy ? "approved" : "pending",
-        approvedBy: approvedBy || null,
-        approvedAt: approvedBy ? now : null
+        status: visualApproved ? "approved" : "pending",
+        approvalType: "human",
+        approvedBy: visualApproved ? visualQuality.manualReview.approvedBy : null,
+        approvedAt: visualApproved ? visualQuality.manualReview.approvedAt ?? now : null
       },
       realDeviceQa: {
-        iphoneQuickLook: "not-tested",
-        androidSceneViewer: "not-tested"
+        ...pendingRealDeviceQa()
       }
     },
     lifecycle: {
@@ -610,10 +765,10 @@ function buildManifest({ identity, analysis, variants, visualQuality, approvedBy
     },
     validation: {
       warnings: [],
-      fails: []
+      fails: validationFails
     },
     generatedAt: now,
-    approvedAt: approvedBy ? now : null,
+    approvedAt: visualApproved ? now : null,
     publishedAt: null
   };
 }
@@ -745,18 +900,18 @@ function runOptimizeDish(args) {
   const generatedFiles = {};
   const transformEvidence = {};
   for (const key of ["web", "mobile", "arLite"]) {
-    const filePath = productionFilePath(rootDir, identity, key);
+    const filePath = workFilePath(rootDir, identity, key);
     const command = runGltfTransform({ rootDir, input: source, output: filePath, profile: key });
     generatedFiles[key] = filePath;
     transformEvidence[key] = command;
   }
 
-  const usdzPath = productionFilePath(rootDir, identity, "iosUsdz");
+  const usdzPath = workFilePath(rootDir, identity, "iosUsdz");
   ensureParent(usdzPath);
-  writeFileSync(usdzPath, createUsdzPackage({ identity, analysis }));
+  writeFileSync(usdzPath, createUsdzPackageFromGlb({ glbPath: generatedFiles.arLite, identity }));
   generatedFiles.iosUsdz = usdzPath;
 
-  const posterPath = productionFilePath(rootDir, identity, "poster");
+  const posterPath = workFilePath(rootDir, identity, "poster");
   ensureParent(posterPath);
   writeFileSync(posterPath, WEBP_PLACEHOLDER);
   generatedFiles.poster = posterPath;
@@ -772,13 +927,21 @@ function runOptimizeDish(args) {
     }),
     arLite: variantMetadata(generatedFiles.arLite, productionUrl(identity, "arLite"), {
       profile: "arLite",
+      optimizationMethod: "mesh-simplification-ar-lite",
+      optimizer: transformEvidence.arLite,
       extensionsRequired: []
     }),
     iosUsdz: variantMetadata(generatedFiles.iosUsdz, productionUrl(identity, "iosUsdz"), {
-      profile: "ios-quicklook"
+      profile: "ios-quicklook",
+      productionFaithful: true,
+      proxy: false,
+      conversionMethod: "glb-usdz-geometry-texture-export",
+      sourceVariant: "arLite"
     }),
     poster: variantMetadata(generatedFiles.poster, productionUrl(identity, "poster"), {
-      profile: "poster"
+      profile: "poster",
+      placeholder: true,
+      productionPoster: false
     })
   };
 
@@ -798,8 +961,12 @@ function runOptimizeDish(args) {
     manifest.validationStatus = "failed";
     manifest.validation.fails = validation.fails;
   }
+  const optimizationOk = validation.ok && visualQuality.status === "passed";
+  if (!optimizationOk) {
+    manifest.validationStatus = "failed";
+  }
   writeJsonFile(join(reports, "optimization-report.json"), {
-    ok: validation.ok,
+    ok: optimizationOk,
     identity,
     source,
     generatedFiles,
@@ -808,7 +975,12 @@ function runOptimizeDish(args) {
   });
   writeJsonFile(versionManifestPath(rootDir, identity), manifest);
 
-  result.ok = validation.ok;
+  if (visualQuality.status !== "passed") {
+    result.ok = false;
+    result.fails.push(STRICT_VISUAL_REJECTION);
+  } else {
+    result.ok = validation.ok;
+  }
   result.fails.push(...validation.fails);
   result.warnings.push(...validation.warnings);
   result.metrics.manifestPath = versionManifestPath(rootDir, identity);
@@ -835,6 +1007,40 @@ function runPublish(args) {
     dishSlug: cleanSegment(manifest.dishSlug, "dishSlug"),
     version: cleanVersion(manifest.activeVersion)
   };
+  const preflight = validateDishManifestPipeline({
+    manifest,
+    manifestPath,
+    context: "production",
+    requireFiles: true,
+    rootDir,
+    strict: true
+  });
+  if (!preflight.ok) {
+    result.ok = false;
+    result.fails.push("Publish requires a pre-approved strict visual identity manifest before promotion");
+    result.fails.push(...preflight.fails);
+    result.warnings.push(...preflight.warnings);
+    result.evidence.push({ preflight });
+    return result;
+  }
+  if (manifest.status !== "approved") {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: manifest status approved");
+  }
+  if (manifest.validationStatus !== "passed") {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: validationStatus passed");
+  }
+  if (manifest.visualQuality?.status !== "passed") {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: visualQuality.status passed");
+  }
+  if (manifest.quality?.manualVisualApproved !== true) {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: existing manual visual approval");
+  }
+  if (manifest.visualQuality?.manualReview?.status !== "approved") {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: human visual report approval");
+  }
+  if ((manifest.validation?.warnings?.length ?? 0) > 0 || (manifest.validation?.fails?.length ?? 0) > 0) {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: no warnings or fails");
+  }
   const activePath = activeManifestPath(rootDir, identity);
   const previous = existsSync(activePath) ? readJsonFile(activePath) : null;
   const now = new Date().toISOString();
@@ -845,23 +1051,18 @@ function runPublish(args) {
     quality: {
       ...manifest.quality,
       manualVisualApprovalRequired: true,
-      manualVisualApproved: true,
-      approvedBy,
+      manualVisualApproved: manifest.quality.manualVisualApproved,
+      approvedBy: manifest.quality.approvedBy,
+      publishedBy: approvedBy,
       manualReview: {
         ...(manifest.quality?.manualReview ?? {}),
-        status: "approved",
-        approvedBy,
-        approvedAt: manifest.quality?.manualReview?.approvedAt ?? now
+        status: manifest.quality?.manualReview?.status,
+        approvedBy: manifest.quality?.manualReview?.approvedBy,
+        approvedAt: manifest.quality?.manualReview?.approvedAt
       }
     },
     visualQuality: {
-      ...manifest.visualQuality,
-      manualReview: {
-        ...(manifest.visualQuality?.manualReview ?? {}),
-        status: "approved",
-        approvedBy,
-        approvedAt: manifest.visualQuality?.manualReview?.approvedAt ?? now
-      }
+      ...manifest.visualQuality
     },
     rollback: {
       ...(manifest.rollback ?? {}),
@@ -870,7 +1071,7 @@ function runPublish(args) {
       toVersion: null
     },
     validation: { warnings: [], fails: [] },
-    approvedAt: manifest.approvedAt ?? now,
+    approvedAt: manifest.approvedAt,
     publishedAt: now,
     lifecycle: {
       ...(manifest.lifecycle ?? {}),

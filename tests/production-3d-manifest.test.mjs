@@ -12,6 +12,113 @@ import {
 } from "../scripts/3d/shared/manifest-schema.mjs";
 
 const stableIso = "2026-05-24T00:00:00.000Z";
+const strictPromise =
+  "visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds";
+
+function realDeviceQa() {
+  return {
+    required: true,
+    iphoneQuickLook: {
+      required: true,
+      status: "passed",
+      device: "iPhone 15 Pro",
+      os: "iOS 18.5",
+      testedBy: "QA Bot",
+      testedAt: stableIso
+    },
+    androidSceneViewer: {
+      required: true,
+      status: "passed",
+      device: "Pixel 8",
+      os: "Android 15",
+      testedBy: "QA Bot",
+      testedAt: stableIso
+    }
+  };
+}
+
+function strictVisualQuality(overrides = {}) {
+  const angles = ["front", "left", "right", "top"];
+  return {
+    status: "passed",
+    score: 0.991,
+    promise: strictPromise,
+    method: "deterministic-render-comparison",
+    report: "assets/3d/reports/maison-elyse/main/homard-bisque/v1/visual-report.md",
+    reportArtifacts: {
+      web: {
+        before: "renders/web/front-before.png",
+        after: "renders/web/front-after.png",
+        diff: "renders/web/front-diff.png"
+      },
+      mobile: {
+        before: "renders/mobile/front-before.png",
+        after: "renders/mobile/front-after.png",
+        diff: "renders/mobile/front-diff.png"
+      },
+      arLite: {
+        before: "renders/ar-lite/front-before.png",
+        after: "renders/ar-lite/front-after.png",
+        diff: "renders/ar-lite/front-diff.png"
+      }
+    },
+    angleReports: ["web", "mobile", "arLite"].flatMap((variant) =>
+      angles.map((angle) => ({
+        variant,
+        angle,
+        status: "passed",
+        before: `renders/${variant}/${angle}-before.png`,
+        after: `renders/${variant}/${angle}-after.png`,
+        diff: `renders/${variant}/${angle}-diff.png`,
+        ssim: 0.992,
+        perceptualScore: 0.991,
+        maxDiffRatio: 0.001
+      }))
+    ),
+    meanSsim: 0.992,
+    perceptualScore: 0.991,
+    maxDiffRatio: 0.001,
+    maxSilhouetteDiff: 0.001,
+    maxColorDelta: 0.01,
+    maxTextureBlurDelta: 0.01,
+    maxMaterialDrift: 0.01,
+    maxScaleDriftMeters: 0.001,
+    maxOriginDriftMeters: 0.001,
+    lowPolyVisibilityScore: 0.001,
+    appetitePreservationScore: 0.99,
+    thresholds: {
+      meanSsim: 0.985,
+      perceptualScore: 0.98,
+      maxDiffRatio: 0.004,
+      maxSilhouetteDiff: 0.002,
+      maxColorDelta: 0.015,
+      maxTextureBlurDelta: 0.02,
+      maxMaterialDrift: 0.02,
+      maxScaleDriftMeters: 0.003,
+      maxOriginDriftMeters: 0.003,
+      maxLowPolyVisibility: 0.01,
+      minAppetitePreservation: 0.98
+    },
+    checks: {
+      textureSharpness: { status: "passed" },
+      silhouette: { status: "passed" },
+      color: { status: "passed" },
+      material: { status: "passed" },
+      scaleOrigin: { status: "passed" },
+      lowPoly: { status: "passed" },
+      appetite: { status: "passed" }
+    },
+    manualReview: {
+      required: true,
+      status: "approved",
+      approvalType: "human",
+      approvedBy: "QA Bot",
+      approvedAt: stableIso
+    },
+    realDeviceQa: realDeviceQa(),
+    ...overrides
+  };
+}
 
 function validDishManifest(overrides = {}) {
   return {
@@ -68,12 +175,11 @@ function validDishManifest(overrides = {}) {
   };
 }
 
-test("production dish manifest accepts the required multi-variant contract", () => {
+test("production dish manifest rejects schema v1 passed manifests without strict visual identity evidence", () => {
   const result = validateDishManifest(validDishManifest(), { context: "production" });
 
-  assert.equal(result.ok, true);
-  assert.deepEqual(result.fails, []);
-  assert.equal(result.metrics.validationStatus, "passed");
+  assert.equal(result.ok, false);
+  assert.match(result.fails.join("\n"), /schemaVersion.*2.*passed.*approved.*published/i);
 });
 
 test("production dish manifest accepts the schema v2 contract with physical scale and quality gates", () => {
@@ -96,7 +202,9 @@ test("production dish manifest accepts the schema v2 contract with physical scal
           bytes: 120_000,
           sha256: "a".repeat(64),
           width: 1200,
-          height: 900
+          height: 900,
+          placeholder: false,
+          productionPoster: true
         },
         web: {
           url: "/models/restaurants/maison-elyse/main/homard-bisque/v1/web.glb",
@@ -133,6 +241,7 @@ test("production dish manifest accepts the schema v2 contract with physical scal
           maxTextureSize: 1024,
           extensionsUsed: [],
           extensionsRequired: [],
+          optimizationMethod: "mesh-simplification",
           arPlacement: "floor",
           arScale: "fixed"
         },
@@ -142,7 +251,8 @@ test("production dish manifest accepts the schema v2 contract with physical scal
           sha256: "e".repeat(64),
           usdLayerCount: 1,
           textureCount: 4,
-          productionQuickLook: true
+          productionQuickLook: true,
+          productionFaithful: true
         }
       },
       physicalScaleMeters: {
@@ -171,8 +281,9 @@ test("production dish manifest accepts the schema v2 contract with physical scal
       },
       quality: {
         manualVisualApprovalRequired: true,
-        manualVisualApproved: false,
-        approvedBy: null,
+        manualVisualApproved: true,
+        approvedBy: "QA Bot",
+        realDeviceQa: realDeviceQa(),
         notes: []
       },
       sourceAnalysis: {
@@ -188,20 +299,7 @@ test("production dish manifest accepts the schema v2 contract with physical scal
         externalUris: [],
         classification: "signature"
       },
-      visualQuality: {
-        status: "passed",
-        score: 0.94,
-        threshold: 0.85,
-        deterministicViews: ["front", "left", "right", "top"],
-        manualReview: {
-          required: true,
-          status: "pending"
-        },
-        realDeviceQa: {
-          iphoneQuickLook: "not-tested",
-          androidSceneViewer: "not-tested"
-        }
-      },
+      visualQuality: strictVisualQuality(),
       lifecycle: {
         phase: "approved",
         generatedBy: "scripts/3d/optimize-dish.mjs",
@@ -258,6 +356,166 @@ test("production schema v2 requires source, visual, lifecycle, and rollback evid
   assert.match(result.fails.join("\n"), /visualQuality/i);
   assert.match(result.fails.join("\n"), /lifecycle/i);
   assert.match(result.fails.join("\n"), /rollback/i);
+});
+
+test("production schema v2 rejects structural visualQuality proxies as approved evidence", () => {
+  const result = validateDishManifest(
+    {
+      schemaVersion: 2,
+      kind: "vistaire.dish-3d-manifest",
+      restaurantSlug: "maison-elyse",
+      menuSlug: "main",
+      dishSlug: "homard-bisque",
+      activeVersion: "v1",
+      status: "approved",
+      validationStatus: "passed",
+      generatedAt: stableIso,
+      approvedAt: stableIso,
+      publishedAt: null,
+      variants: validDishManifest().variants,
+      physicalScaleMeters: { width: 0.22, height: 0.08, depth: 0.22 },
+      bounds: {
+        centeredXZ: true,
+        groundedY: true,
+        min: [-0.11, 0, -0.11],
+        max: [0.11, 0.08, 0.11]
+      },
+      budgets: { profile: "simpleDish" },
+      validation: { warnings: [], fails: [] },
+      quality: {
+        manualVisualApprovalRequired: true,
+        manualVisualApproved: true,
+        approvedBy: "QA Bot"
+      },
+      sourceAnalysis: {
+        bytes: 29_000_000,
+        sha256: "f".repeat(64),
+        meshes: 4,
+        primitives: 6,
+        triangles: 140_000,
+        vertices: 90_000,
+        materials: 6,
+        textures: 5,
+        images: 5,
+        externalUris: [],
+        classification: "signature"
+      },
+      visualQuality: {
+        status: "passed",
+        score: 0.99,
+        threshold: 0.85,
+        method: "deterministic-structural-render-proxy",
+        deterministicViews: ["front", "left", "right", "top", "three-quarter"],
+        checks: {
+          silhouette: { status: "passed", score: 1 },
+          materialCoverage: { status: "passed", score: 1 }
+        },
+        manualReview: {
+          required: true,
+          status: "approved",
+          approvedBy: "QA Bot",
+          approvedAt: stableIso
+        }
+      },
+      lifecycle: {
+        phase: "approved",
+        generatedBy: "scripts/3d/optimize-dish.mjs",
+        generatedAt: stableIso
+      },
+      rollback: {
+        previousVersion: null,
+        fromVersion: null,
+        toVersion: null
+      }
+    },
+    { context: "production" }
+  );
+
+  assert.equal(result.ok, false);
+  assert.match(result.fails.join("\n"), /visualQuality.*rendered before\/after\/diff/i);
+  assert.match(result.fails.join("\n"), /structural.*proxy/i);
+});
+
+test("production schema v2 requires rendered evidence metrics on every angle report", () => {
+  const visualQuality = strictVisualQuality({
+    angleReports: ["web", "mobile", "arLite"].flatMap((variant) =>
+      ["front", "left", "right", "top"].map((angle) => ({ variant, angle }))
+    )
+  });
+  const result = validateDishManifest(
+    {
+      schemaVersion: 2,
+      kind: "vistaire.dish-3d-manifest",
+      restaurantSlug: "maison-elyse",
+      menuSlug: "main",
+      dishSlug: "homard-bisque",
+      activeVersion: "v1",
+      status: "approved",
+      validationStatus: "passed",
+      generatedAt: stableIso,
+      approvedAt: stableIso,
+      publishedAt: null,
+      variants: {
+        ...validDishManifest().variants,
+        poster: {
+          ...validDishManifest().variants.poster,
+          placeholder: false,
+          productionPoster: true
+        },
+        arLite: {
+          ...validDishManifest().variants.arLite,
+          optimizationMethod: "mesh-simplification"
+        },
+        iosUsdz: {
+          ...validDishManifest().variants.iosUsdz,
+          productionFaithful: true
+        }
+      },
+      physicalScaleMeters: { width: 0.22, height: 0.08, depth: 0.22 },
+      bounds: {
+        centeredXZ: true,
+        groundedY: true,
+        min: [-0.11, 0, -0.11],
+        max: [0.11, 0.08, 0.11]
+      },
+      budgets: { profile: "simpleDish" },
+      validation: { warnings: [], fails: [] },
+      quality: {
+        manualVisualApprovalRequired: true,
+        manualVisualApproved: true,
+        approvedBy: "QA Bot"
+      },
+      sourceAnalysis: {
+        bytes: 29_000_000,
+        sha256: "f".repeat(64),
+        meshes: 4,
+        primitives: 6,
+        triangles: 140_000,
+        vertices: 90_000,
+        materials: 6,
+        textures: 5,
+        images: 5,
+        externalUris: [],
+        classification: "signature"
+      },
+      visualQuality,
+      lifecycle: {
+        phase: "approved",
+        generatedBy: "scripts/3d/optimize-dish.mjs",
+        generatedAt: stableIso
+      },
+      rollback: {
+        previousVersion: null,
+        fromVersion: null,
+        toVersion: null
+      }
+    },
+    { context: "production" }
+  );
+
+  assert.equal(result.ok, false);
+  assert.match(result.fails.join("\n"), /angleReports.*before/i);
+  assert.match(result.fails.join("\n"), /angleReports.*ssim/i);
 });
 
 test("production dish manifest fails when required fields are missing", () => {
@@ -420,7 +678,10 @@ test("budget classifier exposes target, warning, and fail bands", () => {
 });
 
 test("restaurant manifest summary rolls up menus, dishes, active versions, and validation status", () => {
-  const dishManifest = validDishManifest();
+  const dishManifest = validDishManifest({
+    validationStatus: "failed",
+    validation: { warnings: [], fails: ["strict visual identity review pending"] }
+  });
   const summary = summarizeRestaurantManifest("maison-elyse", [dishManifest], {
     generatedAt: stableIso
   });
@@ -438,7 +699,7 @@ test("restaurant manifest summary rolls up menus, dishes, active versions, and v
     }
   ]);
   assert.equal(summary.dishes[0].dishSlug, "maison-elyse-n1");
-  assert.equal(summary.validationStatus, "passed");
+  assert.equal(summary.validationStatus, "failed");
   assert.equal(summary.generatedAt, stableIso);
 });
 
