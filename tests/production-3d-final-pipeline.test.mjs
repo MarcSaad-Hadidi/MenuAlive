@@ -6,6 +6,12 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 
+import { zipSync, zlibSync } from "fflate";
+
+const stableIso = "2026-05-24T00:00:00.000Z";
+const strictPromise =
+  "visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds";
+
 async function withTempDir(fn) {
   const dir = mkdtempSync(join(tmpdir(), "vistaire-final-3d-"));
   try {
@@ -105,6 +111,394 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+function makeUsdz() {
+  const texture = Buffer.alloc(60_008);
+  Buffer.from("89504e470d0a1a0a", "hex").copy(texture);
+  let state = 0x12345678;
+  for (let index = 8; index < texture.length; index += 1) {
+    state = (Math.imul(1664525, state) + 1013904223) >>> 0;
+    texture[index] = state & 0xff;
+  }
+  const usda = [
+    "#usda 1.0",
+    "def Mesh \"Dish\" {",
+    "  point3f[] points = [(-0.25, 0, -0.2), (0.25, 0, -0.2), (0, 0.08, 0.2)]",
+    "  int[] faceVertexCounts = [3]",
+    "  int[] faceVertexIndices = [0, 1, 2]",
+    "}",
+    "def Material \"PremiumSauce\" {}"
+  ].join("\n");
+  return Buffer.from(
+    zipSync(
+      {
+        "model.usda": Buffer.from(usda),
+        "textures/albedo.png": texture
+      },
+      { level: 0 }
+    )
+  );
+}
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+  }
+  const output = Buffer.alloc(4);
+  output.writeUInt32BE((crc ^ 0xffffffff) >>> 0);
+  return output;
+}
+
+function pngChunk(type, data = Buffer.alloc(0)) {
+  const typeBytes = Buffer.from(type, "ascii");
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length);
+  return Buffer.concat([length, typeBytes, data, crc32(Buffer.concat([typeBytes, data]))]);
+}
+
+function makePng({ width = 64, height = 64, changedPixel = false, diff = false, filter = 0 } = {}) {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+  const raw = Buffer.alloc((width * 4 + 1) * height);
+  for (let y = 0; y < height; y += 1) {
+    const row = y * (width * 4 + 1);
+    raw[row] = filter;
+    const unfiltered = Buffer.alloc(width * 4);
+    for (let x = 0; x < width; x += 1) {
+      const index = x * 4;
+      const changed = changedPixel && x === 0 && y === 0;
+      const value = diff && changed ? 255 : changed ? 12 : 0;
+      unfiltered[index] = value;
+      unfiltered[index + 1] = value;
+      unfiltered[index + 2] = value;
+      unfiltered[index + 3] = 255;
+    }
+    for (let index = 0; index < unfiltered.length; index += 1) {
+      const left = index >= 4 ? unfiltered[index - 4] : 0;
+      if (filter === 0) raw[row + 1 + index] = unfiltered[index];
+      else if (filter === 1) raw[row + 1 + index] = (unfiltered[index] - left) & 0xff;
+      else throw new Error(`unsupported fixture PNG filter ${filter}`);
+    }
+  }
+  return Buffer.concat([
+    Buffer.from("89504e470d0a1a0a", "hex"),
+    pngChunk("IHDR", header),
+    pngChunk("IDAT", Buffer.from(zlibSync(raw))),
+    pngChunk("IEND")
+  ]);
+}
+
+function writePublicFile(root, url, bytes) {
+  const filePath = join(root, "public", url.replace(/^\//, ""));
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, bytes);
+  return {
+    filePath,
+    bytes: bytes.length,
+    sha256: sha256(bytes)
+  };
+}
+
+function strictVisualQuality(reviewer = "QA Bot") {
+  const angles = ["front", "left", "right", "top"];
+  return {
+    status: "passed",
+    score: 0.991,
+    promise: strictPromise,
+    method: "deterministic-render-comparison",
+    report: "assets/3d/reports/maison-elyse/demo/plat-final/v1/visual-report.md",
+    reportArtifacts: {
+      web: {
+        before: "renders/web/front-before.png",
+        after: "renders/web/front-after.png",
+        diff: "renders/web/front-diff.png"
+      },
+      mobile: {
+        before: "renders/mobile/front-before.png",
+        after: "renders/mobile/front-after.png",
+        diff: "renders/mobile/front-diff.png"
+      },
+      arLite: {
+        before: "renders/ar-lite/front-before.png",
+        after: "renders/ar-lite/front-after.png",
+        diff: "renders/ar-lite/front-diff.png"
+      }
+    },
+    angleReports: ["web", "mobile", "arLite"].flatMap((variant) =>
+      angles.map((angle) => ({
+        variant,
+        angle,
+        status: "passed",
+        before: `renders/${variant}/${angle}-before.png`,
+        after: `renders/${variant}/${angle}-after.png`,
+        diff: `renders/${variant}/${angle}-diff.png`,
+        ssim: 0.992,
+        perceptualScore: 0.991,
+        maxDiffRatio: 0.001
+      }))
+    ),
+    meanSsim: 0.992,
+    perceptualScore: 0.991,
+    maxDiffRatio: 0.001,
+    maxSilhouetteDiff: 0.001,
+    maxColorDelta: 0.01,
+    maxTextureBlurDelta: 0.01,
+    maxMaterialDrift: 0.01,
+    maxScaleDriftMeters: 0.001,
+    maxOriginDriftMeters: 0.001,
+    lowPolyVisibilityScore: 0.001,
+    appetitePreservationScore: 0.99,
+    thresholds: {
+      meanSsim: 0.985,
+      perceptualScore: 0.98,
+      maxDiffRatio: 0.004,
+      maxSilhouetteDiff: 0.002,
+      maxColorDelta: 0.015,
+      maxTextureBlurDelta: 0.02,
+      maxMaterialDrift: 0.02,
+      maxScaleDriftMeters: 0.003,
+      maxOriginDriftMeters: 0.003,
+      maxLowPolyVisibility: 0.01,
+      minAppetitePreservation: 0.98
+    },
+    checks: {
+      textureSharpness: { status: "passed" },
+      silhouette: { status: "passed" },
+      color: { status: "passed" },
+      material: { status: "passed" },
+      scaleOrigin: { status: "passed" },
+      lowPoly: { status: "passed" },
+      appetite: { status: "passed" }
+    },
+    manualReview: {
+      required: true,
+      status: "approved",
+      approvalType: "human",
+      approvedBy: reviewer,
+      approvedAt: stableIso
+    }
+  };
+}
+
+function writeVisualEvidenceFiles(root, manifest) {
+  const beforePng = makePng({ filter: 1 });
+  const afterPng = makePng({ changedPixel: true, filter: 1 });
+  const diffPng = makePng({ changedPixel: true, diff: true, filter: 1 });
+  const reportPath = join(root, manifest.visualQuality.report);
+  mkdirSync(dirname(reportPath), { recursive: true });
+  const reportBytes = Buffer.from("# Visual report\n");
+  writeFileSync(reportPath, reportBytes);
+  manifest.visualQuality.report = {
+    path: manifest.visualQuality.report,
+    sha256: sha256(reportBytes)
+  };
+  const writeRef = (container, key) => {
+    const ref = container[key];
+    const bytes = key === "before" ? beforePng : key === "after" ? afterPng : diffPng;
+    const filePath = join(root, ref);
+    mkdirSync(dirname(filePath), { recursive: true });
+    writeFileSync(filePath, bytes);
+    container[key] = {
+      path: ref,
+      sha256: sha256(bytes),
+      width: 64,
+      height: 64
+    };
+  };
+  for (const triplet of Object.values(manifest.visualQuality.reportArtifacts)) {
+    writeRef(triplet, "before");
+    writeRef(triplet, "after");
+    writeRef(triplet, "diff");
+  }
+  for (const angleReport of manifest.visualQuality.angleReports) {
+    writeRef(angleReport, "before");
+    writeRef(angleReport, "after");
+    writeRef(angleReport, "diff");
+  }
+}
+
+function writeApprovedManifest(root, version, previousVersion = null, { writeVisualEvidence = false } = {}) {
+  const base = `/models/restaurants/maison-elyse/demo/plat-final/${version}`;
+  const glb = makeGlb(makeDishGltf());
+  const arLiteGlb = makeGlb(
+    makeDishGltf({
+      asset: { version: "2.0", generator: "vistaire-final-test-ar-lite" }
+    })
+  );
+  const usdz = makeUsdz();
+  const poster = makePng();
+  const web = writePublicFile(root, `${base}/web/plat-final-web.glb`, glb);
+  const mobile = writePublicFile(root, `${base}/mobile/plat-final-mobile.glb`, glb);
+  const arLite = writePublicFile(root, `${base}/ar-lite/plat-final-ar-lite.glb`, arLiteGlb);
+  const iosUsdz = writePublicFile(root, `${base}/ios/plat-final.usdz`, usdz);
+  const posterFile = writePublicFile(root, `${base}/poster/plat-final.png`, poster);
+  const manifest = {
+    schemaVersion: 2,
+    kind: "vistaire.dish-3d-manifest",
+    restaurantSlug: "maison-elyse",
+    menuSlug: "demo",
+    dishSlug: "plat-final",
+    activeVersion: version,
+    status: "approved",
+    validationStatus: "passed",
+    variants: {
+      web: { url: `${base}/web/plat-final-web.glb`, bytes: web.bytes, sha256: web.sha256, validationStatus: "passed" },
+      mobile: { url: `${base}/mobile/plat-final-mobile.glb`, bytes: mobile.bytes, sha256: mobile.sha256, validationStatus: "passed" },
+      arLite: {
+        url: `${base}/ar-lite/plat-final-ar-lite.glb`,
+        bytes: arLite.bytes,
+        sha256: arLite.sha256,
+        validationStatus: "passed",
+        optimizationMethod: "mesh-simplification",
+        extensionsRequired: []
+      },
+      iosUsdz: {
+        url: `${base}/ios/plat-final.usdz`,
+        bytes: iosUsdz.bytes,
+        sha256: iosUsdz.sha256,
+        validationStatus: "passed",
+        productionFaithful: true
+      },
+      poster: {
+        url: `${base}/poster/plat-final.png`,
+        bytes: posterFile.bytes,
+        sha256: posterFile.sha256,
+        validationStatus: "passed",
+        placeholder: false,
+        productionPoster: true
+      }
+    },
+    physicalScaleMeters: { width: 0.5, height: 0.08, depth: 0.4 },
+    bounds: {
+      min: [-0.25, 0, -0.2],
+      max: [0.25, 0.08, 0.2],
+      centeredXZ: true,
+      groundedY: true
+    },
+    budgets: { profile: "simpleDish" },
+    sourceAnalysis: {
+      bytes: glb.length,
+      sha256: "f".repeat(64),
+      meshes: 1,
+      primitives: 1,
+      triangles: 1,
+      vertices: 3,
+      materials: 1,
+      textures: 1,
+      images: 1,
+      externalUris: [],
+      classification: "simpleDish"
+    },
+    visualQuality: strictVisualQuality(),
+    quality: {
+      manualVisualApprovalRequired: true,
+      manualVisualApproved: true,
+      approvedBy: "QA Bot",
+      manualReview: {
+        status: "approved",
+        approvalType: "human",
+        approvedBy: "QA Bot",
+        approvedAt: stableIso
+      },
+      notes: []
+    },
+    lifecycle: {
+      phase: "approved",
+      generatedBy: "test",
+      generatedAt: stableIso
+    },
+    rollback: {
+      previousVersion,
+      fromVersion: null,
+      toVersion: null
+    },
+    validation: { warnings: [], fails: [] },
+    generatedAt: stableIso,
+    approvedAt: stableIso,
+    publishedAt: null
+  };
+  if (writeVisualEvidence) writeVisualEvidenceFiles(root, manifest);
+  const manifestPath = join(root, "public", base, "manifest.json");
+  mkdirSync(dirname(manifestPath), { recursive: true });
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  return manifestPath;
+}
+
+function writeApprovedV1Manifest(root) {
+  const base = "/models/restaurants/maison-elyse/demo/plat-final/v1";
+  const glb = makeGlb(makeDishGltf());
+  const usdz = makeUsdz();
+  const poster = makePng();
+  const web = writePublicFile(root, `${base}/web/plat-final-web.glb`, glb);
+  const mobile = writePublicFile(root, `${base}/mobile/plat-final-mobile.glb`, glb);
+  const arLite = writePublicFile(root, `${base}/ar-lite/plat-final-ar-lite.glb`, glb);
+  const iosUsdz = writePublicFile(root, `${base}/ios/plat-final.usdz`, usdz);
+  const posterFile = writePublicFile(root, `${base}/poster/plat-final.webp`, poster);
+  const manifest = {
+    schemaVersion: 1,
+    restaurantSlug: "maison-elyse",
+    menuSlug: "demo",
+    dishSlug: "plat-final",
+    activeVersion: "v1",
+    status: "approved",
+    validationStatus: "passed",
+    variants: {
+      web: { url: `${base}/web/plat-final-web.glb`, bytes: web.bytes, sha256: web.sha256, validationStatus: "passed" },
+      mobile: { url: `${base}/mobile/plat-final-mobile.glb`, bytes: mobile.bytes, sha256: mobile.sha256, validationStatus: "passed" },
+      arLite: {
+        url: `${base}/ar-lite/plat-final-ar-lite.glb`,
+        bytes: arLite.bytes,
+        sha256: arLite.sha256,
+        validationStatus: "passed",
+        extensionsRequired: []
+      },
+      iosUsdz: {
+        url: `${base}/ios/plat-final.usdz`,
+        bytes: iosUsdz.bytes,
+        sha256: iosUsdz.sha256,
+        validationStatus: "passed"
+      },
+      poster: {
+        url: `${base}/poster/plat-final.webp`,
+        bytes: posterFile.bytes,
+        sha256: posterFile.sha256,
+        validationStatus: "passed"
+      }
+    },
+    bytes: {
+      total: web.bytes + mobile.bytes + arLite.bytes + iosUsdz.bytes + posterFile.bytes
+    },
+    quality: {
+      manualVisualApprovalRequired: true,
+      manualVisualApproved: true,
+      approvedBy: "QA Bot"
+    },
+    visualQuality: {
+      status: "passed",
+      manualReview: {
+        required: true,
+        status: "approved",
+        approvedBy: "QA Bot",
+        approvedAt: stableIso
+      }
+    },
+    validation: { warnings: [], fails: [] },
+    generatedAt: stableIso,
+    approvedAt: stableIso,
+    publishedAt: null
+  };
+  const manifestPath = join(root, "public", base, "manifest.json");
+  mkdirSync(dirname(manifestPath), { recursive: true });
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  return manifestPath;
+}
+
 test("analyze-source emits source evidence, geometry metrics, and a markdown review note", () =>
   withTempDir(async (dir) => {
     const sourcePath = join(dir, "source", "dish.glb");
@@ -139,7 +533,7 @@ test("analyze-source emits source evidence, geometry metrics, and a markdown rev
     assert.deepEqual(parsed.metrics.externalUris, []);
   }));
 
-test("optimize-dish writes versioned variants, manifest v2, visual evidence, and validation reports", () =>
+test("optimize-dish writes versioned variants and rejects them until strict visual identity evidence exists", () =>
   withTempDir(async (dir) => {
     const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
     mkdirSync(dirname(sourcePath), { recursive: true });
@@ -166,7 +560,8 @@ test("optimize-dish writes versioned variants, manifest v2, visual evidence, and
       "--json"
     ]);
 
-    assert.equal(result.code, 0, result.stderr);
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, /strict rendered visual identity/i);
     const manifestPath = join(
       dir,
       "public",
@@ -180,17 +575,170 @@ test("optimize-dish writes versioned variants, manifest v2, visual evidence, and
     );
     const manifest = readJson(manifestPath);
     assert.equal(manifest.schemaVersion, 2);
-    assert.equal(manifest.status, "approved");
-    assert.equal(manifest.validationStatus, "passed");
-    assert.equal(manifest.quality.manualReview.status, "approved");
-    assert.equal(manifest.visualQuality.status, "passed");
+    assert.equal(manifest.status, "review");
+    assert.equal(manifest.validationStatus, "failed");
+    assert.equal(manifest.quality.manualReview.status, "pending");
+    assert.equal(manifest.quality.manualVisualApproved, false);
+    assert.equal(manifest.visualQuality.status, "failed");
     assert.equal(manifest.sourceAnalysis.triangles, 1);
     for (const key of ["web", "mobile", "arLite", "iosUsdz", "poster"]) {
-      assert.equal(existsSync(join(dir, "public", manifest.variants[key].url)), true, key);
+      assert.equal(existsSync(join(dir, "public", manifest.variants[key].url)), false, key);
       assert.equal(typeof manifest.variants[key].sha256, "string");
       assert.equal(manifest.variants[key].sha256.length, 64);
     }
+    assert.equal(
+      existsSync(join(dir, "assets", "3d", "work", "maison-elyse", "demo", "plat-final", "vfinal", "web", "plat-final-web.glb")),
+      true
+    );
     assert.equal(existsSync(join(dir, "assets", "3d", "reports", "maison-elyse", "demo", "plat-final", "vfinal", "visual-quality.json")), true);
+  }));
+
+test("optimize-dish rejects generated staging assets until strict rendered visual identity evidence exists", () =>
+  withTempDir(async (dir) => {
+    const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
+    mkdirSync(dirname(sourcePath), { recursive: true });
+    writeFileSync(sourcePath, makeGlb(makeDishGltf()));
+
+    const result = await runNode([
+      "scripts/3d/optimize-dish.mjs",
+      "--restaurant",
+      "maison-elyse",
+      "--menu",
+      "demo",
+      "--dish",
+      "plat-final",
+      "--version",
+      "vstrict",
+      "--source",
+      sourcePath,
+      "--root",
+      dir,
+      "--write",
+      "--allow-public-binaries",
+      "--approved-by",
+      "QA Bot",
+      "--json"
+    ]);
+
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, /strict rendered visual identity/i);
+
+    const manifestPath = join(
+      dir,
+      "public",
+      "models",
+      "restaurants",
+      "maison-elyse",
+      "demo",
+      "plat-final",
+      "vstrict",
+      "manifest.json"
+    );
+    const manifest = readJson(manifestPath);
+    assert.equal(manifest.status, "review");
+    assert.equal(manifest.validationStatus, "failed");
+    assert.equal(manifest.visualQuality.status, "failed");
+    assert.equal(manifest.quality.manualVisualApproved, false);
+  }));
+
+test("publish refuses a generated proxy manifest even when CLI approval flags are supplied", () =>
+  withTempDir(async (dir) => {
+    const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
+    mkdirSync(dirname(sourcePath), { recursive: true });
+    writeFileSync(sourcePath, makeGlb(makeDishGltf()));
+
+    await runNode([
+      "scripts/3d/optimize-dish.mjs",
+      "--restaurant",
+      "maison-elyse",
+      "--menu",
+      "demo",
+      "--dish",
+      "plat-final",
+      "--version",
+      "vproxy",
+      "--source",
+      sourcePath,
+      "--root",
+      dir,
+      "--write",
+      "--allow-public-binaries",
+      "--approved-by",
+      "QA Bot",
+      "--json"
+    ]);
+
+    const manifestPath = join(
+      dir,
+      "public",
+      "models",
+      "restaurants",
+      "maison-elyse",
+      "demo",
+      "plat-final",
+      "vproxy",
+      "manifest.json"
+    );
+    const publish = await runNode([
+      "scripts/3d/publish.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--quality-approved",
+      "--approved-by",
+      "QA Bot",
+      "--json"
+    ]);
+
+    assert.equal(publish.code, 1);
+    assert.match(publish.stdout, /pre-approved strict visual identity manifest/i);
+  }));
+
+test("publish refuses approved schema v2 manifests when visual report files are missing", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vmissing");
+
+    const publish = await runNode([
+      "scripts/3d/publish.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--quality-approved",
+      "--approved-by",
+      "QA Bot",
+      "--json"
+    ]);
+
+    assert.equal(publish.code, 1);
+    assert.match(publish.stdout, /visualQuality\.report/i);
+    assert.match(publish.stdout, /visualQuality\.reportArtifacts\.web\.before/i);
+    assert.match(publish.stdout, /visualQuality\.reportArtifacts\.web\.after/i);
+    assert.match(publish.stdout, /visualQuality\.reportArtifacts\.web\.diff/i);
+  }));
+
+test("publish refuses schema v1 manifests even when legacy approval fields are present", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedV1Manifest(dir);
+
+    const publish = await runNode([
+      "scripts/3d/publish.mjs",
+      "--manifest",
+      manifestPath,
+      "--root",
+      dir,
+      "--write",
+      "--quality-approved",
+      "--approved-by",
+      "QA Bot",
+      "--json"
+    ]);
+
+    assert.equal(publish.code, 1);
+    assert.match(publish.stdout, /schemaVersion.*2/i);
   }));
 
 test("optimize-dish refuses CDN mode unless public binary writes are explicitly allowed", () =>
@@ -229,44 +777,10 @@ test("optimize-dish refuses CDN mode unless public binary writes are explicitly 
 
 test("publish promotes an approved version and rollback restores the previous active version", () =>
   withTempDir(async (dir) => {
-    const sourcePath = join(dir, "assets", "3d", "source", "maison-elyse", "demo", "plat-final", "source.glb");
-    mkdirSync(dirname(sourcePath), { recursive: true });
-    writeFileSync(sourcePath, makeGlb(makeDishGltf()));
-
     for (const version of ["v1", "v2"]) {
-      const optimize = await runNode([
-        "scripts/3d/optimize-dish.mjs",
-        "--restaurant",
-        "maison-elyse",
-        "--menu",
-        "demo",
-        "--dish",
-        "plat-final",
-        "--version",
-        version,
-        "--source",
-        sourcePath,
-        "--root",
-        dir,
-        "--write",
-        "--allow-public-binaries",
-        "--approved-by",
-        "QA Bot",
-        "--json"
-      ]);
-      assert.equal(optimize.code, 0, optimize.stderr);
-
-      const manifestPath = join(
-        dir,
-        "public",
-        "models",
-        "restaurants",
-        "maison-elyse",
-        "demo",
-        "plat-final",
-        version,
-        "manifest.json"
-      );
+      const manifestPath = writeApprovedManifest(dir, version, version === "v2" ? "v1" : null, {
+        writeVisualEvidence: true
+      });
       const publish = await runNode([
         "scripts/3d/publish.mjs",
         "--manifest",
@@ -279,7 +793,7 @@ test("publish promotes an approved version and rollback restores the previous ac
         "QA Bot",
         "--json"
       ]);
-      assert.equal(publish.code, 0, publish.stderr);
+      assert.equal(publish.code, 0, `${publish.stdout}\n${publish.stderr}`);
     }
 
     const activeManifestPath = join(

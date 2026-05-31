@@ -1,9 +1,30 @@
 # Vistaire 3D Manual QA
 
 Automated validators prove structure, headers, budgets, and runtime safety.
-The visual-quality report also records deterministic geometry, scale, material,
-and texture-coverage evidence. These checks do not prove that AR works on real
-devices, and they do not replace human review of plating fidelity.
+They do not prove visual identity by themselves. A production candidate is
+rejected until source and candidate have been rendered and compared with real
+before/after/diff artifacts for web, mobile, and AR-lite.
+
+The phrase "exactly the same visual" must be treated as: "visually
+indistinguishable under deterministic multi-angle mobile dining-distance review
+within strict thresholds." Do not approve pixel-perfect or absolute-identity
+claims.
+
+## Visual Identity Review
+
+- Review web, mobile, and AR-lite before/after/diff artifacts.
+- Review each deterministic angle, not only a hero angle.
+- Confirm SSIM and perceptual scores meet the strict manifest thresholds.
+- Reject blurry textures, silhouette changes, color drift, cheap-looking
+  materials, broken scale/origin, visible low-poly simplification, or any loss
+  of appetite appeal.
+- Reject USDZ proxy packages, poster placeholders, and AR-lite copies presented
+  as optimized production assets.
+- Record the human reviewer, approval date, report path, and notes before
+  publication.
+- If budgets cannot be met without visible loss, keep the previous version and
+  request artist retouching, retopology, texture baking, or manual source
+  simplification.
 
 ## Chrome DevTools
 

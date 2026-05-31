@@ -54,6 +54,23 @@ const WEBP_PLACEHOLDER = Buffer.from(
   "UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA",
   "base64"
 );
+const STRICT_VISUAL_PROMISE =
+  "visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds";
+const STRICT_VISUAL_THRESHOLDS = Object.freeze({
+  meanSsim: 0.985,
+  perceptualScore: 0.98,
+  maxDiffRatio: 0.004,
+  maxSilhouetteDiff: 0.002,
+  maxColorDelta: 0.015,
+  maxTextureBlurDelta: 0.02,
+  maxMaterialDrift: 0.02,
+  maxScaleDriftMeters: 0.003,
+  maxOriginDriftMeters: 0.003,
+  maxLowPolyVisibility: 0.01,
+  minAppetitePreservation: 0.98
+});
+const STRICT_VISUAL_REJECTION =
+  "Strict rendered visual identity evidence is required before optimization can be approved: source/candidate before-after-diff renders for web, mobile, and arLite, per-angle SSIM/perceptual scores, texture/silhouette/color/material/scale/origin/low-poly/appetite checks, and human approval.";
 
 function createResult(name, metrics = {}) {
   return {
@@ -376,10 +393,6 @@ function productionUrl(identity, variantKey) {
   return `/models/restaurants/${identity.restaurantSlug}/${identity.menuSlug}/${identity.dishSlug}/${identity.version}/${directory}/${fileName}`;
 }
 
-function productionFilePath(rootDir, identity, variantKey) {
-  return safeJoin(rootDir, "public", productionUrl(identity, variantKey).replace(/^\//, ""));
-}
-
 function reportDir(rootDir, identity) {
   return safeJoin(
     rootDir,
@@ -403,6 +416,14 @@ function workDir(rootDir, identity) {
     identity.menuSlug,
     identity.dishSlug,
     identity.version
+  );
+}
+
+function workFilePath(rootDir, identity, variantKey) {
+  return safeJoin(
+    workDir(rootDir, identity),
+    VARIANT_DIRS[variantKey],
+    VARIANT_FILES[variantKey](identity.dishSlug)
   );
 }
 
@@ -495,31 +516,45 @@ function createUsdzPackage({ identity, analysis }) {
 }
 
 function makeVisualQualityReport({ identity, analysis, variants, approvedBy }) {
-  const geometryScore = analysis.triangles > 0 && analysis.vertices > 0 ? 1 : 0;
-  const scaleScore = analysis.bounds.groundedY && analysis.bounds.centeredXZ ? 1 : 0.8;
-  const materialScore = analysis.materials > 0 ? 1 : 0.75;
-  const textureScore = analysis.textures > 0 ? 0.95 : 0.85;
-  const score = Number(((geometryScore + scaleScore + materialScore + textureScore) / 4).toFixed(4));
   return {
-    status: score >= 0.85 ? "passed" : "warning",
-    score,
-    threshold: 0.85,
-    method: "deterministic-structural-render-proxy",
+    status: "failed",
+    score: 0,
+    promise: STRICT_VISUAL_PROMISE,
+    method: "missing-deterministic-render-comparison",
+    thresholds: STRICT_VISUAL_THRESHOLDS,
+    report: null,
+    reportArtifacts: {},
+    angleReports: [],
+    metrics: {},
     deterministicViews: ["front", "left", "right", "top", "three-quarter"],
     checks: {
-      silhouette: { status: "passed", score: geometryScore },
-      physicalScale: { status: scaleScore >= 1 ? "passed" : "warning", score: scaleScore },
-      materialCoverage: { status: materialScore >= 1 ? "passed" : "warning", score: materialScore },
-      textureSharpnessProxy: { status: textureScore >= 0.85 ? "passed" : "warning", score: textureScore }
+      textureSharpness: { status: "failed", reason: "Rendered texture sharpness comparison is missing" },
+      silhouette: { status: "failed", reason: "Rendered silhouette diff is missing" },
+      color: { status: "failed", reason: "Rendered color drift comparison is missing" },
+      material: { status: "failed", reason: "Rendered material drift review is missing" },
+      scaleOrigin: { status: "failed", reason: "Scale/origin comparison is missing" },
+      lowPoly: { status: "failed", reason: "Low-poly visibility review is missing" },
+      appetite: { status: "failed", reason: "Human appetite appeal review is missing" }
     },
     variants: Object.fromEntries(
       Object.entries(variants).map(([key, variant]) => [key, { bytes: variant.bytes, sha256: variant.sha256 }])
     ),
+    sourceSummary: {
+      bytes: analysis.bytes,
+      sha256: analysis.sha256,
+      triangles: analysis.triangles,
+      vertices: analysis.vertices,
+      materials: analysis.materials,
+      textures: analysis.textures
+    },
+    fails: [STRICT_VISUAL_REJECTION],
     manualReview: {
       required: true,
-      status: approvedBy ? "approved" : "pending",
-      approvedBy: approvedBy || null,
-      approvedAt: approvedBy ? new Date().toISOString() : null
+      status: "pending",
+      approvalType: "human",
+      approvedBy: null,
+      approvedAt: null,
+      requestedBy: approvedBy || null
     },
     realDeviceQa: {
       iphoneQuickLook: "not-tested",
@@ -542,8 +577,14 @@ function variantMetadata(filePath, url, extra = {}) {
 
 function buildManifest({ identity, analysis, variants, visualQuality, approvedBy }) {
   const now = new Date().toISOString();
-  const status = approvedBy ? "approved" : "review";
+  const visualApproved =
+    visualQuality?.status === "passed" &&
+    visualQuality?.manualReview?.status === "approved" &&
+    visualQuality?.manualReview?.approvalType === "human" &&
+    Boolean(visualQuality?.manualReview?.approvedBy);
+  const status = visualApproved ? "approved" : "review";
   const totalBytes = Object.values(variants).reduce((sum, variant) => sum + variant.bytes, 0);
+  const validationFails = visualApproved ? [] : [STRICT_VISUAL_REJECTION];
   return {
     schemaVersion: 2,
     kind: "vistaire.dish-3d-manifest",
@@ -552,7 +593,7 @@ function buildManifest({ identity, analysis, variants, visualQuality, approvedBy
     dishSlug: identity.dishSlug,
     activeVersion: identity.version,
     status,
-    validationStatus: "passed",
+    validationStatus: visualApproved ? "passed" : "failed",
     variants,
     bytes: { total: totalBytes },
     physicalScaleMeters: {
@@ -586,12 +627,14 @@ function buildManifest({ identity, analysis, variants, visualQuality, approvedBy
     visualQuality,
     quality: {
       manualVisualApprovalRequired: true,
-      manualVisualApproved: Boolean(approvedBy),
-      approvedBy: approvedBy || null,
+      manualVisualApproved: visualApproved,
+      approvedBy: visualApproved ? visualQuality.manualReview.approvedBy : null,
+      requestedBy: approvedBy || null,
       manualReview: {
-        status: approvedBy ? "approved" : "pending",
-        approvedBy: approvedBy || null,
-        approvedAt: approvedBy ? now : null
+        status: visualApproved ? "approved" : "pending",
+        approvalType: "human",
+        approvedBy: visualApproved ? visualQuality.manualReview.approvedBy : null,
+        approvedAt: visualApproved ? visualQuality.manualReview.approvedAt ?? now : null
       },
       realDeviceQa: {
         iphoneQuickLook: "not-tested",
@@ -610,10 +653,10 @@ function buildManifest({ identity, analysis, variants, visualQuality, approvedBy
     },
     validation: {
       warnings: [],
-      fails: []
+      fails: validationFails
     },
     generatedAt: now,
-    approvedAt: approvedBy ? now : null,
+    approvedAt: visualApproved ? now : null,
     publishedAt: null
   };
 }
@@ -745,18 +788,18 @@ function runOptimizeDish(args) {
   const generatedFiles = {};
   const transformEvidence = {};
   for (const key of ["web", "mobile", "arLite"]) {
-    const filePath = productionFilePath(rootDir, identity, key);
+    const filePath = workFilePath(rootDir, identity, key);
     const command = runGltfTransform({ rootDir, input: source, output: filePath, profile: key });
     generatedFiles[key] = filePath;
     transformEvidence[key] = command;
   }
 
-  const usdzPath = productionFilePath(rootDir, identity, "iosUsdz");
+  const usdzPath = workFilePath(rootDir, identity, "iosUsdz");
   ensureParent(usdzPath);
   writeFileSync(usdzPath, createUsdzPackage({ identity, analysis }));
   generatedFiles.iosUsdz = usdzPath;
 
-  const posterPath = productionFilePath(rootDir, identity, "poster");
+  const posterPath = workFilePath(rootDir, identity, "poster");
   ensureParent(posterPath);
   writeFileSync(posterPath, WEBP_PLACEHOLDER);
   generatedFiles.poster = posterPath;
@@ -772,13 +815,18 @@ function runOptimizeDish(args) {
     }),
     arLite: variantMetadata(generatedFiles.arLite, productionUrl(identity, "arLite"), {
       profile: "arLite",
+      optimizationMethod: "copy",
       extensionsRequired: []
     }),
     iosUsdz: variantMetadata(generatedFiles.iosUsdz, productionUrl(identity, "iosUsdz"), {
-      profile: "ios-quicklook"
+      profile: "ios-quicklook",
+      productionFaithful: false,
+      proxy: true
     }),
     poster: variantMetadata(generatedFiles.poster, productionUrl(identity, "poster"), {
-      profile: "poster"
+      profile: "poster",
+      placeholder: true,
+      productionPoster: false
     })
   };
 
@@ -798,8 +846,12 @@ function runOptimizeDish(args) {
     manifest.validationStatus = "failed";
     manifest.validation.fails = validation.fails;
   }
+  const optimizationOk = validation.ok && visualQuality.status === "passed";
+  if (!optimizationOk) {
+    manifest.validationStatus = "failed";
+  }
   writeJsonFile(join(reports, "optimization-report.json"), {
-    ok: validation.ok,
+    ok: optimizationOk,
     identity,
     source,
     generatedFiles,
@@ -808,7 +860,12 @@ function runOptimizeDish(args) {
   });
   writeJsonFile(versionManifestPath(rootDir, identity), manifest);
 
-  result.ok = validation.ok;
+  if (visualQuality.status !== "passed") {
+    result.ok = false;
+    result.fails.push(STRICT_VISUAL_REJECTION);
+  } else {
+    result.ok = validation.ok;
+  }
   result.fails.push(...validation.fails);
   result.warnings.push(...validation.warnings);
   result.metrics.manifestPath = versionManifestPath(rootDir, identity);
@@ -835,6 +892,40 @@ function runPublish(args) {
     dishSlug: cleanSegment(manifest.dishSlug, "dishSlug"),
     version: cleanVersion(manifest.activeVersion)
   };
+  const preflight = validateDishManifestPipeline({
+    manifest,
+    manifestPath,
+    context: "production",
+    requireFiles: true,
+    rootDir,
+    strict: true
+  });
+  if (!preflight.ok) {
+    result.ok = false;
+    result.fails.push("Publish requires a pre-approved strict visual identity manifest before promotion");
+    result.fails.push(...preflight.fails);
+    result.warnings.push(...preflight.warnings);
+    result.evidence.push({ preflight });
+    return result;
+  }
+  if (manifest.status !== "approved") {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: manifest status approved");
+  }
+  if (manifest.validationStatus !== "passed") {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: validationStatus passed");
+  }
+  if (manifest.visualQuality?.status !== "passed") {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: visualQuality.status passed");
+  }
+  if (manifest.quality?.manualVisualApproved !== true) {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: existing manual visual approval");
+  }
+  if (manifest.visualQuality?.manualReview?.status !== "approved") {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: human visual report approval");
+  }
+  if ((manifest.validation?.warnings?.length ?? 0) > 0 || (manifest.validation?.fails?.length ?? 0) > 0) {
+    throw new Error("Publish requires a pre-approved strict visual identity manifest before promotion: no warnings or fails");
+  }
   const activePath = activeManifestPath(rootDir, identity);
   const previous = existsSync(activePath) ? readJsonFile(activePath) : null;
   const now = new Date().toISOString();
@@ -845,23 +936,18 @@ function runPublish(args) {
     quality: {
       ...manifest.quality,
       manualVisualApprovalRequired: true,
-      manualVisualApproved: true,
-      approvedBy,
+      manualVisualApproved: manifest.quality.manualVisualApproved,
+      approvedBy: manifest.quality.approvedBy,
+      publishedBy: approvedBy,
       manualReview: {
         ...(manifest.quality?.manualReview ?? {}),
-        status: "approved",
-        approvedBy,
-        approvedAt: manifest.quality?.manualReview?.approvedAt ?? now
+        status: manifest.quality?.manualReview?.status,
+        approvedBy: manifest.quality?.manualReview?.approvedBy,
+        approvedAt: manifest.quality?.manualReview?.approvedAt
       }
     },
     visualQuality: {
-      ...manifest.visualQuality,
-      manualReview: {
-        ...(manifest.visualQuality?.manualReview ?? {}),
-        status: "approved",
-        approvedBy,
-        approvedAt: manifest.visualQuality?.manualReview?.approvedAt ?? now
-      }
+      ...manifest.visualQuality
     },
     rollback: {
       ...(manifest.rollback ?? {}),
@@ -870,7 +956,7 @@ function runPublish(args) {
       toVersion: null
     },
     validation: { warnings: [], fails: [] },
-    approvedAt: manifest.approvedAt ?? now,
+    approvedAt: manifest.approvedAt,
     publishedAt: now,
     lifecycle: {
       ...(manifest.lifecycle ?? {}),

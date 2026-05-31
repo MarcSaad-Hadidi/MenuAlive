@@ -228,6 +228,9 @@ export function validateUsdzBasic({
   if (/\bundefined\b/i.test(usdTextBundle)) {
     addFail(result, `${label}: USD text layer contains undefined references`);
   }
+  if (/\bDishProxy\b/.test(usdTextBundle) || /vistaire:sourceSha256/.test(usdTextBundle)) {
+    addFail(result, `${label}: USDZ appears to be a generated proxy package, not a faithful production export`);
+  }
 
   result.evidence.push({
     filePath,
