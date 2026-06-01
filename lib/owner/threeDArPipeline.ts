@@ -14,6 +14,8 @@ import {
   formatPipelineBytes,
   pipelineStatusNextAction,
   resolvePipelineStatus,
+  shouldPreserveDemoFallbackAssets,
+  type PipelineAssetSource,
   type PipelineActionId,
   type PipelineStatusId,
   type PipelineStatusTone
@@ -68,7 +70,7 @@ export type Owner3dPipelineAsset = {
   selectedCandidate: string;
   lastRun: string;
   nextAction: string;
-  source: "manifest" | "report" | "demo-fallback";
+  source: PipelineAssetSource;
   manifestPath: string | null;
   reportDirectory: string | null;
   detailHref: string;
@@ -817,7 +819,16 @@ function readOverview(): Owner3dPipelineOverview {
     .map((identity) => assetFromReports(rootDir, identity));
 
   const assets = [...manifestAssets, ...reportAssets].sort(sortAssets);
-  if (assets.length > 0) return buildOverview(assets, "manifests");
+  if (assets.length > 0) {
+    if (shouldPreserveDemoFallbackAssets(assets)) {
+      const fallback = fallbackAssets(rootDir)
+        .filter((asset) => !knownIds.has(asset.id))
+        .sort(sortAssets);
+      return buildOverview([...assets, ...fallback].sort(sortAssets), "manifests");
+    }
+
+    return buildOverview(assets, "manifests");
+  }
 
   return buildOverview(fallbackAssets(rootDir).sort(sortAssets), "fallback");
 }

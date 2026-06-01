@@ -9,6 +9,8 @@ export type PipelineStatusId =
 
 export type PipelineStatusTone = "ready" | "warn" | "danger" | "muted";
 
+export type PipelineAssetSource = "manifest" | "report" | "demo-fallback";
+
 export type PipelineOverviewCard = {
   id: PipelineStatusId;
   label: string;
@@ -328,6 +330,16 @@ export function pipelineStatusNextAction(status: PipelineStatusId): string {
   if (status === "ready_to_publish") return "Publish";
   if (status === "published") return "Surveiller, puis Rollback seulement si nécessaire";
   return "Run visual compare";
+}
+
+export function shouldPreserveDemoFallbackAssets(
+  assets: Array<{ source: PipelineAssetSource; status: PipelineStatusId }>
+): boolean {
+  const nonFallbackAssets = assets.filter((asset) => asset.source !== "demo-fallback");
+  return (
+    nonFallbackAssets.length > 0 &&
+    nonFallbackAssets.every((asset) => asset.source === "manifest" && asset.status === "rejected")
+  );
 }
 
 export function formatPipelineBytes(value: unknown): string {
