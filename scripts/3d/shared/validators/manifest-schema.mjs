@@ -235,12 +235,24 @@ function validateExternalVariantPath(result, manifest, key, variant) {
     return;
   }
   const expected = `/${manifest.restaurantSlug}/${manifest.menuSlug}/${manifest.dishSlug}/${manifest.activeVersion}/${variantDirectory(key)}/`;
-  if (!parsed.pathname.includes(expected)) {
+  let expectedPrefix = expected;
+  const cdnBaseUrl = String(process.env.VISTAIRE_3D_CDN_BASE_URL ?? "").trim();
+  if (cdnBaseUrl) {
+    try {
+      const base = new URL(cdnBaseUrl);
+      if (base.origin === parsed.origin) {
+        expectedPrefix = `${base.pathname.replace(/\/+$/, "")}${expected}`;
+      }
+    } catch {
+      // The CLI layer reports invalid CDN base URLs; schema validation keeps the tenant path check deterministic.
+    }
+  }
+  if (!parsed.pathname.startsWith(expectedPrefix)) {
     addFail(
       result,
       pathMessage(
         `variants.${key}.url`,
-        `external URL path must include ${expected} to avoid cross-tenant CDN asset reuse`
+        `external URL path must start with ${expectedPrefix} to avoid cross-tenant CDN asset reuse`
       )
     );
   }
@@ -414,6 +426,19 @@ function validateRealDeviceQa(result, qa, path) {
     }
     if (!isIsoDateOrNull(entry.testedAt) || entry.testedAt === null) {
       addFail(result, pathMessage(`${entryPath}.testedAt`, "real-device QA date is required"));
+    }
+    if (!isObject(entry.evidence)) {
+      addFail(result, pathMessage(`${entryPath}.evidence`, "uploaded evidence metadata is required"));
+    } else {
+      if (!isEvidenceReference(entry.evidence)) {
+        addFail(result, pathMessage(`${entryPath}.evidence`, "must include a local or private evidence reference"));
+      }
+      if (typeof entry.evidence.sha256 !== "string" || !SHA256_PATTERN.test(entry.evidence.sha256)) {
+        addFail(result, pathMessage(`${entryPath}.evidence.sha256`, "must be a sha256 hex digest"));
+      }
+      if (!Number.isFinite(entry.evidence.bytes) || entry.evidence.bytes <= 0) {
+        addFail(result, pathMessage(`${entryPath}.evidence.bytes`, "must be a positive byte size"));
+      }
     }
   }
 }

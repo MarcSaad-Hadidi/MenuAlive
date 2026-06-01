@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import styles from "@/components/owner/OwnerCockpit.module.css";
 import { OwnerShell } from "@/components/owner/OwnerShell";
-import {
-  vistaireClerkAppearance,
-  vistaireClerkLocalization
-} from "@/lib/clerkAppearance";
 import { getVistaireOwnerAuthorization } from "@/lib/auth/owner";
 
 export const metadata: Metadata = {
@@ -27,24 +22,31 @@ export default async function OwnerLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await auth.protect();
   const ownerAuthorization = await getVistaireOwnerAuthorization();
   if (!ownerAuthorization.ok) {
+    await auth.protect();
     notFound();
   }
 
-  return (
-    <ClerkProvider
-      appearance={vistaireClerkAppearance}
-      localization={vistaireClerkLocalization}
-      telemetry={false}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-in"
-      afterSignOutUrl="/"
-    >
+  if (ownerAuthorization.userId === "owner-e2e-bypass") {
+    return (
       <div className={styles.ownerTheme}>
-        <OwnerShell>{children}</OwnerShell>
+        <OwnerShell
+          accountControl={
+            <span className={styles.badge}>
+              {ownerAuthorization.emailAddresses[0] ?? "Owner e2e"}
+            </span>
+          }
+        >
+          {children}
+        </OwnerShell>
       </div>
-    </ClerkProvider>
+    );
+  }
+
+  const { OwnerClerkBoundary } = await import(
+    "@/components/owner/OwnerClerkBoundary"
   );
+
+  return <OwnerClerkBoundary>{children}</OwnerClerkBoundary>;
 }

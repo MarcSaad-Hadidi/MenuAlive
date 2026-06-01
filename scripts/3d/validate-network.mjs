@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { collectManifestAssets } from "./validate-dish.mjs";
 import { asArray, defaultDishManifestPath, parseArgs, readJsonFile, setExitCodeForResult, writeStdout } from "./shared/file-utils.mjs";
 import { validateNetworkHeaders } from "./shared/validators/network-headers.mjs";
@@ -18,6 +20,11 @@ const result = await validateNetworkHeaders({
   assets,
   strict: Boolean(args.strict)
 });
+
+if (args.out) {
+  mkdirSync(dirname(String(args.out)), { recursive: true });
+  writeFileSync(String(args.out), `${JSON.stringify(result, null, 2)}\n`);
+}
 
 setExitCodeForResult(result, Boolean(args.strict));
 writeStdout(result, true);

@@ -89,7 +89,7 @@ Finalize only after strict visual evidence, human approval, real-device QA, and
 delivery validation are present:
 
 ```bash
-npm run 3d:finalize-manifest -- --manifest path/to/manifest.json --write
+npm run 3d:finalize-manifest -- --manifest path/to/manifest.json --network-validation-report assets/3d/reports/.../network-validation.json --write
 ```
 
 Finalize marks the version manifest `approved` but leaves `publishedAt` null and

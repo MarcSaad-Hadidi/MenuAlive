@@ -449,7 +449,9 @@ test("network header validator rejects CDN byte and sha256 mismatches in strict 
   const expectedBytes = Buffer.from("vistaire-cdn-object");
   const wrongBytes = Buffer.from("wrong-object");
   const previousOrigins = process.env.VISTAIRE_3D_CDN_ORIGINS;
+  const previousBaseUrl = process.env.VISTAIRE_3D_CDN_BASE_URL;
   process.env.VISTAIRE_3D_CDN_ORIGINS = "https://cdn.example.com";
+  process.env.VISTAIRE_3D_CDN_BASE_URL = "https://cdn.example.com/vistaire";
   try {
     const result = await validateNetworkHeaders({
       baseUrl: "https://vistaire.example",
@@ -493,6 +495,8 @@ test("network header validator rejects CDN byte and sha256 mismatches in strict 
   } finally {
     if (previousOrigins === undefined) delete process.env.VISTAIRE_3D_CDN_ORIGINS;
     else process.env.VISTAIRE_3D_CDN_ORIGINS = previousOrigins;
+    if (previousBaseUrl === undefined) delete process.env.VISTAIRE_3D_CDN_BASE_URL;
+    else process.env.VISTAIRE_3D_CDN_BASE_URL = previousBaseUrl;
   }
 });
 

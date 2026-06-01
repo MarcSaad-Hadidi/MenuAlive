@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireVistaireOwnerApi } from "@/lib/auth/ownerApi";
+import {
+  requireSameOriginOwnerMutation,
+  requireVistaireOwnerApi
+} from "@/lib/auth/ownerApi";
 import { updateOwnerQrCode } from "@/lib/owner/qrStore";
 import type { OwnerQrCodeStatus } from "@/lib/owner/types";
 
@@ -14,6 +17,9 @@ export async function PATCH(
 ) {
   const owner = await requireVistaireOwnerApi();
   if (!owner.ok) return owner.response;
+
+  const originError = requireSameOriginOwnerMutation(request);
+  if (originError) return originError;
 
   const { id } = await params;
   if (!id) {

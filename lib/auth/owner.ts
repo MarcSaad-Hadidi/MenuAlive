@@ -1,6 +1,11 @@
 import "server-only";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
+import {
+  devOwnerBypassIdentity,
+  hasTrustedDevOwnerBypass
+} from "@/lib/auth/devOwnerBypass";
 import { isOwnerIdentityAllowed } from "@/lib/auth/ownerPolicy";
 
 export type VistaireOwnerAuthorization =
@@ -16,6 +21,14 @@ export type VistaireOwnerAuthorization =
     };
 
 export async function getVistaireOwnerAuthorization(): Promise<VistaireOwnerAuthorization> {
+  const headerList = await headers();
+  if (hasTrustedDevOwnerBypass(headerList)) {
+    return {
+      ok: true,
+      ...devOwnerBypassIdentity()
+    };
+  }
+
   const authState = await auth();
   if (!authState.userId) {
     return {

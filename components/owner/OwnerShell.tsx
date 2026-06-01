@@ -3,11 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
 import styles from "@/components/owner/OwnerCockpit.module.css";
 import { OWNER_NAV_ITEMS, ownerNavTitle } from "@/lib/owner/nav";
 
-export function OwnerShell({ children }: { children: React.ReactNode }) {
+export function OwnerShell({
+  children,
+  accountControl = null
+}: {
+  children: React.ReactNode;
+  accountControl?: React.ReactNode;
+}) {
   const pathname = usePathname() ?? "/owner";
   const [mobileOpen, setMobileOpen] = useState(false);
   const { label, hint } = ownerNavTitle(pathname);
@@ -77,7 +82,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
             <Link className={styles.btn} href="/apercu-restaurateur" prefetch={false}>
               Aperçu public
             </Link>
-            <UserButton />
+            {accountControl}
           </div>
         </header>
         <main className={styles.consoleContent}>{children}</main>

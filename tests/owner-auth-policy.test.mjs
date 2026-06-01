@@ -5,6 +5,18 @@ import {
   isOwnerIdentityAllowed,
   parseOwnerAllowlist
 } from "../lib/auth/ownerPolicy.ts";
+import {
+  DEV_OWNER_BYPASS_COOKIE,
+  DEV_OWNER_BYPASS_REQUEST_HEADER,
+  DEV_OWNER_BYPASS_TRUSTED_HEADER,
+  hasTrustedDevOwnerBypass,
+  shouldApplyDevOwnerBypass,
+  shouldApplyDevOwnerBypassToken
+} from "../lib/auth/devOwnerBypass.ts";
+import {
+  getOwner3dRestaurantAccess,
+  ownerCanAccess3dRestaurant
+} from "../lib/auth/owner3dAccess.ts";
 
 test("parses owner allowlists without exposing client-side env names", () => {
   assert.deepEqual(parseOwnerAllowlist(" user_1, user_2\nuser_3 "), [
@@ -59,5 +71,83 @@ test("does not fall back to NEXT_PUBLIC owner configuration", () => {
       }
     ),
     false
+  );
+});
+
+test("owner e2e bypass requires explicit token and localhost host", () => {
+  const env = {
+    VISTAIRE_OWNER_E2E_AUTH_BYPASS: "1",
+    VISTAIRE_OWNER_E2E_AUTH_BYPASS_TOKEN: "0123456789abcdef"
+  };
+  const validHeaders = new Map([
+    ["host", "localhost:3000"],
+    [DEV_OWNER_BYPASS_REQUEST_HEADER, "0123456789abcdef"]
+  ]);
+  const remoteHeaders = new Map([
+    ["host", "vistaire.example.com"],
+    [DEV_OWNER_BYPASS_REQUEST_HEADER, "0123456789abcdef"]
+  ]);
+
+  assert.equal(shouldApplyDevOwnerBypass(validHeaders, env), true);
+  assert.equal(
+    shouldApplyDevOwnerBypass(
+      new Map([
+        ["host", "localhost:3000"],
+        ["cookie", `${DEV_OWNER_BYPASS_COOKIE}=0123456789abcdef`]
+      ]),
+      env
+    ),
+    true
+  );
+  assert.equal(shouldApplyDevOwnerBypass(remoteHeaders, env), false);
+  assert.equal(
+    shouldApplyDevOwnerBypass(validHeaders, {
+      VISTAIRE_OWNER_E2E_AUTH_BYPASS: "1",
+      VISTAIRE_OWNER_E2E_AUTH_BYPASS_TOKEN: "short"
+    }),
+    false
+  );
+  assert.equal(
+    hasTrustedDevOwnerBypass(
+      new Map([[DEV_OWNER_BYPASS_TRUSTED_HEADER, "1"]]),
+      env
+    ),
+    true
+  );
+  assert.equal(
+    shouldApplyDevOwnerBypassToken(
+      new Map([["host", "localhost:3000"]]),
+      "0123456789abcdef",
+      env
+    ),
+    true
+  );
+});
+
+test("owner 3D restaurant access fails closed unless slugs are configured", () => {
+  const owner = {
+    userId: "user_owner",
+    emailAddresses: ["owner@vistaire.ca"]
+  };
+
+  assert.equal(getOwner3dRestaurantAccess(owner, {}).mode, "none");
+  assert.equal(ownerCanAccess3dRestaurant(owner, "maison-elyse", {}), false);
+  assert.equal(
+    ownerCanAccess3dRestaurant(owner, "maison-elyse", {
+      VISTAIRE_OWNER_3D_RESTAURANT_SLUGS: "maison-elyse"
+    }),
+    true
+  );
+  assert.equal(
+    ownerCanAccess3dRestaurant(owner, "other", {
+      VISTAIRE_OWNER_3D_RESTAURANT_ACCESS: "owner@vistaire.ca=maison-elyse;user_other=*"
+    }),
+    false
+  );
+  assert.equal(
+    ownerCanAccess3dRestaurant(owner, "maison-elyse", {
+      VISTAIRE_OWNER_3D_RESTAURANT_ACCESS: "owner@vistaire.ca=maison-elyse"
+    }),
+    true
   );
 });
