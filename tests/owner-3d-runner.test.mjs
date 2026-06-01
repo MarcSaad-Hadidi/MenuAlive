@@ -34,7 +34,8 @@ test("owner 3D external runner script exists and exports a testable API", async 
     "resolveRunnerSourceUploadId",
     "buildStorageArtifactPath",
     "collectArtifactFiles",
-    "runOnce"
+    "runOnce",
+    "shouldStopRunnerLoop"
   ]) {
     assert.equal(typeof runner[exportName], "function", `${exportName} export`);
   }
@@ -154,6 +155,31 @@ test("owner 3D runner maps job steps to bounded npm command plans", async () => 
       }),
     /not automated/
   );
+});
+
+test("owner 3D polling runner stays alive while the queue is idle", async () => {
+  const runner = await import(`../scripts/3d/runner.mjs?cache=${Date.now()}`);
+  const pollArgs = { once: false, maxJobs: null };
+
+  assert.equal(
+    runner.shouldStopRunnerLoop({ args: pollArgs, processed: 0, result: { claimed: false } }),
+    false
+  );
+  assert.equal(
+    runner.shouldStopRunnerLoop({ args: { ...pollArgs, once: true }, processed: 0, result: { claimed: false } }),
+    true
+  );
+  assert.equal(
+    runner.shouldStopRunnerLoop({ args: { ...pollArgs, maxJobs: 2 }, processed: 1, result: { claimed: false } }),
+    false
+  );
+  assert.equal(
+    runner.shouldStopRunnerLoop({ args: { ...pollArgs, maxJobs: 2 }, processed: 2, result: { claimed: true } }),
+    true
+  );
+
+  const source = readFileSync(runnerPath, "utf8");
+  assert.doesNotMatch(source, /args\.once\s*\|\|\s*!result\.claimed/);
 });
 
 test("owner 3D runner sanitizes logs and refuses unsafe artifact paths", async () => {

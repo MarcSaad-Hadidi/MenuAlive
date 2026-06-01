@@ -368,6 +368,7 @@ test("source upload resolver refuses to write sha sidecar over a symlink", async
       /symlink/i
     );
     assert.equal(readFileSync(victim, "utf8"), "unchanged");
+    assert.equal(existsSync(join(sourceDir, "source.glb")), false);
   });
 });
 

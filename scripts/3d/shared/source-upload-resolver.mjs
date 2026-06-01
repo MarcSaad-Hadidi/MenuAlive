@@ -227,6 +227,13 @@ function assertNoSymlinkAncestors(rootDir, targetPath) {
   }
 }
 
+function assertWritableNonSymlinkTarget(rootDir, targetPath, label) {
+  assertNoSymlinkAncestors(rootDir, targetPath);
+  if (existsSync(targetPath) && lstatSync(targetPath).isSymbolicLink()) {
+    throw new Error(`Refusing to write ${label} over a symlink.`);
+  }
+}
+
 export async function resolveSourceUploadRecord(
   client,
   { identity, sourceUploadId = null, env = process.env, allowedRestaurantSlugs = null } = {}
@@ -271,13 +278,12 @@ export async function downloadAndMaterializeSourceUpload(
   if (Number(row.bytes) !== bytes.length) throw new Error("Downloaded source byte length does not match metadata.");
   validateSourceGlbBytes(bytes);
   const sourcePath = safeLocalSourcePath({ rootDir, identity, sha256: actualSha256 });
-  assertNoSymlinkAncestors(rootDir, sourcePath);
-  if (existsSync(sourcePath) && lstatSync(sourcePath).isSymbolicLink()) {
-    throw new Error("Refusing to write source over a symlink.");
-  }
+  const sourceShaPath = `${sourcePath}.sha256`;
+  assertWritableNonSymlinkTarget(rootDir, sourcePath, "source");
+  assertWritableNonSymlinkTarget(rootDir, sourceShaPath, "source SHA-256 sidecar");
   mkdirSync(dirname(sourcePath), { recursive: true });
   writeFileSync(sourcePath, bytes);
-  writeFileSync(`${sourcePath}.sha256`, `${actualSha256}\n`);
+  writeFileSync(sourceShaPath, `${actualSha256}\n`);
   return {
     sourceUpload: row,
     sourcePath,

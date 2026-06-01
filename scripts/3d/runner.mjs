@@ -634,6 +634,13 @@ export async function runOnce(options = {}) {
   return { ...await runClaimedJob(client, args, claimed), claimed: true };
 }
 
+export function shouldStopRunnerLoop({ args, processed }) {
+  return Boolean(
+    args.once ||
+      (args.maxJobs !== null && processed >= args.maxJobs)
+  );
+}
+
 async function runLoop(args) {
   const results = [];
   let processed = 0;
@@ -641,7 +648,7 @@ async function runLoop(args) {
     const result = await runOnce(args);
     results.push(result);
     if (result.claimed) processed += 1;
-    if (args.once || !result.claimed || (args.maxJobs !== null && processed >= args.maxJobs)) break;
+    if (shouldStopRunnerLoop({ args, processed })) break;
     await new Promise((resolvePromise) => setTimeout(resolvePromise, args.pollIntervalMs));
   }
   return { ok: results.every((result) => result.ok), processed, results };
