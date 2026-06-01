@@ -6,13 +6,20 @@ const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 
 const expectedScripts = [
   "3d:analyze-source",
+  "3d:repair-source",
   "3d:optimize",
+  "3d:optimize-heavy",
   "3d:optimize-dish",
   "3d:optimize-menu",
   "3d:preview",
   "3d:finalize-manifest",
   "3d:record-device-qa",
   "3d:prepare-cdn-upload",
+  "3d:runner",
+  "3d:runner:once",
+  "3d:runner:claim",
+  "3d:benchmark-heavy",
+  "3d:retouch-report",
   "3d:publish",
   "3d:rollback",
   "3d:clean-stale"

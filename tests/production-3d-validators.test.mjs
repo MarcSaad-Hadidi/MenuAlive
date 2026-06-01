@@ -187,6 +187,24 @@ test("file signature and sha256 validators return structured evidence", () =>
     assert.ok(hash.evidence.some((item) => item.actualSha256));
   }));
 
+test("budget validator fails AR-lite over the hard triangle ceiling", () => {
+  const manifest = baseManifest({
+    variants: {
+      ...baseManifest().variants,
+      arLite: {
+        url: "/models/restaurants/maison-elyse/demo/dish/v1/ar-lite/dish.glb",
+        bytes: 1_000_000,
+        triangleCount: 151_000
+      }
+    }
+  });
+
+  const result = validateBudgets({ manifest, profile: "signature" });
+
+  assert.equal(result.ok, false);
+  assert.match(result.fails.join("\n"), /arLite.*151000 triangles.*150000/);
+});
+
 test("basic GLB validator accepts a minimal valid GLB and reports scene metrics", () =>
   withTempDir((dir) => {
     const glbPath = join(dir, "dish.glb");

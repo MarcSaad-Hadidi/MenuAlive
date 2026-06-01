@@ -603,6 +603,9 @@ function validateStrictProductionVariantMetadata(result, manifest) {
     if (arLite.optimizationMethod === "copy" || arLite.optimizer?.command?.includes(" copy ")) {
       addFail(result, pathMessage("variants.arLite.optimizationMethod", "arLite copy cannot be presented as optimization"));
     }
+    if (Number.isFinite(arLite.triangleCount) && arLite.triangleCount > 150_000) {
+      addFail(result, pathMessage("variants.arLite.triangleCount", "must be <= 150000 for Android AR-lite production"));
+    }
     if (typeof sourceSha256 === "string" && arLite.sha256 === sourceSha256) {
       addFail(result, pathMessage("variants.arLite.sha256", "arLite must not be an unoptimized source copy"));
     }

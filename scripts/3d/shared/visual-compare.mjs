@@ -10,6 +10,7 @@ import {
 import { dirname, join, normalize, relative, resolve, sep } from "node:path";
 
 import { parseArgs, writeStdout } from "./file-utils.mjs";
+import { analyzeGlbGeometryFile } from "./geometry-metrics.mjs";
 import { comparePngImages, encodePngImage, parsePngImage } from "./png-image.mjs";
 
 export const STRICT_VISUAL_PROMISE =
@@ -119,53 +120,13 @@ function fileReference(filePath, rootDir) {
   };
 }
 
-function parseGlbJson(filePath) {
-  const bytes = readFileSync(filePath);
-  if (bytes.length < 20 || bytes.toString("utf8", 0, 4) !== "glTF") {
-    throw new Error(`${filePath} is not a GLB`);
-  }
-  let offset = 12;
-  while (offset + 8 <= bytes.length) {
-    const chunkLength = bytes.readUInt32LE(offset);
-    const chunkType = bytes.readUInt32LE(offset + 4);
-    const start = offset + 8;
-    const end = start + chunkLength;
-    if (end > bytes.length) throw new Error(`${filePath} has an invalid GLB chunk`);
-    if (chunkType === 0x4e4f534a) {
-      return JSON.parse(bytes.subarray(start, end).toString("utf8").replace(/\0+$/g, "").trim());
-    }
-    offset = end;
-  }
-  throw new Error(`${filePath} is missing a GLB JSON chunk`);
-}
-
 function geometrySummary(filePath) {
-  const gltf = parseGlbJson(filePath);
-  const min = [Infinity, Infinity, Infinity];
-  const max = [-Infinity, -Infinity, -Infinity];
-  for (const mesh of gltf.meshes ?? []) {
-    for (const primitive of mesh.primitives ?? []) {
-      const accessor = gltf.accessors?.[primitive.attributes?.POSITION];
-      if (!accessor?.min || !accessor?.max) continue;
-      for (let index = 0; index < 3; index += 1) {
-        min[index] = Math.min(min[index], accessor.min[index]);
-        max[index] = Math.max(max[index], accessor.max[index]);
-      }
-    }
-  }
-  if (!Number.isFinite(min[0])) {
-    return {
-      min: [0, 0, 0],
-      max: [0, 0, 0],
-      dimensionsMeters: [0, 0, 0],
-      originMeters: [0, 0, 0]
-    };
-  }
+  const geometry = analyzeGlbGeometryFile(filePath);
   return {
-    min,
-    max,
-    dimensionsMeters: max.map((value, index) => value - min[index]),
-    originMeters: max.map((value, index) => (value + min[index]) / 2)
+    ...geometry.bounds,
+    components: geometry.components,
+    tinyIslandCount: geometry.tinyIslandCount,
+    duplicateShellEstimate: geometry.duplicateShellEstimate
   };
 }
 

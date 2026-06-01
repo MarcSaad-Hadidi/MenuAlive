@@ -6,23 +6,48 @@ function addBudgetEvidence(result, check) {
   result.evidence.push(check);
 
   if (check.status === "unknown") {
-    addFail(result, `${check.key}: byte size is not measurable`, check);
+    addFail(result, `${check.key}: ${check.metric} is not measurable`, check);
     return;
   }
   if (check.status === "warning") {
     addWarning(
       result,
-      `${check.key}: ${formatBytes(check.actualBytes)} exceeds warning budget ${formatBytes(check.warningBytes)}`,
+      check.metric === "bytes"
+        ? `${check.key}: ${formatBytes(check.actualBytes)} exceeds warning budget ${formatBytes(check.warningBytes)}`
+        : `${check.key}: ${check.actual} ${check.metric} exceeds warning budget ${check.warning}`,
       check
     );
   }
-  if (check.actualBytes > check.failBytes) {
+  if (check.actual > check.fail) {
     addFail(
       result,
-      `${check.key}: ${formatBytes(check.actualBytes)} exceeds fail budget ${formatBytes(check.failBytes)}`,
+      check.metric === "bytes"
+        ? `${check.key}: ${formatBytes(check.actualBytes)} exceeds fail budget ${formatBytes(check.failBytes)}`
+        : `${check.key}: ${check.actual} ${check.metric} exceeds fail budget ${check.fail}`,
       check
     );
   }
+}
+
+function budgetCheck({ scope, key, budgetKey, metric, actual, budget }) {
+  const check = {
+    scope,
+    key,
+    budgetKey,
+    metric,
+    actual,
+    target: budget.target,
+    warning: budget.warning,
+    fail: budget.fail,
+    status: classifyBudget(actual, budget)
+  };
+  if (metric === "bytes") {
+    check.actualBytes = actual;
+    check.targetBytes = budget.target;
+    check.warningBytes = budget.warning;
+    check.failBytes = budget.fail;
+  }
+  return check;
 }
 
 function stableAssetKey(variant) {
@@ -50,17 +75,30 @@ export function validateBudgets({
     if (!budget) continue;
 
     const actualBytes = Number(variant?.bytes);
-    addBudgetEvidence(result, {
+    addBudgetEvidence(result, budgetCheck({
       scope: "variant",
       key: variantKeyName,
       budgetKey,
       metric: "bytes",
-      actualBytes,
-      targetBytes: budget.target,
-      warningBytes: budget.warning,
-      failBytes: budget.fail,
-      status: classifyBudget(actualBytes, budget)
-    });
+      actual: actualBytes,
+      budget
+    }));
+
+    const triangleBudget = budgets.variants?.[budgetKey]?.triangles;
+    const hasTriangleMetadata =
+      Object.prototype.hasOwnProperty.call(variant ?? {}, "triangleCount") ||
+      Object.prototype.hasOwnProperty.call(variant ?? {}, "triangles");
+    const actualTriangles = Number(variant?.triangleCount ?? variant?.triangles);
+    if (triangleBudget && hasTriangleMetadata) {
+      addBudgetEvidence(result, budgetCheck({
+        scope: "variant",
+        key: variantKeyName,
+        budgetKey,
+        metric: "triangles",
+        actual: actualTriangles,
+        budget: triangleBudget
+      }));
+    }
   }
 
   const uniquePublicAssets = new Map();
@@ -92,17 +130,14 @@ export function validateBudgets({
 
   const totalBudget = budgets.profiles?.[profile]?.totalPublicBytes;
   if (totalBudget) {
-    addBudgetEvidence(result, {
+    addBudgetEvidence(result, budgetCheck({
       scope: "total",
       key: "publicTotal",
       budgetKey: `${profile}.totalPublicBytes`,
       metric: "bytes",
-      actualBytes: publicTotalBytes,
-      targetBytes: totalBudget.target,
-      warningBytes: totalBudget.warning,
-      failBytes: totalBudget.fail,
-      status: classifyBudget(publicTotalBytes, totalBudget)
-    });
+      actual: publicTotalBytes,
+      budget: totalBudget
+    }));
   }
 
   return result;

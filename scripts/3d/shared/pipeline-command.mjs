@@ -14,6 +14,7 @@ import { basename, dirname, join, normalize, relative, resolve, sep } from "node
 import { zipSync } from "fflate";
 
 import { parseArgs, publicUrlToFilePath, readJsonFile, writeStdout } from "./file-utils.mjs";
+import { analyzeGeometryFromGltf } from "./geometry-metrics.mjs";
 import {
   summarizeRestaurantManifest
 } from "./manifest-schema.mjs";
@@ -71,6 +72,7 @@ const STRICT_VISUAL_THRESHOLDS = Object.freeze({
 const STRICT_VISUAL_REJECTION =
   "Strict rendered visual identity evidence is required before optimization can be approved: source/candidate before-after-diff renders for web, mobile, and arLite, per-angle SSIM/perceptual scores, texture/silhouette/color/material/scale/origin/low-poly/appetite checks, and human approval.";
 const CANDIDATE_PROFILES = Object.freeze(["conservative", "balanced", "aggressive"]);
+const HEAVY_CANDIDATE_PROFILES = Object.freeze([...CANDIDATE_PROFILES, "emergency-ar"]);
 const GLB_VARIANTS = Object.freeze(["web", "mobile", "arLite"]);
 const RUNTIME_VARIANTS = Object.freeze(["web", "mobile", "arLite", "iosUsdz", "poster"]);
 
@@ -356,38 +358,6 @@ function externalUris(gltf) {
   return uris;
 }
 
-function aggregateBounds(gltf) {
-  const min = [Infinity, Infinity, Infinity];
-  const max = [-Infinity, -Infinity, -Infinity];
-  for (const mesh of gltf.meshes ?? []) {
-    for (const primitive of mesh.primitives ?? []) {
-      const accessor = gltf.accessors?.[primitive.attributes?.POSITION];
-      if (!accessor?.min || !accessor?.max) continue;
-      for (let i = 0; i < 3; i += 1) {
-        min[i] = Math.min(min[i], accessor.min[i]);
-        max[i] = Math.max(max[i], accessor.max[i]);
-      }
-    }
-  }
-  if (!Number.isFinite(min[0]) || !Number.isFinite(max[0])) {
-    return {
-      min: [0, 0, 0],
-      max: [0.1, 0.1, 0.1],
-      dimensionsMeters: [0.1, 0.1, 0.1],
-      centeredXZ: false,
-      groundedY: false
-    };
-  }
-  const dimensionsMeters = max.map((value, index) => Number((value - min[index]).toFixed(6)));
-  return {
-    min,
-    max,
-    dimensionsMeters,
-    centeredXZ: Math.abs(min[0] + max[0]) < 0.001 && Math.abs(min[2] + max[2]) < 0.001,
-    groundedY: Math.abs(min[1]) < 0.001
-  };
-}
-
 function analyzeGlbFile(sourcePath) {
   const bytes = readFileSync(sourcePath);
   if (isLfsPointer(bytes)) throw new Error("Source GLB is a Git LFS pointer, not a binary asset");
@@ -432,7 +402,7 @@ function analyzeGlbFile(sourcePath) {
     };
   });
 
-  const bounds = aggregateBounds(gltf);
+  const geometry = analyzeGeometryFromGltf({ gltf, binBuffer });
   const extUris = externalUris(gltf);
   const metrics = {
     sourcePath,
@@ -443,8 +413,8 @@ function analyzeGlbFile(sourcePath) {
     chunks,
     meshes: gltf.meshes?.length ?? 0,
     primitives,
-    triangles,
-    vertices,
+    triangles: geometry.triangles || triangles,
+    vertices: geometry.vertices || vertices,
     materials: gltf.materials?.length ?? 0,
     textures: gltf.textures?.length ?? 0,
     images: imageMetrics.length,
@@ -452,7 +422,8 @@ function analyzeGlbFile(sourcePath) {
     extensionsUsed: gltf.extensionsUsed ?? [],
     extensionsRequired: gltf.extensionsRequired ?? [],
     externalUris: extUris,
-    bounds,
+    bounds: geometry.bounds,
+    geometry,
     drawCallEstimate: primitives,
     drawCalls,
     classification:
@@ -671,6 +642,29 @@ function transformArgsFor({ input, output, profile, candidateName = "balanced" }
         "0.55",
         "--simplify-error",
         "0.0007",
+        "--simplify-lock-border",
+        "true"
+      ]
+    },
+    "emergency-ar": {
+      web: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "1024"],
+      mobile: ["optimize", input, output, "--compress", "meshopt", "--texture-compress", "webp", "--texture-size", "512"],
+      arLite: [
+        "optimize",
+        input,
+        output,
+        "--compress",
+        "false",
+        "--texture-compress",
+        "false",
+        "--texture-size",
+        "512",
+        "--simplify",
+        "true",
+        "--simplify-ratio",
+        "0.35",
+        "--simplify-error",
+        "0.0012",
         "--simplify-lock-border",
         "true"
       ]
@@ -1671,6 +1665,8 @@ function runOptimizeDish(args) {
   const allowPublicBinaries = Boolean(args["allow-public-binaries"]);
   const approvedBy = String(args["approved-by"] ?? "").trim();
   const cdnBaseUrl = cleanCdnBaseUrl(args["cdn-base-url"] ?? "");
+  const heavyAsset = Boolean(args["heavy-asset"]);
+  const candidateProfiles = heavyAsset ? HEAVY_CANDIDATE_PROFILES : CANDIDATE_PROFILES;
   const reports = reportDir(rootDir, identity);
   const work = workDir(rootDir, identity);
   const analysis = analyzeGlbFile(source);
@@ -1679,6 +1675,8 @@ function runOptimizeDish(args) {
   result.metrics.source = source;
   result.metrics.rootDir = rootDir;
   result.metrics.dryRun = dryRun;
+  result.metrics.heavyAsset = heavyAsset;
+  result.metrics.candidateProfiles = candidateProfiles;
   result.evidence.push({ stage: "source-analysis", ...analysis });
 
   if (analysis.externalUris.length > 0) {
@@ -1718,7 +1716,7 @@ function runOptimizeDish(args) {
   if (visualThreshold !== "strict") {
     throw new Error("--visual-threshold currently supports strict only");
   }
-  for (const candidateName of CANDIDATE_PROFILES) {
+  for (const candidateName of candidateProfiles) {
     const candidateFiles = {};
     const candidateEvidence = {};
     const candidateAnalysis = {};
