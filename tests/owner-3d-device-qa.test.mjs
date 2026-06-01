@@ -270,8 +270,13 @@ test("owner Device QA UI and API routes exist without early model fetching", () 
   assert.match(api, /superseded_at: supersededAt/);
   assert.match(api, /Existing Device QA result could not be superseded/);
   assert.match(api, /update\(\{ superseded_at: null \}\)/);
+  const supersedeIndex = api.indexOf(".update({ superseded_at: supersededAt })");
+  const insertMatch = /\.from\(DEVICE_QA_TABLE\)\s*\.insert\(\{/.exec(
+    api.slice(supersedeIndex)
+  );
+  const insertIndex = insertMatch ? supersedeIndex + insertMatch.index : -1;
   assert.ok(
-    api.indexOf("superseded_at: supersededAt") < api.indexOf(".from(DEVICE_QA_TABLE)\n    .insert"),
+    supersedeIndex >= 0 && insertIndex > supersedeIndex,
     "active Device QA rows should be superseded before inserting a replacement"
   );
   assert.doesNotMatch(api, /child_process|spawn\(|exec\(|public\/models/);
