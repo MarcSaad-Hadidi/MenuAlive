@@ -33,6 +33,11 @@ export const PRODUCTION_3D_BUDGETS = Object.freeze({
         warning: 12 * MiB,
         fail: 15 * MiB
       },
+      triangles: {
+        target: 70_000,
+        warning: 100_000,
+        fail: 150_000
+      },
       requiredExtensions: {
         target: 0,
         warning: 0,

@@ -24,6 +24,7 @@ import { getOwner3dPipelineOverview } from "@/lib/owner/threeDArPipeline";
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 
 const JOBS_TABLE = "owner_3d_pipeline_jobs";
+const SOURCE_UPLOADS_TABLE = "owner_3d_ar_source_uploads";
 const ACTIVE_DEDUPE_STATUSES: PipelineJobStatus[] = [
   "queued",
   "running",
@@ -55,6 +56,7 @@ type PipelineJobRow = {
   duration_ms: number | null;
   error_count: number | null;
   error_message: string | null;
+  source_upload_id?: string | null;
   initiated_by_clerk_user_id: string;
   initiated_by_email: string | null;
   next_action: string;
@@ -259,6 +261,35 @@ function jobToInsert(job: PipelineJob, owner: OwnerIdentity) {
   };
 }
 
+async function findLatestRunnableSourceUploadId(
+  client: SupabaseClient,
+  identity: PipelineJobIdentity
+): Promise<string | null> {
+  const { data, error } = await client
+    .from(SOURCE_UPLOADS_TABLE)
+    .select("id,status")
+    .eq("restaurant_slug", identity.restaurantSlug)
+    .eq("menu_slug", identity.menuSlug)
+    .eq("dish_slug", identity.dishSlug)
+    .eq("version", identity.version)
+    .in("status", [
+      "source_uploaded",
+      "analyzing",
+      "analysis_failed",
+      "analysis_complete",
+      "optimized",
+      "needs_review",
+      "ready_to_finalize",
+      "ready_to_publish"
+    ])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data || typeof data.id !== "string") return null;
+  return data.id;
+}
+
 function fallbackIdentities(): PipelineJobIdentity[] {
   const overview = getOwner3dPipelineOverview();
   return overview.assets.slice(0, 6).map((asset) => ({
@@ -404,6 +435,7 @@ export async function enqueueOwner3dPipelineJob(args: {
     initiatedBy: args.owner.emailAddresses[0] ?? args.owner.userId
   });
   const insert = jobToInsert(job, args.owner);
+  const latestSourceUploadId = await findLatestRunnableSourceUploadId(admin.client, args.identity);
 
   const existing = await admin.client
     .from(JOBS_TABLE)
@@ -430,7 +462,10 @@ export async function enqueueOwner3dPipelineJob(args: {
 
   const { data, error } = await admin.client
     .from(JOBS_TABLE)
-    .insert(insert)
+    .insert({
+      ...insert,
+      source_upload_id: latestSourceUploadId
+    })
     .select("*")
     .single();
 
