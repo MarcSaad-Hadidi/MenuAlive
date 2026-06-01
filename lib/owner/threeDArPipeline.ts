@@ -27,6 +27,7 @@ import {
   buildOwner3dLifecycleState,
   type Owner3dLifecycleState
 } from "@/lib/owner/threeDLifecycleModel";
+import { cleanOwner3dPathSegment } from "@/lib/owner/owner3dPathSegments";
 
 type JsonObject = Record<string, unknown>;
 
@@ -134,7 +135,7 @@ function readJsonObject(filePath: string): JsonObject | null {
 }
 
 function toRepoPath(filePath: string): string {
-  return relative(process.cwd(), filePath).replaceAll("\\", "/");
+  return relative(/* turbopackIgnore: true */ process.cwd(), filePath).replaceAll("\\", "/");
 }
 
 function titleFromSlug(slug: string): string {
@@ -172,14 +173,6 @@ function latestDateLabel(values: unknown[]): string {
     .filter((value) => Number.isFinite(value));
   if (dates.length === 0) return "Aucune exécution";
   return formatDateLabel(new Date(Math.max(...dates)).toISOString());
-}
-
-function cleanPathSegment(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 }
 
 function commandIdentity(identity: PipelineIdentity): string {
@@ -288,12 +281,12 @@ function identityFromManifest(path: string, manifest: JsonObject): PipelineIdent
   const match = normalized.match(
     /public\/models\/restaurants\/([^/]+)\/([^/]+)\/([^/]+)\/([^/]+)\/manifest\.json$/
   );
-  const restaurantSlug = cleanPathSegment(
+  const restaurantSlug = cleanOwner3dPathSegment(
     stringValue(manifest.restaurantSlug, match?.[1] ?? "")
   );
-  const menuSlug = cleanPathSegment(stringValue(manifest.menuSlug, match?.[2] ?? ""));
-  const dishSlug = cleanPathSegment(stringValue(manifest.dishSlug, match?.[3] ?? ""));
-  const version = cleanPathSegment(
+  const menuSlug = cleanOwner3dPathSegment(stringValue(manifest.menuSlug, match?.[2] ?? ""));
+  const dishSlug = cleanOwner3dPathSegment(stringValue(manifest.dishSlug, match?.[3] ?? ""));
+  const version = cleanOwner3dPathSegment(
     stringValue(manifest.activeVersion, match?.[4] ?? stringValue(manifest.version))
   );
 
@@ -809,7 +802,7 @@ function buildOverview(assets: Owner3dPipelineAsset[], source: Owner3dPipelineOv
 }
 
 function readOverview(): Owner3dPipelineOverview {
-  const rootDir = process.cwd();
+  const rootDir = /* turbopackIgnore: true */ process.cwd();
   const manifestsRoot = join(rootDir, "public", "models", "restaurants");
   const manifestAssets = scanManifestFiles(manifestsRoot)
     .map((manifestPath) => {

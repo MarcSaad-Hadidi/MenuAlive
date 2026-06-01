@@ -11,6 +11,7 @@ import {
   buildDeviceQaState,
   type DeviceQaState
 } from "@/lib/owner/threeDDeviceQaModel";
+import { cleanOwner3dPathSegment } from "@/lib/owner/owner3dPathSegments";
 import {
   buildVisualReviewState,
   type VisualReviewState
@@ -61,20 +62,12 @@ function stringValue(value: unknown, fallback = ""): string {
   return fallback;
 }
 
-function cleanPathSegment(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 function identityFromParams(params: PipelineIdentity): PipelineIdentity | null {
   const identity = {
-    restaurantSlug: cleanPathSegment(params.restaurantSlug),
-    menuSlug: cleanPathSegment(params.menuSlug),
-    dishSlug: cleanPathSegment(params.dishSlug),
-    version: cleanPathSegment(params.version)
+    restaurantSlug: cleanOwner3dPathSegment(params.restaurantSlug),
+    menuSlug: cleanOwner3dPathSegment(params.menuSlug),
+    dishSlug: cleanOwner3dPathSegment(params.dishSlug),
+    version: cleanOwner3dPathSegment(params.version)
   };
 
   if (
@@ -107,7 +100,7 @@ function readJsonObject(filePath: string): JsonObject | null {
 }
 
 function toRepoPath(filePath: string): string {
-  return relative(process.cwd(), filePath).replaceAll("\\", "/");
+  return relative(/* turbopackIgnore: true */ process.cwd(), filePath).replaceAll("\\", "/");
 }
 
 function titleFromSlug(slug: string): string {
@@ -124,7 +117,7 @@ function maybeNameFromManifest(manifest: JsonObject | null, key: string, slug: s
 
 function manifestFilePath(identity: PipelineIdentity): string {
   return join(
-    process.cwd(),
+    /* turbopackIgnore: true */ process.cwd(),
     "public",
     "models",
     "restaurants",
@@ -138,7 +131,7 @@ function manifestFilePath(identity: PipelineIdentity): string {
 
 function reportBundle(identity: PipelineIdentity): ReportBundle {
   const directory = join(
-    process.cwd(),
+    /* turbopackIgnore: true */ process.cwd(),
     "assets",
     "3d",
     "reports",

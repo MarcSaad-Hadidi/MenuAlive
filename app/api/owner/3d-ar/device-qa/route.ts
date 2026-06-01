@@ -352,6 +352,27 @@ export async function POST(request: NextRequest) {
     artifactId = String(artifact.data.id);
   }
 
+  const deviceTarget = deviceTargetForRow(validation.record.target);
+  const supersededAt = new Date().toISOString();
+  const superseded = await admin.client
+    .from(DEVICE_QA_TABLE)
+    .update({ superseded_at: supersededAt })
+    .eq("restaurant_slug", identity.identity.restaurantSlug)
+    .eq("menu_slug", identity.identity.menuSlug)
+    .eq("dish_slug", identity.identity.dishSlug)
+    .eq("asset_version", identity.identity.version)
+    .eq("device_target", deviceTarget)
+    .is("superseded_at", null)
+    .select("id");
+
+  if (superseded.error) {
+    if (evidencePath) await admin.client.storage.from(bucket).remove([evidencePath]);
+    return NextResponse.json(
+      { ok: false, error: "Existing Device QA result could not be superseded." },
+      { status: 503 }
+    );
+  }
+
   const deviceQa = await admin.client
     .from(DEVICE_QA_TABLE)
     .insert({
@@ -359,7 +380,7 @@ export async function POST(request: NextRequest) {
       menu_slug: identity.identity.menuSlug,
       dish_slug: identity.identity.dishSlug,
       asset_version: identity.identity.version,
-      device_target: deviceTargetForRow(validation.record.target),
+      device_target: deviceTarget,
       status: validation.record.status === "not-tested" ? "not_tested" : validation.record.status,
       device_name: validation.record.deviceName || null,
       os_version: validation.record.osVersion || null,
@@ -390,6 +411,18 @@ export async function POST(request: NextRequest) {
 
   if (deviceQa.error || !deviceQa.data) {
     if (evidencePath) await admin.client.storage.from(bucket).remove([evidencePath]);
+    const supersededIds = Array.isArray(superseded.data)
+      ? superseded.data
+          .map((row) => (row && typeof row === "object" && "id" in row ? String(row.id) : ""))
+          .filter(Boolean)
+      : [];
+    if (supersededIds.length > 0) {
+      await admin.client
+        .from(DEVICE_QA_TABLE)
+        .update({ superseded_at: null })
+        .in("id", supersededIds)
+        .eq("superseded_at", supersededAt);
+    }
     return NextResponse.json({ ok: false, error: "Device QA could not be recorded." }, { status: 503 });
   }
 

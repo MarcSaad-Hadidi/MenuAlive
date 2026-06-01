@@ -4,6 +4,7 @@ import { join } from "node:path";
 import test from "node:test";
 
 const reviewModel = await import("../lib/owner/threeDVisualReviewModel.ts");
+const pathSegments = await import("../lib/owner/owner3dPathSegments.ts");
 
 const VALID_REPORT = {
   status: "passed",
@@ -242,6 +243,24 @@ test("owner visual review URL safety blocks unsafe model and screenshot referenc
   ]) {
     assert.equal(reviewModel.validateReviewArtifactPath(unsafe).ok, false, unsafe);
   }
+});
+
+test("owner visual review route segment sanitizer is bounded and regex-free", () => {
+  assert.equal(pathSegments.cleanOwner3dPathSegment("Maison@@Elyse"), "maison-elyse");
+  assert.equal(pathSegments.cleanOwner3dPathSegment("--maison--elyse--"), "maison--elyse");
+  assert.equal(pathSegments.cleanOwner3dPathSegment("A".repeat(100)).length, 80);
+
+  const sanitizer = readFileSync(
+    join(process.cwd(), "lib", "owner", "owner3dPathSegments.ts"),
+    "utf8"
+  );
+  assert.doesNotMatch(sanitizer, /\.replace\(/);
+
+  const server = readFileSync(
+    join(process.cwd(), "lib", "owner", "threeDVisualReviewServer.ts"),
+    "utf8"
+  );
+  assert.doesNotMatch(server, /replace\(\s*\/\[\^a-z0-9/);
 });
 
 test("owner visual review route and component avoid early GLB loading", () => {

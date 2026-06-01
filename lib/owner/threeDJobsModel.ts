@@ -578,12 +578,62 @@ function incrementCounter<T extends string>(map: Partial<Record<T, number>>, key
   map[key] = (map[key] ?? 0) + 1;
 }
 
+function cleanDashId(value: string, fallback: string): string {
+  const bounded = value.slice(0, 512).toLowerCase();
+  let cleaned = "";
+  let dashRun = true;
+
+  for (let index = 0; index < bounded.length && cleaned.length < 80; index += 1) {
+    const code = bounded.charCodeAt(index);
+    const safe = (code >= 48 && code <= 57) || (code >= 97 && code <= 122);
+
+    if (safe) {
+      cleaned += bounded[index];
+      dashRun = false;
+    } else if (!dashRun) {
+      cleaned += "-";
+      dashRun = true;
+    }
+  }
+
+  if (cleaned.endsWith("-")) cleaned = cleaned.slice(0, -1);
+  return cleaned || fallback;
+}
+
+function cleanPathId(value: string): string {
+  const bounded = value.slice(0, 512).toLowerCase();
+  let cleaned = "";
+  let replacingUnsafeRun = false;
+
+  for (let index = 0; index < bounded.length && cleaned.length < 80; index += 1) {
+    const code = bounded.charCodeAt(index);
+    const safe =
+      (code >= 48 && code <= 57) ||
+      (code >= 97 && code <= 122) ||
+      code === 45 ||
+      code === 46 ||
+      code === 95;
+
+    if (safe) {
+      cleaned += bounded[index];
+      replacingUnsafeRun = false;
+    } else if (!replacingUnsafeRun) {
+      cleaned += "-";
+      replacingUnsafeRun = true;
+    }
+  }
+
+  let start = 0;
+  while (start < cleaned.length && cleaned.charCodeAt(start) === 45) start += 1;
+
+  let end = cleaned.length;
+  while (end > start && cleaned.charCodeAt(end - 1) === 45) end -= 1;
+
+  return cleaned.slice(start, end);
+}
+
 function blockerId(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || "pipeline-blocker";
+  return cleanDashId(value, "pipeline-blocker");
 }
 
 let fallbackJobSequence = 0;
@@ -596,9 +646,7 @@ function jobNonce(): string {
 }
 
 function jobIdSuffix(): string {
-  const cleaned = jobNonce()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, "");
+  const cleaned = cleanPathId(jobNonce());
   if (cleaned.length >= 16) return cleaned.slice(0, 64);
   return safeHash(`${cleaned}:${fallbackJobSequence}:${Date.now()}`);
 }

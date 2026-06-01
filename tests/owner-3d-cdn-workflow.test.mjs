@@ -279,8 +279,9 @@ test("owner status mapping blocks ready-to-finalize until CDN network validation
 test("owner CDN API and UI are auth-gated and do not fake uploads", () => {
   const apiPath = join(process.cwd(), "app", "api", "owner", "3d-ar", "cdn", "route.ts");
   const componentPath = join(process.cwd(), "components", "owner", "Owner3dCdnWorkflowPanel.tsx");
+  const workflowPath = join(process.cwd(), "lib", "owner", "threeDCdnWorkflow.ts");
 
-  for (const path of [apiPath, componentPath]) {
+  for (const path of [apiPath, componentPath, workflowPath]) {
     assert.equal(existsSync(path), true, path);
   }
 
@@ -289,6 +290,9 @@ test("owner CDN API and UI are auth-gated and do not fake uploads", () => {
   assert.match(api, /requireSameOriginOwnerMutation/);
   assert.match(api, /buildCdnWorkflowFromFiles/);
   assert.doesNotMatch(api, /child_process|spawn\(|exec\(|public\/models.*write/i);
+
+  const workflow = readFileSync(workflowPath, "utf8");
+  assert.match(workflow, /turbopackIgnore/);
 
   const component = readFileSync(componentPath, "utf8");
   for (const text of [

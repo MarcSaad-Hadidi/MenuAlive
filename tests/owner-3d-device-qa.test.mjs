@@ -267,6 +267,13 @@ test("owner Device QA UI and API routes exist without early model fetching", () 
   assert.match(api, /requireVistaireOwnerApi\(\)/);
   assert.match(api, /requireSameOriginOwnerMutation/);
   assert.match(api, /validateDeviceQaSubmission/);
+  assert.match(api, /superseded_at: supersededAt/);
+  assert.match(api, /Existing Device QA result could not be superseded/);
+  assert.match(api, /update\(\{ superseded_at: null \}\)/);
+  assert.ok(
+    api.indexOf("superseded_at: supersededAt") < api.indexOf(".from(DEVICE_QA_TABLE)\n    .insert"),
+    "active Device QA rows should be superseded before inserting a replacement"
+  );
   assert.doesNotMatch(api, /child_process|spawn\(|exec\(|public\/models/);
 
   const migration = readFileSync(migrationPath, "utf8");
@@ -274,4 +281,5 @@ test("owner Device QA UI and API routes exist without early model fetching", () 
   assert.match(migration, /restaurant_slug text not null/);
   assert.match(migration, /evidence_storage_path/);
   assert.match(migration, /asset_url/);
+  assert.match(migration, /owner_3d_device_qa_active_identity_target_key/);
 });

@@ -129,7 +129,7 @@ function readJsonObject(filePath: string): JsonObject | null {
 }
 
 function toRepoPath(filePath: string): string {
-  return relative(process.cwd(), filePath).replaceAll("\\", "/");
+  return relative(/* turbopackIgnore: true */ process.cwd(), filePath).replaceAll("\\", "/");
 }
 
 function reportsPath(identity: SourceUploadIdentity): string {
@@ -587,9 +587,8 @@ export function cdnStorageConfigured(env: NodeJS.ProcessEnv = process.env): bool
 }
 
 export function buildCdnWorkflowFromFiles(identity: SourceUploadIdentity): CdnWorkflowState {
-  const root = process.cwd();
   const reportDir = join(
-    root,
+    process.cwd(),
     "assets",
     "3d",
     "reports",
@@ -598,7 +597,18 @@ export function buildCdnWorkflowFromFiles(identity: SourceUploadIdentity): CdnWo
     identity.dishSlug,
     identity.version
   );
-  const manifest = readJsonObject(join(root, manifestPath(identity)));
+  const manifestFile = join(
+    process.cwd(),
+    "public",
+    "models",
+    "restaurants",
+    identity.restaurantSlug,
+    identity.menuSlug,
+    identity.dishSlug,
+    identity.version,
+    "manifest.json"
+  );
+  const manifest = readJsonObject(manifestFile);
   const uploadPlan = readJsonObject(join(reportDir, "upload-plan.json"));
   const networkReport = readJsonObject(join(reportDir, "network-validation.json"));
   const state = buildCdnWorkflowState({

@@ -530,8 +530,38 @@ function auditActor(value: unknown, fallback = "Manifest lifecycle"): Owner3dAud
   return { label, name: label === fallback ? undefined : label };
 }
 
+function cleanAuditId(parts: Array<string | null | undefined>): string {
+  const bounded = parts.filter(Boolean).join(":").slice(0, 512);
+  let cleaned = "";
+  let replacementRun = false;
+
+  for (let index = 0; index < bounded.length && cleaned.length < 240; index += 1) {
+    const code = bounded.charCodeAt(index);
+    const safe =
+      (code >= 48 && code <= 57) ||
+      (code >= 65 && code <= 90) ||
+      (code >= 97 && code <= 122) ||
+      code === 45 ||
+      code === 46 ||
+      code === 47 ||
+      code === 58 ||
+      code === 64 ||
+      code === 95;
+
+    if (safe) {
+      cleaned += bounded[index];
+      replacementRun = false;
+    } else if (!replacementRun) {
+      cleaned += "-";
+      replacementRun = true;
+    }
+  }
+
+  return cleaned || "owner-3d-audit-event";
+}
+
 function eventId(parts: Array<string | null | undefined>): string {
-  return parts.filter(Boolean).join(":").replace(/[^a-z0-9:_@./-]+/gi, "-");
+  return cleanAuditId(parts);
 }
 
 export function createOwner3dLifecycleAuditEvent(args: {
