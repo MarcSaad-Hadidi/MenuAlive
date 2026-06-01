@@ -1169,6 +1169,15 @@
   border-color: var(--line-strong);
 }
 
+.btn:focus-visible,
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible,
+.pipelineActionSummary:focus-visible {
+  outline: 2px solid rgba(232, 207, 155, 0.72);
+  outline-offset: 2px;
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -1749,6 +1758,1273 @@
   color: var(--owner-soft);
 }
 
+/* 3D / AR pipeline operations */
+.pipelineOverviewGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pipelineOverviewCard {
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-1);
+}
+
+.pipelineOverviewCardPrimary {
+  border-color: var(--line-strong);
+  background: linear-gradient(180deg, rgba(232, 207, 155, 0.1), var(--surface-1));
+}
+
+.pipelineOverviewValue {
+  font-family: var(--owner-display);
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.sourceUploadPanel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(232, 207, 155, 0.08), rgba(13, 8, 5, 0.58)),
+    var(--surface-1);
+}
+
+.sourceUploadHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sourceUploadEyebrow {
+  margin: 0 0 5px;
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sourceUploadForm {
+  display: grid;
+  gap: 12px;
+}
+
+.sourceUploadIdentityGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sourceUploadControls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.sourceUploadDrop {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.sourceUploadDrop input[type="file"] {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-0);
+  color: var(--owner-cream);
+}
+
+.sourceUploadDrop > span:last-child {
+  color: var(--owner-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.sourceUploadRecord {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding-top: 4px;
+}
+
+.sourceUploadRecord div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(232, 207, 155, 0.12);
+  border-radius: 10px;
+  background: rgba(13, 8, 5, 0.42);
+}
+
+.sourceUploadRecord dt {
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sourceUploadRecord dd {
+  margin: 4px 0 0;
+  color: var(--owner-cream);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.pipelineJobsPanel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(232, 207, 155, 0.05), rgba(13, 8, 5, 0.2)),
+    var(--surface-1);
+}
+
+.pipelineJobsHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pipelineJobsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.pipelineHealthGrid,
+.pipelineObservabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pipelineObservabilityGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pipelineHealthCard,
+.pipelineBlockerList,
+.pipelineRecommendationList,
+.pipelineFailureList,
+.pipelineArtifactList {
+  min-width: 0;
+  border: 1px solid rgba(232, 207, 155, 0.13);
+  border-radius: 12px;
+  background: rgba(13, 8, 5, 0.36);
+  padding: 12px;
+}
+
+.pipelineHealthCard {
+  display: grid;
+  gap: 6px;
+}
+
+.pipelineHealthCard span,
+.pipelineHealthCard small {
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pipelineHealthCard strong {
+  font-family: var(--owner-display);
+  color: var(--owner-cream);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.pipelineFilterBar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 10px;
+  align-items: end;
+}
+
+.pipelineSelectField {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pipelineSelectField span {
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pipelineSelectField select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-0);
+  color: var(--owner-cream);
+  padding: 8px 10px;
+}
+
+.pipelineJobsList {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pipelineJobCard,
+.pipelineJobDetail {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-2);
+  padding: 14px;
+}
+
+.pipelineJobCard {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.pipelineJobCard[aria-pressed="true"] {
+  border-color: var(--line-strong);
+  background: linear-gradient(180deg, rgba(232, 207, 155, 0.1), var(--surface-2));
+}
+
+.pipelineJobDetail {
+  display: grid;
+  gap: 12px;
+}
+
+.pipelineTimeline {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pipelineTimeline li {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(232, 207, 155, 0.13);
+  border-radius: 10px;
+  background: rgba(13, 8, 5, 0.36);
+  color: var(--owner-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.pipelineTimeline strong {
+  color: var(--owner-cream);
+  font-size: 12px;
+}
+
+.pipelineTimeline span {
+  color: var(--owner-muted);
+  font-size: 12px;
+}
+
+.pipelineLogsDrawer {
+  border: 1px solid rgba(232, 207, 155, 0.13);
+  border-radius: 12px;
+  background: rgba(13, 8, 5, 0.36);
+  padding: 10px;
+}
+
+.pipelineLogsDrawer summary {
+  cursor: pointer;
+  color: var(--owner-champagne);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pipelineLogsDrawer pre {
+  max-height: 220px;
+  margin: 10px 0 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--owner-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pipelineJobActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pipelineBlockerList,
+.pipelineRecommendationList,
+.pipelineFailureList,
+.pipelineArtifactList {
+  display: grid;
+  gap: 8px;
+}
+
+.pipelineRecommendationList article {
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(232, 207, 155, 0.1);
+}
+
+.pipelineNextAction {
+  color: var(--owner-champagne);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pipelineMobileList {
+  display: grid;
+  gap: 10px;
+}
+
+.pipelineCardHeader,
+.pipelineDetailHeader,
+.pipelineSectionTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pipelineDetailHeader {
+  margin-bottom: 16px;
+}
+
+.pipelineRouteLinks,
+.pipelineVersionStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.pipelineVersionStrip {
+  justify-content: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pipelineDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pipelineDetailSection,
+.pipelineActionsPanel {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-2);
+  padding: 14px;
+}
+
+.pipelineDefinitionList {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.pipelineDefinitionList dt {
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pipelineDefinitionList dd {
+  margin: 3px 0 0;
+  color: var(--owner-cream);
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.pipelineDefinitionList p {
+  margin: 4px 0 0;
+  color: var(--owner-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.pipelineActionsPanel {
+  margin-top: 10px;
+}
+
+.pipelineActionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.pipelineActionItem {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(13, 8, 5, 0.44);
+  padding: 10px;
+}
+
+.pipelineActionItem summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.pipelineActionItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.pipelineActionSummary {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--owner-cream);
+}
+
+.pipelineActionSummary span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pipelineActionSummary small {
+  color: var(--owner-soft);
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.pipelineActionItem p {
+  margin: 10px 0 0;
+}
+
+.pipelineCommand {
+  display: block;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(232, 207, 155, 0.14);
+  border-radius: 10px;
+  background: #0a0705;
+  color: rgba(255, 250, 240, 0.78);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cdnWorkflowPanel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin-top: 12px;
+  padding: clamp(14px, 2.4vw, 18px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(232, 207, 155, 0.08), rgba(13, 8, 5, 0.72)),
+    var(--surface-1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.cdnStatusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.cdnStatusGrid div {
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid rgba(232, 207, 155, 0.12);
+  border-radius: 10px;
+  background: rgba(8, 6, 4, 0.42);
+}
+
+.cdnStatusGrid span,
+.cdnEvidenceList dt {
+  display: block;
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cdnStatusGrid strong,
+.cdnEvidenceList dd {
+  display: block;
+  margin: 4px 0 0;
+  color: var(--owner-cream);
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.cdnToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cdnCommandGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.cdnCommandGrid details,
+.cdnRawReport,
+.cdnReportGrid article,
+.cdnVariantCard {
+  min-width: 0;
+  border: 1px solid rgba(232, 207, 155, 0.13);
+  border-radius: 12px;
+  background: rgba(8, 6, 4, 0.38);
+  padding: 12px;
+}
+
+.cdnCommandGrid summary,
+.cdnRawReport summary {
+  cursor: pointer;
+  color: var(--owner-champagne);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cdnBreakCell {
+  max-width: 280px;
+  overflow-wrap: anywhere;
+}
+
+.cdnHeaderChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cdnHeaderChips span {
+  max-width: 100%;
+  padding: 5px 7px;
+  border: 1px solid rgba(232, 207, 155, 0.13);
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.04);
+  color: var(--owner-muted);
+  font-size: 11px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.cdnReportPanel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cdnReportGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.cdnEvidenceList {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 10px 0 0;
+}
+
+.cdnEvidenceList div {
+  min-width: 0;
+}
+
+.cdnRawReport pre {
+  max-height: 260px;
+  margin: 10px 0 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--owner-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lifecyclePanel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin-top: 12px;
+  padding: clamp(14px, 2.4vw, 18px);
+  border: 1px solid rgba(232, 207, 155, 0.16);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(232, 207, 155, 0.1), rgba(13, 8, 5, 0.7)),
+    var(--surface-1);
+}
+
+.lifecycleGateList,
+.lifecycleGrid,
+.auditTimeline {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lifecycleGateList {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lifecycleGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lifecycleGate,
+.lifecycleCard,
+.auditEvent {
+  min-width: 0;
+  border: 1px solid rgba(232, 207, 155, 0.13);
+  border-radius: 12px;
+  background: rgba(8, 6, 4, 0.42);
+  padding: 12px;
+}
+
+.lifecycleGate p,
+.lifecycleCard p {
+  margin: 8px 0 0;
+  color: var(--owner-cream);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.lifecycleGate > span,
+.lifecycleCard .cellSub {
+  display: block;
+  margin-top: 6px;
+  color: var(--owner-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lifecycleEvidenceList {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lifecycleEvidenceList li {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.lifecycleEvidenceList span,
+.lifecycleConfirm span,
+.lifecycleEffects dt,
+.lifecycleMiniGrid dt,
+.rollbackCompareGrid span {
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lifecycleEvidenceList code,
+.lifecycleConfirm code {
+  max-width: 100%;
+  color: var(--owner-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.lifecycleConfirm {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  margin: 12px 0;
+}
+
+.lifecycleInput {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(232, 207, 155, 0.18);
+  border-radius: 10px;
+  background: rgba(5, 4, 3, 0.62);
+  color: var(--owner-cream);
+  padding: 10px 11px;
+  font: inherit;
+}
+
+.lifecycleInput:disabled {
+  color: var(--owner-muted);
+  opacity: 0.7;
+}
+
+.lifecycleEffects,
+.lifecycleMiniGrid,
+.rollbackCompareGrid {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 10px 0;
+}
+
+.lifecycleEffects {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lifecycleMiniGrid,
+.rollbackCompareGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lifecycleEffects div,
+.lifecycleMiniGrid div,
+.rollbackCompareGrid div {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid rgba(232, 207, 155, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 250, 240, 0.035);
+}
+
+.lifecycleEffects dd,
+.lifecycleMiniGrid dd,
+.rollbackCompareGrid strong,
+.rollbackCompareGrid p {
+  margin: 4px 0 0;
+  color: var(--owner-cream);
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.rollbackTargetList {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 10px 0;
+}
+
+.rollbackTargetButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(232, 207, 155, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 250, 240, 0.035);
+  color: var(--owner-cream);
+  padding: 9px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rollbackTargetButton span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rollbackTargetButton:disabled {
+  color: var(--owner-muted);
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.rollbackTargetButtonActive {
+  border-color: rgba(232, 207, 155, 0.38);
+  background: rgba(232, 207, 155, 0.08);
+}
+
+.auditTimelinePanel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.auditEventHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.visualReviewShell {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.visualReviewHero,
+.reviewModelsPanel,
+.visualEvidencePanel,
+.reviewMetricsPanel,
+.reviewDecisionCard,
+.reviewActionsPanel {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(38, 25, 14, 0.78), rgba(16, 10, 6, 0.9));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+}
+
+.visualReviewHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: clamp(16px, 3vw, 24px);
+}
+
+.visualReviewWarning {
+  border: 1px solid rgba(230, 160, 122, 0.34);
+  border-radius: 12px;
+  background: rgba(92, 38, 18, 0.24);
+  color: #ffd8c5;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reviewModelsPanel,
+.visualEvidencePanel,
+.reviewMetricsPanel,
+.reviewActionsPanel {
+  display: grid;
+  gap: 14px;
+  padding: clamp(14px, 2.6vw, 18px);
+  min-width: 0;
+}
+
+.reviewModelGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.reviewModelPane {
+  display: grid;
+  grid-template-rows: auto minmax(300px, 1fr);
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid rgba(232, 207, 155, 0.12);
+  border-radius: 12px;
+  background: rgba(10, 7, 5, 0.44);
+  padding: 12px;
+}
+
+.reviewModelPaneHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.reviewModelStage,
+.reviewModelPlaceholder {
+  min-height: 300px;
+  border: 1px solid rgba(255, 250, 240, 0.1);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(232, 207, 155, 0.12), transparent 34%),
+    #080604;
+  overflow: hidden;
+}
+
+.reviewModelPlaceholder {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  align-content: center;
+  padding: 18px;
+  text-align: center;
+  color: var(--owner-muted);
+}
+
+.reviewModelPlaceholder p {
+  max-width: 32ch;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.reviewModelViewer {
+  display: block;
+  width: 100%;
+  height: clamp(320px, 48vw, 560px);
+  background: transparent;
+}
+
+.reviewModeControls,
+.reviewRequestGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.reviewModeControls .btn[aria-pressed="true"],
+.reviewModelsPanel .btn[aria-pressed="true"] {
+  border-color: rgba(232, 207, 155, 0.64);
+  background: rgba(232, 207, 155, 0.13);
+}
+
+.reviewAngleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.reviewAngleCard {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid rgba(232, 207, 155, 0.12);
+  border-radius: 12px;
+  background: rgba(9, 6, 4, 0.46);
+  padding: 12px;
+}
+
+.reviewAngleHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.reviewImageTriplet,
+.reviewSplitStage {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.reviewSplitStage {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reviewImageTile,
+.reviewImageMissing {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(255, 250, 240, 0.1);
+  border-radius: 10px;
+  background: rgba(8, 6, 4, 0.72);
+  overflow: hidden;
+}
+
+.reviewImageTile img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  background: #050403;
+}
+
+.reviewImageTile figcaption,
+.reviewImageMissing span {
+  display: block;
+  padding: 8px 9px;
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reviewImageMissing {
+  display: grid;
+  min-height: 150px;
+  align-content: center;
+  text-align: center;
+}
+
+.reviewImageMissing p,
+.reviewFocusedEmpty {
+  margin: 0;
+  color: var(--owner-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.reviewFocusedPanel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.reviewFocusedEmpty {
+  border: 1px dashed rgba(232, 207, 155, 0.24);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.reviewOverlayStage {
+  position: relative;
+  min-height: 260px;
+  aspect-ratio: 16 / 10;
+  border: 1px solid rgba(255, 250, 240, 0.1);
+  border-radius: 12px;
+  background: #050403;
+  overflow: hidden;
+}
+
+.reviewOverlayStage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.reviewOverlayStage p {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--owner-muted);
+}
+
+.reviewMetricsPanel .tableWrap {
+  border: 1px solid rgba(232, 207, 155, 0.12);
+  border-radius: 12px;
+  background: rgba(8, 6, 4, 0.44);
+}
+
+.reviewDecisionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.reviewDecisionCard {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.reviewDecisionCard p,
+.reviewRejectedCandidate li {
+  color: var(--owner-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.reviewRejectedCandidate {
+  display: grid;
+  gap: 6px;
+}
+
+.reviewRejectedCandidate strong {
+  color: var(--owner-cream);
+}
+
+.reviewRejectedCandidate ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.deviceQaPanel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: clamp(14px, 2.6vw, 18px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(38, 25, 14, 0.78), rgba(16, 10, 6, 0.9));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+}
+
+.deviceQaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.deviceQaCard {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(232, 207, 155, 0.13);
+  border-radius: 12px;
+  background: rgba(8, 6, 4, 0.42);
+}
+
+.deviceQaCard legend {
+  padding: 0 6px;
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.deviceQaHeader,
+.deviceQaAssetBox,
+.deviceQaActions {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+}
+
+.deviceQaHeader {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.deviceQaQrGrid {
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.deviceQaQr {
+  display: grid;
+  place-items: center;
+  min-height: 156px;
+  border: 1px solid rgba(232, 207, 155, 0.16);
+  border-radius: 12px;
+  background: #fff8ea;
+  color: #080706;
+  overflow: hidden;
+}
+
+.deviceQaQr svg {
+  display: block;
+  width: 132px;
+  height: 132px;
+}
+
+.deviceQaAssetBox {
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px;
+  border: 1px solid rgba(232, 207, 155, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 250, 240, 0.04);
+}
+
+.deviceQaAssetBox span {
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.deviceQaAssetBox a {
+  color: var(--owner-cream);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.deviceQaInstructionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.deviceQaInstructionGrid ol,
+.deviceQaInstructionGrid ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--owner-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.deviceQaCommand {
+  min-width: 0;
+}
+
+.deviceQaActions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.reviewActionsPanel {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reviewActionsPanel fieldset {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(232, 207, 155, 0.13);
+  border-radius: 12px;
+  background: rgba(8, 6, 4, 0.38);
+  padding: 12px;
+}
+
+.reviewActionsPanel legend {
+  padding: 0 6px;
+  color: var(--owner-soft);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.reviewActionsPanel .qrStatusLine {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 960px) {
   .console {
     grid-template-columns: minmax(0, 1fr);
@@ -1787,6 +3063,34 @@
   .statTilePrimary {
     grid-column: span 1;
   }
+
+  .pipelineOverviewGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pipelineDetailGrid,
+  .pipelineActionGrid,
+  .cdnCommandGrid,
+  .cdnReportGrid,
+  .lifecycleGateList,
+  .lifecycleGrid,
+  .pipelineHealthGrid,
+  .pipelineObservabilityGrid,
+  .pipelineJobsGrid,
+  .deviceQaGrid,
+  .reviewModelGrid,
+  .reviewDecisionGrid,
+  .reviewActionsPanel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sourceUploadIdentityGrid,
+  .sourceUploadRecord,
+  .cdnStatusGrid,
+  .lifecycleEffects,
+  .pipelineFilterBar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .showMobile {
@@ -1800,6 +3104,114 @@
 
   .showMobile {
     display: block;
+  }
+
+  .pipelineMobileList.showMobile {
+    display: grid;
+  }
+
+  .pipelineOverviewGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pipelineHealthGrid,
+  .pipelineObservabilityGrid,
+  .pipelineFilterBar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pipelineDetailHeader,
+  .pipelineCardHeader,
+  .pipelineSectionTitleRow {
+    flex-direction: column;
+  }
+
+  .pipelineRouteLinks {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .pipelineRouteLinks .btn,
+  .reviewModeControls .btn,
+  .reviewRequestGrid .btn {
+    width: 100%;
+  }
+
+  .visualReviewHero,
+  .reviewModelPaneHeader,
+  .reviewAngleHeader {
+    flex-direction: column;
+  }
+
+  .reviewModeControls,
+  .reviewRequestGrid {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .reviewAngleGrid,
+  .reviewImageTriplet,
+  .reviewSplitStage,
+  .deviceQaQrGrid,
+  .deviceQaInstructionGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .deviceQaHeader,
+  .deviceQaActions {
+    flex-direction: column;
+  }
+
+  .deviceQaActions .btn {
+    width: 100%;
+  }
+
+  .cdnToolbar,
+  .cdnStatusGrid,
+  .cdnCommandGrid,
+  .cdnReportGrid,
+  .lifecycleGateList,
+  .lifecycleGrid,
+  .lifecycleEffects,
+  .lifecycleMiniGrid,
+  .rollbackCompareGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cdnToolbar {
+    flex-direction: column;
+  }
+
+  .cdnToolbar .btn {
+    width: 100%;
+  }
+
+  .lifecycleCard .btn,
+  .rollbackTargetButton {
+    width: 100%;
+  }
+
+  .sourceUploadHeader,
+  .sourceUploadControls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sourceUploadHeader {
+    display: grid;
+  }
+
+  .sourceUploadIdentityGrid,
+  .sourceUploadRecord {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pipelineJobActions {
+    flex-direction: column;
+  }
+
+  .pipelineJobActions .btn,
+  .pipelineJobActions .btnPrimary {
+    width: 100%;
   }
 }
 

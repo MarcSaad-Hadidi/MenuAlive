@@ -496,6 +496,10 @@ function configuredCdnOrigins() {
     .filter(Boolean);
 }
 
+function configuredCdnBaseUrl() {
+  return cleanCdnBaseUrl(process.env.VISTAIRE_3D_CDN_BASE_URL ?? "");
+}
+
 function cleanCdnBaseUrl(value) {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
@@ -1427,6 +1431,13 @@ function validateNetworkValidationReport({ manifest, reportPath }) {
   const metricsByUrl = new Map((report.metrics?.assets ?? []).map((asset) => [asset.url, asset]));
   for (const asset of collectManifestAssets(manifest)) {
     if (!/^https:\/\//i.test(asset.url)) continue;
+    try {
+      validateCdnTargetUrl(manifest, asset.role, asset.url);
+    } catch (error) {
+      result.ok = false;
+      result.fails.push(`${asset.label}: ${error.message}`);
+      continue;
+    }
     const metric = metricsByUrl.get(asset.url);
     if (!metric) {
       result.ok = false;
@@ -1437,21 +1448,39 @@ function validateNetworkValidationReport({ manifest, reportPath }) {
       result.ok = false;
       result.fails.push(`${asset.label}: network validation did not prove successful HEAD and GET requests`);
     }
-    if (!metric.contentType) {
+    const expectedContentType = contentTypeForVariant(asset.role, asset.url);
+    const actualContentType = String(metric.contentType ?? "").split(";")[0].trim().toLowerCase();
+    if (!actualContentType) {
       result.ok = false;
       result.fails.push(`${asset.label}: network validation is missing content-type evidence`);
-    }
-    if (!String(metric.cacheControl ?? "").includes("immutable")) {
+    } else if (actualContentType !== expectedContentType) {
       result.ok = false;
-      result.fails.push(`${asset.label}: network validation is missing immutable cache-control evidence`);
+      result.fails.push(`${asset.label}: network validation content-type must be ${expectedContentType}`);
+    }
+    const cacheControl = String(metric.cacheControl ?? "").toLowerCase();
+    if (
+      !cacheControl.includes("public") ||
+      !cacheControl.includes("max-age=31536000") ||
+      !cacheControl.includes("immutable")
+    ) {
+      result.ok = false;
+      result.fails.push(`${asset.label}: network validation is missing public, max-age=31536000, immutable cache-control evidence`);
     }
     if (asset.role === "iosUsdz" && !String(metric.contentDisposition ?? "").toLowerCase().includes("inline")) {
       result.ok = false;
       result.fails.push(`${asset.label}: network validation is missing inline USDZ content-disposition evidence`);
     }
-    if (["web", "mobile", "arLite", "poster"].includes(asset.role) && !metric.accessControlAllowOrigin) {
+    if (["web", "mobile", "arLite", "poster"].includes(asset.role)) {
+      const cors = String(metric.accessControlAllowOrigin ?? "");
+      const appOrigin = String(process.env.VISTAIRE_APP_ORIGIN ?? "").replace(/\/+$/, "");
+      if (cors !== "*" && (!appOrigin || cors !== appOrigin)) {
+        result.ok = false;
+        result.fails.push(`${asset.label}: network validation CORS must be * or VISTAIRE_APP_ORIGIN`);
+      }
+    }
+    if (Number.isFinite(asset.bytes) && Number(metric.contentLength) !== asset.bytes) {
       result.ok = false;
-      result.fails.push(`${asset.label}: network validation is missing CORS evidence`);
+      result.fails.push(`${asset.label}: network validation contentLength does not match manifest bytes`);
     }
     if (Number.isFinite(asset.bytes) && metric.fetchedBytes !== asset.bytes) {
       result.ok = false;
@@ -1506,6 +1535,14 @@ function expectedCdnPathSuffix(manifest, variantKey) {
   return `/${manifest.restaurantSlug}/${manifest.menuSlug}/${manifest.dishSlug}/${manifest.activeVersion}/${VARIANT_DIRS[variantKey]}/`;
 }
 
+function expectedCdnPathPrefix(manifest, variantKey) {
+  const suffix = expectedCdnPathSuffix(manifest, variantKey);
+  const baseUrl = configuredCdnBaseUrl();
+  if (!baseUrl) return suffix;
+  const basePath = new URL(baseUrl).pathname.replace(/\/+$/, "");
+  return `${basePath}${suffix}`;
+}
+
 function validateCdnTargetUrl(manifest, variantKey, url) {
   let parsed;
   try {
@@ -1524,9 +1561,9 @@ function validateCdnTargetUrl(manifest, variantKey, url) {
   if (!allowedOrigins.includes(parsed.origin)) {
     throw new Error(`variants.${variantKey}.url origin ${parsed.origin} is not allowlisted by VISTAIRE_3D_CDN_ORIGINS`);
   }
-  const expectedSuffix = expectedCdnPathSuffix(manifest, variantKey);
-  if (!parsed.pathname.includes(expectedSuffix)) {
-    throw new Error(`variants.${variantKey}.url must include ${expectedSuffix}`);
+  const expectedPrefix = expectedCdnPathPrefix(manifest, variantKey);
+  if (!parsed.pathname.startsWith(expectedPrefix)) {
+    throw new Error(`variants.${variantKey}.url must start with ${expectedPrefix}`);
   }
   return parsed;
 }
@@ -2046,8 +2083,15 @@ function runRecordDeviceQa(args) {
     ]) {
       if (args[cliKey]) entry[entryKey] = String(args[cliKey]);
     }
-  } else if (args.evidence) {
-    entry.evidence = assertLocalEvidenceReference(args.evidence, rootDir, "--evidence");
+  } else {
+    const notes = String(args.notes ?? "").trim();
+    if (status === "failed" && notes.length < 8) {
+      throw new Error("--notes is required when status is failed");
+    }
+    if (notes) entry.notes = notes;
+    if (args.evidence) {
+      entry.evidence = assertLocalEvidenceReference(args.evidence, rootDir, "--evidence");
+    }
   }
 
   const updatedQa = {
@@ -2109,6 +2153,9 @@ function runPrepareCdnUpload(args) {
       "Cache-Control": "public, max-age=31536000, immutable"
     };
     if (variantKey === "iosUsdz") headers["Content-Disposition"] = "inline";
+    if (["web", "mobile", "arLite", "poster"].includes(variantKey)) {
+      headers["Access-Control-Allow-Origin"] = String(process.env.VISTAIRE_APP_ORIGIN ?? "*").replace(/\/+$/, "") || "*";
+    }
     uploads.push({
       variant: variantKey,
       role: variantKey,

@@ -149,7 +149,12 @@ function realDeviceQa() {
       device: "iPhone 15 Pro",
       os: "iOS 18.5",
       testedBy: "QA Bot",
-      testedAt: stableIso
+      testedAt: stableIso,
+      evidence: {
+        path: "assets/3d/reports/maison-elyse/main/homard-bisque/v1/device-qa/iphone.md",
+        sha256: "a".repeat(64),
+        bytes: 512
+      }
     },
     androidSceneViewer: {
       required: true,
@@ -157,7 +162,12 @@ function realDeviceQa() {
       device: "Pixel 8",
       os: "Android 15",
       testedBy: "QA Bot",
-      testedAt: stableIso
+      testedAt: stableIso,
+      evidence: {
+        path: "assets/3d/reports/maison-elyse/main/homard-bisque/v1/device-qa/android.md",
+        sha256: "b".repeat(64),
+        bytes: 640
+      }
     }
   };
 }
@@ -581,6 +591,61 @@ function writeApprovedManifest(root, version, previousVersion = null, { writeVis
   mkdirSync(dirname(manifestPath), { recursive: true });
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   return manifestPath;
+}
+
+function cdnVariantDirectory(variantKey) {
+  return variantKey === "arLite" ? "ar-lite" : variantKey === "iosUsdz" ? "ios" : variantKey;
+}
+
+function contentTypeForCdnTest(variantKey, url) {
+  if (variantKey === "iosUsdz" || url.endsWith(".usdz")) return "model/vnd.usdz+zip";
+  if (["web", "mobile", "arLite"].includes(variantKey) || url.endsWith(".glb")) return "model/gltf-binary";
+  if (url.endsWith(".png")) return "image/png";
+  return "application/octet-stream";
+}
+
+function rewriteManifestToCdn(manifestPath, version, prefix = "vistaire") {
+  const manifest = readJson(manifestPath);
+  for (const [variantKey, variant] of Object.entries(manifest.variants)) {
+    const directory = cdnVariantDirectory(variantKey);
+    variant.url = `https://cdn.example.com/${prefix}/maison-elyse/demo/plat-final/${version}/${directory}/${variant.url.split("/").pop()}`;
+  }
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  return manifest;
+}
+
+function writePassingNetworkReport(root, manifest) {
+  const reportPath = join(root, "assets", "3d", "reports", manifest.restaurantSlug, manifest.menuSlug, manifest.dishSlug, manifest.activeVersion, "network-validation.json");
+  mkdirSync(dirname(reportPath), { recursive: true });
+  const assets = Object.entries(manifest.variants).map(([variantKey, variant]) => ({
+    label: `${manifest.restaurantSlug}/${manifest.menuSlug}/${manifest.dishSlug}/${variantKey}`,
+    role: variantKey,
+    url: variant.url,
+    status: 200,
+    getStatus: 200,
+    contentType: contentTypeForCdnTest(variantKey, variant.url),
+    contentDisposition: variantKey === "iosUsdz" ? "inline" : "",
+    cacheControl: "public, max-age=31536000, immutable",
+    accessControlAllowOrigin: variantKey === "iosUsdz" ? "" : "*",
+    contentLength: variant.bytes,
+    fetchedBytes: variant.bytes,
+    fetchedSha256: variant.sha256
+  }));
+  writeFileSync(
+    reportPath,
+    `${JSON.stringify(
+      {
+        ok: true,
+        name: "network-headers",
+        metrics: { baseUrl: "https://cdn.example.com", assets },
+        warnings: [],
+        fails: []
+      },
+      null,
+      2
+    )}\n`
+  );
+  return reportPath;
 }
 
 function setManifestBackToReview(manifest, reason = "final approval pending") {
@@ -1612,7 +1677,8 @@ test("prepare-cdn-upload writes a deterministic upload plan with required header
       {
         env: {
           ...process.env,
-          VISTAIRE_3D_CDN_ORIGINS: "https://cdn.example.com"
+          VISTAIRE_3D_CDN_ORIGINS: "https://cdn.example.com",
+          VISTAIRE_3D_CDN_BASE_URL: "https://cdn.example.com/vistaire"
         }
       }
     );
@@ -1625,6 +1691,109 @@ test("prepare-cdn-upload writes a deterministic upload plan with required header
     assert.equal(usdz.headers["Cache-Control"], "public, max-age=31536000, immutable");
     assert.equal(usdz.headers["Content-Disposition"], "inline");
     assert.equal(usdz.sha256, manifest.variants.iosUsdz.sha256);
+  }));
+
+test("prepare-cdn-upload rejects allowlisted origins outside the configured CDN namespace", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vupload", null, { writeVisualEvidence: true });
+    const manifest = readJson(manifestPath);
+    copyManifestPublicAssetsToWork(dir, manifest);
+    for (const [variantKey, variant] of Object.entries(manifest.variants)) {
+      const directory = variantKey === "arLite" ? "ar-lite" : variantKey === "iosUsdz" ? "ios" : variantKey;
+      variant.url = `https://cdn.example.com/other/maison-elyse/demo/plat-final/vupload/${directory}/${variant.url.split("/").pop()}`;
+    }
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    const outPath = join(dir, "assets", "3d", "reports", "maison-elyse", "demo", "plat-final", "vupload", "upload-plan.json");
+
+    const plan = await runNode(
+      [
+        "scripts/3d/prepare-cdn-upload.mjs",
+        "--manifest",
+        manifestPath,
+        "--root",
+        dir,
+        "--out",
+        outPath,
+        "--write",
+        "--json"
+      ],
+      {
+        env: {
+          ...process.env,
+          VISTAIRE_3D_CDN_ORIGINS: "https://cdn.example.com",
+          VISTAIRE_3D_CDN_BASE_URL: "https://cdn.example.com/vistaire"
+        }
+      }
+    );
+
+    assert.equal(plan.code, 1);
+    assert.match(plan.stdout, /must start with/i);
+    assert.equal(existsSync(outPath), false);
+  }));
+
+test("finalize-manifest refuses external CDN URLs outside the configured namespace", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vbadcdn", null, { writeVisualEvidence: true });
+    const manifest = rewriteManifestToCdn(manifestPath, "vbadcdn", "other");
+    const reportPath = writePassingNetworkReport(dir, manifest);
+
+    const finalize = await runNode(
+      [
+        "scripts/3d/finalize-manifest.mjs",
+        "--manifest",
+        manifestPath,
+        "--root",
+        dir,
+        "--network-validation-report",
+        reportPath,
+        "--write",
+        "--json"
+      ],
+      {
+        env: {
+          ...process.env,
+          VISTAIRE_3D_CDN_ORIGINS: "https://cdn.example.com",
+          VISTAIRE_3D_CDN_BASE_URL: "https://cdn.example.com/vistaire"
+        }
+      }
+    );
+
+    assert.equal(finalize.code, 1);
+    assert.match(finalize.stdout, /must start with/i);
+  }));
+
+test("publish refuses external CDN URLs outside the configured namespace", () =>
+  withTempDir(async (dir) => {
+    const manifestPath = writeApprovedManifest(dir, "vbadpublishcdn", null, { writeVisualEvidence: true });
+    const manifest = rewriteManifestToCdn(manifestPath, "vbadpublishcdn", "other");
+    const reportPath = writePassingNetworkReport(dir, manifest);
+
+    const publish = await runNode(
+      [
+        "scripts/3d/publish.mjs",
+        "--manifest",
+        manifestPath,
+        "--root",
+        dir,
+        "--network-validation-report",
+        reportPath,
+        "--write",
+        "--quality-approved",
+        "--approved-by",
+        "QA Bot",
+        "--json"
+      ],
+      {
+        env: {
+          ...process.env,
+          VISTAIRE_3D_CDN_ORIGINS: "https://cdn.example.com",
+          VISTAIRE_3D_CDN_BASE_URL: "https://cdn.example.com/vistaire"
+        }
+      }
+    );
+
+    assert.equal(publish.code, 1);
+    assert.match(publish.stdout, /must start with/i);
   }));
 
 test("publish promotes an approved version and rollback restores the previous active version", () =>

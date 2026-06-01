@@ -1,0 +1,98 @@
+import { spawn } from "node:child_process";
+import http from "node:http";
+
+const DEFAULT_BASE_URL = "http://localhost:3000";
+const OWNER_E2E_TOKEN =
+  process.env.VISTAIRE_OWNER_E2E_AUTH_BYPASS_TOKEN ??
+  "vistaire-owner-e2e-local-token";
+
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? DEFAULT_BASE_URL;
+const parsedBaseURL = new URL(baseURL);
+const playwrightArgs = ["./node_modules/@playwright/test/cli.js", "test", ...process.argv.slice(2)];
+const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEB_SERVER === "1";
+
+function waitForServer(url, timeoutMs = 120_000) {
+  const deadline = Date.now() + timeoutMs;
+
+  return new Promise((resolve, reject) => {
+    const poll = () => {
+      const request = http.get(url, (response) => {
+        response.resume();
+        resolve();
+      });
+
+      request.on("error", (error) => {
+        if (Date.now() > deadline) {
+          reject(error);
+          return;
+        }
+        setTimeout(poll, 500);
+      });
+
+      request.setTimeout(2_000, () => {
+        request.destroy();
+      });
+    };
+
+    poll();
+  });
+}
+
+function runChild(command, args, options = {}) {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      stdio: "inherit",
+      windowsHide: true,
+      ...options
+    });
+
+    child.on("exit", (code, signal) => {
+      resolve(code ?? (signal ? 1 : 0));
+    });
+  });
+}
+
+async function main() {
+  let server = null;
+
+  try {
+    if (!skipWebServer) {
+      const port = parsedBaseURL.port || (parsedBaseURL.protocol === "https:" ? "443" : "80");
+      server = spawn(
+        process.execPath,
+        ["./node_modules/next/dist/bin/next", "start", "-p", port],
+        {
+          stdio: "inherit",
+          windowsHide: true,
+          env: {
+            ...process.env,
+            VISTAIRE_OWNER_E2E_AUTH_BYPASS: "1",
+            VISTAIRE_OWNER_E2E_AUTH_BYPASS_TOKEN: OWNER_E2E_TOKEN,
+            VISTAIRE_OWNER_E2E_EMAIL: "owner-e2e@localhost",
+            VISTAIRE_OWNER_3D_JOBS_FALLBACK: "1",
+            VISTAIRE_OWNER_3D_RESTAURANT_SLUGS: "*"
+          }
+        }
+      );
+
+      await waitForServer(baseURL);
+    }
+
+    const exitCode = await runChild(process.execPath, playwrightArgs, {
+      env: {
+        ...process.env,
+        PLAYWRIGHT_SKIP_WEB_SERVER: "1",
+        PLAYWRIGHT_BASE_URL: baseURL,
+        VISTAIRE_OWNER_E2E_AUTH_BYPASS_TOKEN: OWNER_E2E_TOKEN
+      }
+    });
+
+    process.exitCode = exitCode;
+  } finally {
+    if (server && !server.killed) {
+      server.kill();
+    }
+  }
+}
+
+await main();

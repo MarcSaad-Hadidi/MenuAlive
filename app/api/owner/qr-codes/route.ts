@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireVistaireOwnerApi } from "@/lib/auth/ownerApi";
+import {
+  requireSameOriginOwnerMutation,
+  requireVistaireOwnerApi
+} from "@/lib/auth/ownerApi";
 import { createOwnerQrCode } from "@/lib/owner/qrStore";
 
 export const runtime = "nodejs";
@@ -8,6 +11,9 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   const owner = await requireVistaireOwnerApi();
   if (!owner.ok) return owner.response;
+
+  const originError = requireSameOriginOwnerMutation(request);
+  if (originError) return originError;
 
   let body: unknown;
   try {

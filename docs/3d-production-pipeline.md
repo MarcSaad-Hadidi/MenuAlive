@@ -59,10 +59,11 @@ Git LFS pointers, and external URI dependencies fail the command.
 npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source assets/3d/source/maison-elyse/main/homard-bisque/v1/source.glb --write --allow-public-binaries --approved-by "Marc"
 ```
 
-For storage/CDN mode, allow the origin and omit public binary writes:
+For storage/CDN mode, allow the origin, define the immutable base namespace,
+and omit public binary writes:
 
 ```bash
-VISTAIRE_3D_CDN_ORIGINS=https://cdn.example.com npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source assets/3d/source/maison-elyse/main/homard-bisque/v1/source.glb --write --cdn-base-url https://cdn.example.com/vistaire
+VISTAIRE_3D_CDN_ORIGINS=https://cdn.example.com VISTAIRE_3D_CDN_BASE_URL=https://cdn.example.com/vistaire npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source assets/3d/source/maison-elyse/main/homard-bisque/v1/source.glb --write --cdn-base-url https://cdn.example.com/vistaire
 ```
 
 The optimizer requires `@gltf-transform/cli`. Web and mobile candidates use
@@ -81,7 +82,7 @@ production posters or exposed as runtime assets.
 To run the full end-to-end rendered comparison during optimization:
 
 ```bash
-VISTAIRE_3D_CDN_ORIGINS=https://cdn.example.com npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source assets/3d/source/maison-elyse/main/homard-bisque/v1/source.glb --write --cdn-base-url https://cdn.example.com/vistaire --run-visual-compare --visual-threshold strict
+VISTAIRE_3D_CDN_ORIGINS=https://cdn.example.com VISTAIRE_3D_CDN_BASE_URL=https://cdn.example.com/vistaire npm run 3d:optimize-dish -- --restaurant maison-elyse --menu main --dish homard-bisque --version v1 --source assets/3d/source/maison-elyse/main/homard-bisque/v1/source.glb --write --cdn-base-url https://cdn.example.com/vistaire --run-visual-compare --visual-threshold strict
 ```
 
 This generates conservative, balanced, and aggressive candidate sets for web,
@@ -133,7 +134,9 @@ npm run 3d:prepare-cdn-upload -- --manifest public/models/restaurants/maison-ely
 
 The plan lists each ignored staging file, target CDN URL, bytes, SHA-256,
 content type, immutable cache headers, and USDZ `Content-Disposition: inline`.
-It does not upload and does not validate the CDN.
+It does not upload and does not validate the CDN. The target URLs must stay
+under `VISTAIRE_3D_CDN_BASE_URL` plus the versioned
+`/{restaurant}/{menu}/{dish}/{version}/{variant}/` path.
 
 9. Record real-device QA only after testing on actual hardware:
 
@@ -149,25 +152,42 @@ failures.
 10. Validate delivery headers after upload:
 
 ```bash
-npm run 3d:validate-network -- --base-url https://example.com --manifest path/to/manifest.json --strict
+npm run 3d:validate-network -- --base-url https://example.com --manifest path/to/manifest.json --strict --out assets/3d/reports/.../network-validation.json
 ```
 
 For CDN publication, save the strict network validation JSON and pass it to
 publish:
 
 ```bash
-npm run 3d:validate-network -- --base-url https://example.com --manifest path/to/manifest.json --strict > assets/3d/reports/.../network-validation.json
+npm run 3d:validate-network -- --base-url https://example.com --manifest path/to/manifest.json --strict --out assets/3d/reports/.../network-validation.json
 npm run 3d:finalize-manifest -- --manifest path/to/manifest.json --network-validation-report assets/3d/reports/.../network-validation.json --write
 ```
 
 The report must include matching fetched byte counts and SHA-256 values for each
-CDN asset.
+CDN asset, exact MIME evidence, immutable cache headers, required CORS, and
+inline USDZ disposition.
+
+For external CDN validation, set `VISTAIRE_3D_CDN_ORIGINS`,
+`VISTAIRE_3D_CDN_BASE_URL`, and `VISTAIRE_APP_ORIGIN` before
+`3d:validate-network`. The owner CDN panel reports storage as configured only
+when `VISTAIRE_3D_CDN_BUCKET` and `VISTAIRE_3D_CDN_BASE_URL` are present. These
+variables do not upload assets by themselves; they allow URL validation,
+expected path checks, CORS/header verification, and manual runner handoff.
+
+PowerShell runner form:
+
+```powershell
+$env:VISTAIRE_3D_CDN_ORIGINS = "https://cdn.example.com"
+$env:VISTAIRE_3D_CDN_BASE_URL = "https://cdn.example.com/vistaire"
+$env:VISTAIRE_APP_ORIGIN = "https://vistaire.example.com"
+npm run 3d:validate-network -- --base-url https://vistaire.example.com --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --strict --out assets/3d/reports/maison-elyse/main/homard-bisque/v1/network-validation.json
+```
 
 11. Finalize the version manifest after visual approval, device QA, and CDN
     validation:
 
 ```bash
-npm run 3d:finalize-manifest -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --write
+npm run 3d:finalize-manifest -- --manifest public/models/restaurants/maison-elyse/main/homard-bisque/v1/manifest.json --network-validation-report assets/3d/reports/maison-elyse/main/homard-bisque/v1/network-validation.json --write
 ```
 
 Finalize changes `review` to `approved`, sets `validationStatus: "passed"`,

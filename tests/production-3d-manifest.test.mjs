@@ -24,7 +24,12 @@ function realDeviceQa() {
       device: "iPhone 15 Pro",
       os: "iOS 18.5",
       testedBy: "QA Bot",
-      testedAt: stableIso
+      testedAt: stableIso,
+      evidence: {
+        path: "assets/3d/reports/maison-elyse/main/homard-bisque/v1/device-qa/iphone.md",
+        sha256: "a".repeat(64),
+        bytes: 512
+      }
     },
     androidSceneViewer: {
       required: true,
@@ -32,7 +37,12 @@ function realDeviceQa() {
       device: "Pixel 8",
       os: "Android 15",
       testedBy: "QA Bot",
-      testedAt: stableIso
+      testedAt: stableIso,
+      evidence: {
+        path: "assets/3d/reports/maison-elyse/main/homard-bisque/v1/device-qa/android.md",
+        sha256: "b".repeat(64),
+        bytes: 640
+      }
     }
   };
 }

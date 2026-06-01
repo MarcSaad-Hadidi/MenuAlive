@@ -57,7 +57,13 @@ function hasExpectedExternalPath(url, expectedPathSuffix) {
   if (!expectedPathSuffix || !isExternalHttpsUrl(url)) return true;
   try {
     const parsed = new URL(url);
-    return parsed.pathname.includes(expectedPathSuffix);
+    const cdnBaseUrl = String(process.env.VISTAIRE_3D_CDN_BASE_URL ?? "").trim();
+    if (cdnBaseUrl) {
+      const base = new URL(cdnBaseUrl);
+      const basePath = base.pathname.replace(/\/+$/, "");
+      return base.origin === parsed.origin && parsed.pathname.startsWith(`${basePath}${expectedPathSuffix}`);
+    }
+    return parsed.pathname.startsWith(expectedPathSuffix);
   } catch {
     return false;
   }
