@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 2,
+  "kind": "vistaire.dish-3d-manifest",
+  "restaurantSlug": "maison-elyse",
+  "menuSlug": "pilot",
+  "dishSlug": "homard-bleu-bisque-fenouil",
+  "activeVersion": "pilot-real-20260601",
+  "status": "review",
+  "validationStatus": "failed",
+  "variants": {
+    "web": {
+      "url": "https://cdn.example.com/vistaire/maison-elyse/pilot/homard-bleu-bisque-fenouil/pilot-real-20260601/web/homard-bleu-bisque-fenouil-web.glb",
+      "bytes": 4362716,
+      "sha256": "98df1a3b77825f44ddf09fff65b96171442cb60f27ffc89a877c6f1334e5c442",
+      "validationStatus": "passed",
+      "profile": "web",
+      "optimizer": {
+        "ok": true,
+        "fallback": false,
+        "candidateName": "balanced"
+      }
+    },
+    "mobile": {
+      "url": "https://cdn.example.com/vistaire/maison-elyse/pilot/homard-bleu-bisque-fenouil/pilot-real-20260601/mobile/homard-bleu-bisque-fenouil-mobile.glb",
+      "bytes": 3019544,
+      "sha256": "918eb55e455a14fd3054d99f80f8a6cdde503b6c876272e64daf082ff5571aa7",
+      "validationStatus": "passed",
+      "profile": "mobile",
+      "optimizer": {
+        "ok": true,
+        "fallback": false,
+        "candidateName": "balanced"
+      }
+    },
+    "arLite": {
+      "url": "https://cdn.example.com/vistaire/maison-elyse/pilot/homard-bleu-bisque-fenouil/pilot-real-20260601/ar-lite/homard-bleu-bisque-fenouil-ar-lite.glb",
+      "bytes": 22262592,
+      "sha256": "554347a40369e0f9ee53b4a91384309bbf8617419b258c7c34e28eeb5ea523b6",
+      "validationStatus": "passed",
+      "profile": "arLite",
+      "optimizationMethod": "mesh-simplification-ar-lite",
+      "optimizer": {
+        "ok": true,
+        "fallback": false,
+        "candidateName": "balanced"
+      },
+      "triangleCount": 221148,
+      "vertexCount": 254571,
+      "materialCount": 1,
+      "textureCount": 2,
+      "maxTextureSize": 2048,
+      "extensionsUsed": [],
+      "extensionsRequired": [],
+      "arPlacement": "floor",
+      "arScale": "fixed"
+    },
+    "iosUsdz": {
+      "url": "https://cdn.example.com/vistaire/maison-elyse/pilot/homard-bleu-bisque-fenouil/pilot-real-20260601/ios/homard-bleu-bisque-fenouil.usdz",
+      "bytes": 28662781,
+      "sha256": "4570641aa13a37a0405cd4819c4b9c3f9f34c949c9f72a3031ff05fe7a7e6a12",
+      "validationStatus": "passed",
+      "profile": "ios-quicklook",
+      "productionFaithful": false,
+      "faithfulnessStatus": "unproven-until-real-device-qa",
+      "proxy": false,
+      "conversionMethod": "glb-usdz-geometry-texture-export",
+      "sourceVariant": "arLite"
+    },
+    "poster": {
+      "url": "https://cdn.example.com/vistaire/maison-elyse/pilot/homard-bleu-bisque-fenouil/pilot-real-20260601/poster/homard-bleu-bisque-fenouil.png",
+      "bytes": 10593,
+      "sha256": "25a971c10d04d1259e19e14992bbea39c1438f3ce72d43c13834996e8770b354",
+      "validationStatus": "passed",
+      "profile": "poster",
+      "placeholder": true,
+      "productionPoster": false
+    }
+  },
+  "bytes": {
+    "total": 58318226
+  },
+  "physicalScaleMeters": {
+    "width": 0.999477,
+    "height": 0.626448,
+    "depth": 0.999946
+  },
+  "bounds": {
+    "min": [
+      -0.4994977116584778,
+      -0.3135806918144226,
+      -0.49999499320983887
+    ],
+    "max": [
+      0.4999792277812958,
+      0.31286683678627014,
+      0.4999510645866394
+    ],
+    "centeredXZ": true,
+    "groundedY": false
+  },
+  "budgets": {
+    "profile": "signature",
+    "policy": "docs/repo-asset-policy.md"
+  },
+  "sourceAnalysis": {
+    "bytes": 24905692,
+    "sha256": "c0fa60aaaf47be44895b14fe460f118882661aacaf9ed87fc9fc2e98f14b8048",
+    "meshes": 1,
+    "primitives": 1,
+    "triangles": 307152,
+    "vertices": 335122,
+    "materials": 1,
+    "textures": 2,
+    "images": 2,
+    "externalUris": [],
+    "classification": "signature"
+  },
+  "visualQuality": {
+    "status": "failed",
+    "score": 0,
+    "promise": "visually indistinguishable under deterministic multi-angle mobile dining-distance review within strict thresholds",
+    "method": "missing-deterministic-render-comparison",
+    "thresholds": {
+      "meanSsim": 0.985,
+      "perceptualScore": 0.98,
+      "maxDiffRatio": 0.004,
+      "maxSilhouetteDiff": 0.002,
+      "maxColorDelta": 0.015,
+      "maxTextureBlurDelta": 0.02,
+      "maxMaterialDrift": 0.02,
+      "maxScaleDriftMeters": 0.003,
+      "maxOriginDriftMeters": 0.003,
+      "maxLowPolyVisibility": 0.01,
+      "minAppetitePreservation": 0.98
+    },
+    "report": null,
+    "reportArtifacts": {},
+    "angleReports": [],
+    "metrics": {},
+    "deterministicViews": [
+      "front",
+      "left",
+      "right",
+      "top",
+      "three-quarter"
+    ],
+    "checks": {
+      "textureSharpness": {
+        "status": "failed",
+        "reason": "Rendered texture sharpness comparison is missing"
+      },
+      "silhouette": {
+        "status": "failed",
+        "reason": "Rendered silhouette diff is missing"
+      },
+      "color": {
+        "status": "failed",
+        "reason": "Rendered color drift comparison is missing"
+      },
+      "material": {
+        "status": "failed",
+        "reason": "Rendered material drift review is missing"
+      },
+      "scaleOrigin": {
+        "status": "failed",
+        "reason": "Scale/origin comparison is missing"
+      },
+      "lowPoly": {
+        "status": "failed",
+        "reason": "Low-poly visibility review is missing"
+      },
+      "appetite": {
+        "status": "failed",
+        "reason": "Human appetite appeal review is missing"
+      }
+    },
+    "variants": {
+      "web": {
+        "bytes": 4362716,
+        "sha256": "98df1a3b77825f44ddf09fff65b96171442cb60f27ffc89a877c6f1334e5c442"
+      },
+      "mobile": {
+        "bytes": 3019544,
+        "sha256": "918eb55e455a14fd3054d99f80f8a6cdde503b6c876272e64daf082ff5571aa7"
+      },
+      "arLite": {
+        "bytes": 22262592,
+        "sha256": "554347a40369e0f9ee53b4a91384309bbf8617419b258c7c34e28eeb5ea523b6"
+      },
+      "iosUsdz": {
+        "bytes": 28662781,
+        "sha256": "4570641aa13a37a0405cd4819c4b9c3f9f34c949c9f72a3031ff05fe7a7e6a12"
+      },
+      "poster": {
+        "bytes": 10593,
+        "sha256": "25a971c10d04d1259e19e14992bbea39c1438f3ce72d43c13834996e8770b354"
+      }
+    },
+    "sourceSummary": {
+      "bytes": 24905692,
+      "sha256": "c0fa60aaaf47be44895b14fe460f118882661aacaf9ed87fc9fc2e98f14b8048",
+      "triangles": 307152,
+      "vertices": 335122,
+      "materials": 1,
+      "textures": 2
+    },
+    "fails": [
+      "Strict rendered visual identity evidence is required before optimization can be approved: source/candidate before-after-diff renders for web, mobile, and arLite, per-angle SSIM/perceptual scores, texture/silhouette/color/material/scale/origin/low-poly/appetite checks, and human approval."
+    ],
+    "manualReview": {
+      "required": true,
+      "status": "pending",
+      "approvalType": "human",
+      "approvedBy": null,
+      "approvedAt": null,
+      "requestedBy": "Marc"
+    },
+    "realDeviceQa": {
+      "required": true,
+      "iphoneQuickLook": {
+        "required": true,
+        "status": "not-tested",
+        "device": null,
+        "os": null,
+        "testedBy": null,
+        "testedAt": null
+      },
+      "androidSceneViewer": {
+        "required": true,
+        "status": "not-tested",
+        "device": null,
+        "os": null,
+        "testedBy": null,
+        "testedAt": null
+      }
+    },
+    "identity": {
+      "restaurantSlug": "maison-elyse",
+      "menuSlug": "pilot",
+      "dishSlug": "homard-bleu-bisque-fenouil",
+      "version": "pilot-real-20260601"
+    }
+  },
+  "quality": {
+    "manualVisualApprovalRequired": true,
+    "manualVisualApproved": false,
+    "approvedBy": null,
+    "requestedBy": "Marc",
+    "manualReview": {
+      "status": "pending",
+      "approvalType": "human",
+      "approvedBy": null,
+      "approvedAt": null
+    },
+    "realDeviceQa": {
+      "required": true,
+      "iphoneQuickLook": {
+        "required": true,
+        "status": "not-tested",
+        "device": null,
+        "os": null,
+        "testedBy": null,
+        "testedAt": null
+      },
+      "androidSceneViewer": {
+        "required": true,
+        "status": "not-tested",
+        "device": null,
+        "os": null,
+        "testedBy": null,
+        "testedAt": null
+      }
+    }
+  },
+  "lifecycle": {
+    "phase": "review",
+    "generatedBy": "scripts/3d/optimize-dish.mjs",
+    "generatedAt": "2026-06-01T14:35:41.026Z"
+  },
+  "rollback": {
+    "previousVersion": null,
+    "fromVersion": null,
+    "toVersion": null
+  },
+  "validation": {
+    "warnings": [],
+    "fails": [
+      "bounds.groundedY: must be true for production AR",
+      "arLite: 21.23 MiB exceeds fail budget 15.00 MiB",
+      "iosUsdz: 27.33 MiB exceeds fail budget 5.00 MiB",
+      "publicTotal: 55.62 MiB exceeds fail budget 32.00 MiB"
+    ]
+  },
+  "generatedAt": "2026-06-01T14:35:41.026Z",
+  "approvedAt": null,
+  "publishedAt": null
+}

@@ -164,6 +164,36 @@ test("owner 3D/AR status mapping does not invent success states", () => {
   );
 });
 
+test("owner 3D/AR keeps demo fallback visible when only failed pilot manifests exist", () => {
+  assert.equal(
+    model.shouldPreserveDemoFallbackAssets([{ source: "manifest", status: "rejected" }]),
+    true
+  );
+  assert.equal(
+    model.shouldPreserveDemoFallbackAssets([
+      { source: "manifest", status: "rejected" },
+      { source: "manifest", status: "rejected" }
+    ]),
+    true
+  );
+  assert.equal(
+    model.shouldPreserveDemoFallbackAssets([{ source: "manifest", status: "needs_review" }]),
+    false
+  );
+  assert.equal(
+    model.shouldPreserveDemoFallbackAssets([{ source: "report", status: "rejected" }]),
+    false
+  );
+  assert.equal(model.shouldPreserveDemoFallbackAssets([]), false);
+
+  const pipeline = readFileSync(
+    join(process.cwd(), "lib", "owner", "threeDArPipeline.ts"),
+    "utf8"
+  );
+  assert.match(pipeline, /shouldPreserveDemoFallbackAssets\(assets\)/);
+  assert.match(pipeline, /fallbackAssets\(rootDir\)/);
+});
+
 test("owner 3D/AR routes are prepared with exact slug/version paths", () => {
   const routes = [
     ["app", "owner", "3d-ar", "page.tsx"],
